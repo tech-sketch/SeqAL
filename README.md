@@ -58,4 +58,3 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 - [browniebroke/cookiecutter-pypackage](https://github.com/browniebroke/cookiecutter-pypackage)
 - [flairNLP/flair](https://github.com/flairNLP/flair)
 - [modAL](https://github.com/modAL-python/modAL)
-
