@@ -1,3 +1,9 @@
+# Commitlint related
+.husky
+node_modules
+package.json
+package-lock.json
+
 # Experiment directory
 playground/
 
