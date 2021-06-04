@@ -22,11 +22,6 @@ packages = [
 "Bug Tracker" = "https://github.com/BrambleXu/seqal/issues"
 "Changelog" = "https://seqal.readthedocs.io/changelog.html"
 
-# Documentation Dependencies
-# Sphinx = {version = "^3.3.0", optional = true}
-# sphinx-rtd-theme = {version = "^0.5.0", optional = true}
-# myst-parser = {version = "^0.14.0", optional = true}
-
 [tool.poetry.extras]
 docs = [
     "myst-parser",
@@ -51,6 +46,11 @@ ipython = "^7.24.1"
 ipykernel = "^5.5.5"
 pre-commit = "^2.13.0"
 pylint = "^2.8.3"
+
+# Documentation Dependencies
+Sphinx = {version = "^3.3.0", optional = true}
+sphinx-rtd-theme = {version = "^0.5.0", optional = true}
+myst-parser = {version = "^0.14.0", optional = true}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
