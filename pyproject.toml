@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "seqal"
-version = "0.1.0"
+version = "0.1.1"
 description = "Sequence labeling active learning framework for Python"
 authors = ["Xu Liang <liangxu006@gmail.com>"]
 license = "MIT"
@@ -49,6 +49,7 @@ pylint = "^2.8.3"
 Sphinx = "3.3.0"
 sphinx-rtd-theme = "0.5.0"
 myst-parser = "0.14.0"
+python-semantic-release = "^7.15.5"
 
 
 [build-system]
