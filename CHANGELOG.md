@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.4 (2021-06-07)
+### Fix
+* Change semantic release ci setup ([`d8182c2`](https://github.com/BrambleXu/SeqAL/commit/d8182c29f1733a9c807b9e3188aca4325bc8ff5b))
+
 ## v0.1.2 (2021-06-07)
 ### Fix
 * Add setup in pyproject.tmol ([`5f1e743`](https://github.com/BrambleXu/SeqAL/commit/5f1e74387b8c12731524c53a8bf02273e36433cc))
