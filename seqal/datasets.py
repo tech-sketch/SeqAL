@@ -1,9 +1,10 @@
-from typing import Union, Dict, List
+import re
 from pathlib import Path
-from flair.datasets.base import find_train_dev_test_files
+from typing import Dict, List, Union
+
 from flair.data import Corpus as ParentCorpus
 from flair.data import FlairDataset, Sentence, Token
-import re
+from flair.datasets.base import find_train_dev_test_files
 from torch.utils.data import Dataset
 from torch.utils.data.dataset import ConcatDataset
 
@@ -31,7 +32,9 @@ class Corpus(ParentCorpus):
             corpus (Corpus): Corpus contains train(labeled data), dev, test (data pool)
             query_idx (List[int]): Index list of queried data.
         """
-        self.test.sentences = [sent for i, sent in enumerate(self.test.sentences) if i not in query_idx]
+        self.test.sentences = [
+            sent for i, sent in enumerate(self.test.sentences) if i not in query_idx
+        ]
 
     def add_query_samples(self, query_samples: List[Sentence]) -> None:
         """Add queried data to labeled data.
@@ -145,7 +148,9 @@ class ColumnCorpus(Corpus):
             else None
         )
 
-        super(ColumnCorpus, self).__init__(train, dev, test, name=str(data_folder), **corpusargs)
+        super(ColumnCorpus, self).__init__(
+            train, dev, test, name=str(data_folder), **corpusargs
+        )
 
 
 class ColumnDataset(FlairDataset):
@@ -242,7 +247,9 @@ class ColumnDataset(FlairDataset):
                 # pointer to previous
                 previous_sentence = None
                 while True:
-                    sentence = self._convert_lines_to_sentence(self._read_next_sentence(file))
+                    sentence = self._convert_lines_to_sentence(
+                        self._read_next_sentence(file)
+                    )
                     if not sentence:
                         break
                     if self.banned_sentences is not None and any(
@@ -286,7 +293,9 @@ class ColumnDataset(FlairDataset):
             if self.__line_completes_sentence(line):
                 if len(sentence) > 0:
                     if self.tag_to_bioes is not None:
-                        sentence.convert_tag_scheme(tag_type=self.tag_to_bioes, target_scheme="iobes")
+                        sentence.convert_tag_scheme(
+                            tag_type=self.tag_to_bioes, target_scheme="iobes"
+                        )
                     # check if this sentence is a document boundary
                     if sentence.to_original_text() == self.document_separator_token:
                         sentence.is_document_boundary = True
@@ -302,7 +311,9 @@ class ColumnDataset(FlairDataset):
             sentence.is_document_boundary = True
 
         if self.tag_to_bioes is not None:
-            sentence.convert_tag_scheme(tag_type=self.tag_to_bioes, target_scheme="iobes")
+            sentence.convert_tag_scheme(
+                tag_type=self.tag_to_bioes, target_scheme="iobes"
+            )
 
         if len(sentence) > 0:
             return sentence
@@ -312,24 +323,39 @@ class ColumnDataset(FlairDataset):
         token = Token(fields[self.text_column])
         for column in self.column_name_map:
             if len(fields) > column:
-                if column != self.text_column and self.column_name_map[column] != self.SPACE_AFTER_KEY:
+                if (
+                    column != self.text_column
+                    and self.column_name_map[column] != self.SPACE_AFTER_KEY
+                ):
                     task = self.column_name_map[column]  # for example 'pos'
                     tag = fields[column]
                     if tag.count("-") >= 1:  # tag with prefix, for example tag='B-OBJ'
                         split_at_first_hyphen = tag.split("-", 1)
                         tagging_format_prefix = split_at_first_hyphen[0]
                         tag_without_tagging_format = split_at_first_hyphen[1]
-                        if self.label_name_map and tag_without_tagging_format in self.label_name_map.keys():
-                            tag = tagging_format_prefix + "-" + self.label_name_map[tag_without_tagging_format]
+                        if (
+                            self.label_name_map
+                            and tag_without_tagging_format in self.label_name_map.keys()
+                        ):
+                            tag = (
+                                tagging_format_prefix
+                                + "-"
+                                + self.label_name_map[tag_without_tagging_format]
+                            )
                             # for example, transforming 'B-OBJ' to 'B-part-of-speech-object'
                             if self.label_name_map[tag_without_tagging_format] == "O":
                                 tag = "O"
                     else:  # tag without prefix, for example tag='PPER'
                         if self.label_name_map and tag in self.label_name_map.keys():
-                            tag = self.label_name_map[tag]  # for example, transforming 'PPER' to 'person'
+                            tag = self.label_name_map[
+                                tag
+                            ]  # for example, transforming 'PPER' to 'person'
 
                     token.add_label(task, tag)
-                if self.column_name_map[column] == self.SPACE_AFTER_KEY and fields[column] == "-":
+                if (
+                    self.column_name_map[column] == self.SPACE_AFTER_KEY
+                    and fields[column] == "-"
+                ):
                     token.whitespace_after = False
         return token
 
@@ -353,7 +379,9 @@ class ColumnDataset(FlairDataset):
         else:
             with open(str(self.path_to_column_file), encoding=self.encoding) as file:
                 file.seek(self.indices[index])
-                sentence = self._convert_lines_to_sentence(self._read_next_sentence(file))
+                sentence = self._convert_lines_to_sentence(
+                    self._read_next_sentence(file)
+                )
 
             # set sentence context using partials
             sentence._position_in_dataset = (self, index)
