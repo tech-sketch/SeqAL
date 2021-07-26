@@ -10,7 +10,7 @@ def predict_data_pool(sents: List[Sentence], estimator: Module) -> None:
     """Predict on data pool for query.
 
     Args:
-        corpus (Corpus): Corpus contains train(labeled data), dev, test (data pool)
+        sents (List[Sentence]): Sentences in data pool.
         estimator (Module): Trained model.
     """
     for sent in sents:
@@ -21,7 +21,7 @@ def remove_query_samples(sents: List[Sentence], query_idx: List[int]) -> None:
     """Remove queried data from data pool.
 
     Args:
-        corpus (Corpus): Corpus contains train(labeled data), dev, test (data pool)
+        sents (List[Sentence]): Sentences in data pool.
         query_idx (List[int]): Index list of queried data.
     """
     new_sents = []
@@ -36,16 +36,19 @@ def remove_query_samples(sents: List[Sentence], query_idx: List[int]) -> None:
 
 def random_sampling(
     sents: List[Sentence], estimator=None, query_number=0, seed=0
-) -> Tuple[int, Sentence]:
+) -> Tuple[List[Sentence], List[Sentence]]:
     """Random select data from pool.
 
     Args:
-        corpus (Corpus): Corpus contains train(labeled data), dev, test (data pool)
+        sents (List[Sentence]): Sentences in data pool.
         estimator (None): Random sampling does not need estimator. Here is a placeholder.
-        seed (int, optional): [description]. Defaults to 0.
+        query_number (int, optional): Batch query number. Defaults to 0.
+        seed (int, optional): Random seed. Defaults to 0.
 
     Returns:
-        Tuple[int, Sentence]: The queried id and instance.
+        Tuple[List[Sentence], List[Sentence]]:
+            sents: The data pool after removing query samples.
+            query_samples: Query samples.
     """
     random.seed(seed)
 
@@ -66,15 +69,18 @@ def random_sampling(
 
 def ls_sampling(
     sents: List[Sentence], estimator: Module, query_number: int = 0
-) -> Tuple[int, Sentence]:
+) -> Tuple[List[Sentence], List[Sentence]]:
     """Least confidence sampling.
 
     Args:
-        corpus (Corpus): Corpus contains train(labeled data), dev, test (data pool)
+        sents (List[Sentence]): Sentences in data pool.
         estimator (Module): Sequence tagger.
+        query_number (int, optional): Batch query number. Defaults to 0.
 
     Returns:
-        Tuple[int, Sentence]: The queried id and instance.
+        Tuple[List[Sentence], List[Sentence]]:
+            sents: The data pool after removing query samples.
+            query_samples: Query samples.
     """
     # Predict on data pool
     predict_data_pool(sents, estimator)
@@ -106,15 +112,18 @@ def ls_sampling(
 
 def mnlp_sampling(
     sents: List[Sentence], estimator: Module, query_number: int = 0
-) -> Tuple[int, Sentence]:
+) -> Tuple[List[Sentence], List[Sentence]]:
     """Least confidence sampling.
 
     Args:
-        corpus (Corpus): Corpus contains train(labeled data), dev, test (data pool)
+        sents (List[Sentence]): Sentences in data pool.
         estimator (Module): Sequence tagger.
+        query_number (int, optional): Batch query number. Defaults to 0.
 
     Returns:
-        Tuple[int, Sentence]: The queried id and instance.
+        Tuple[List[Sentence], List[Sentence]]:
+            sents: The data pool after removing query samples.
+            query_samples: Query samples.
     """
     # Predict on data pool
     predict_data_pool(sents, estimator)

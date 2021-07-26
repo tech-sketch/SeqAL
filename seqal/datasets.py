@@ -10,6 +10,12 @@ from torch.utils.data.dataset import ConcatDataset
 
 
 class Corpus(ParentCorpus):
+    """The modified Corpus class.
+
+    Args:
+        ParentCorpus ([type]): [description]
+    """
+
     def get_all_sentences(self) -> Dataset:
         """Refactor method of flair.data.corpus
 
@@ -29,7 +35,6 @@ class Corpus(ParentCorpus):
         """Remove queried data from data pool.
 
         Args:
-            corpus (Corpus): Corpus contains train(labeled data), dev, test (data pool)
             query_idx (List[int]): Index list of queried data.
         """
         self.test.sentences = [
@@ -40,7 +45,6 @@ class Corpus(ParentCorpus):
         """Add queried data to labeled data.
 
         Args:
-            corpus (Corpus): Corpus contains train(labeled data), dev, test (data pool)
             query_idx (int): Index list of queried data.
         """
         for sample in query_samples:
@@ -67,23 +71,31 @@ class ColumnCorpus(Corpus):
         autofind_splits: bool = True,
         **corpusargs,
     ):
-        """
-        Instantiates a Corpus from CoNLL column-formatted task data such as CoNLL03 or CoNLL2000.
-        :param data_folder: base folder with the task data
-        :param column_format: a map specifying the column format
-        :param train_file: the name of the train file
-        :param test_file: the name of the test file
-        :param dev_file: the name of the dev file, if None, dev data is sampled from train
-        :param tag_to_bioes: whether to convert to BIOES tagging scheme
-        :param column_delimiter: default is to split on any separatator, but you can overwrite for instance with "\t"
-        to split only on tabs
-        :param comment_symbol: if set, lines that begin with this symbol are treated as comments
-        :param document_separator_token: If provided, sentences that function as document boundaries are so marked
-        :param skip_first_line: set to True if your dataset has a header line
-        :param in_memory: If set to True, the dataset is kept in memory as Sentence objects, otherwise does disk reads
-        :param label_name_map: Optionally map tag names to different schema.
-        :param banned_sentences: Optionally remove sentences from the corpus. Works only if `in_memory` is true
-        :return: a Corpus with annotated train, dev and test data
+        """Instantiates a Corpus from CoNLL column-formatted task data such as CoNLL03 or CoNLL2000.
+
+        Args:
+            data_folder (Union[str, Path]): Base folder with the task data
+            column_format (Dict[int, str]): A map specifying the column format
+            train_file ([type], optional): The name of the train file
+            test_file ([type], optional): The name of the test file
+            dev_file ([type], optional): The name of the dev file, if None, dev data is sampled from train
+            tag_to_bioes ([type], optional): Whether to convert to BIOES tagging scheme
+            column_delimiter (str, optional): Default is to split on any separatator,
+                                              but you can overwrite for instance with "\t" to split only on tabs
+            comment_symbol (str, optional): If set, lines that begin with this symbol are treated as comments
+            encoding (str, optional): Encodings. Defaults to "utf-8".
+            document_separator_token (str, optional): If provided, sentences that function as document
+                                                      boundaries are so marked
+            skip_first_line (bool, optional): Set to True if your dataset has a header line
+            in_memory (bool, optional): If set to True, the dataset is kept in memory as Sentence objects,
+                                        otherwise does disk reads
+            label_name_map (Dict[str, str], optional): Optionally map tag names to different schema.
+            banned_sentences (List[str], optional): Optionally remove sentences from the corpus.
+                                                    Works only if `in_memory` is true
+            autofind_splits (bool, optional): Defaults to True.
+
+        Returns:
+            Dataset: a Corpus with annotated train, dev and test data
         """
 
         # find train, dev and test files if not specified
@@ -171,20 +183,27 @@ class ColumnDataset(FlairDataset):
         skip_first_line: bool = False,
         label_name_map: Dict[str, str] = None,
     ):
-        """
-        Instantiates a column dataset (typically used for sequence labeling or word-level prediction).
-        :param path_to_column_file: path to the file with the column-formatted data
-        :param column_name_map: a map specifying the column format
-        :param tag_to_bioes: whether to convert to BIOES tagging scheme
-        :param column_delimiter: default is to split on any separatator, but you can overwrite for instance with "\t"
-        to split only on tabs
-        :param comment_symbol: if set, lines that begin with this symbol are treated as comments
-        :param in_memory: If set to True, the dataset is kept in memory as Sentence objects, otherwise does disk reads
-        :param document_separator_token: If provided, sentences that function as document boundaries are so marked
-        :param skip_first_line: set to True if your dataset has a header line
-        :param label_name_map: Optionally map tag names to different schema.
-        :param banned_sentences: Optionally remove sentences from the corpus. Works only if `in_memory` is true
-        :return: a dataset with annotated data
+        """Instantiates a column dataset (typically used for sequence labeling or word-level prediction).
+
+        Args:
+            path_to_column_file (Union[str, Path]): Path to the file with the column-formatted data
+            column_name_map (Dict[int, str]): A map specifying the column format
+            tag_to_bioes (str, optional): Whether to convert to BIOES tagging scheme
+            column_delimiter (str, optional): Default is to split on any separatator,
+                                              but you can overwrite for instance with "\t"
+            comment_symbol (str, optional): If set, lines that begin with this symbol are treated as comments
+            banned_sentences (List[str], optional): If set to True, the dataset is kept in memory as Sentence objects,
+                                                    otherwise does disk reads
+            in_memory (bool, optional): If set to True, the dataset is kept in memory as Sentence objects,
+                                        otherwise does disk reads
+            document_separator_token (str, optional): If provided, sentences that function as document
+                                                      boundaries are so marked
+            encoding (str, optional): Encodings. Defaults to "utf-8".
+            skip_first_line (bool, optional): Optionally map tag names to different schema.
+            label_name_map (Dict[str, str], optional): Optionally map tag names to different schema.
+
+        Returns:
+            Dataset: a dataset with annotated data
         """
         if type(path_to_column_file) is str:
             path_to_column_file = Path(path_to_column_file)
