@@ -91,4 +91,4 @@ def trained_tagger(
     save_path = fixture_path / "output"
     learner.fit(save_path)
 
-    return learner.estimator
+    return learner.trained_estimator

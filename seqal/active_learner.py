@@ -26,7 +26,8 @@ class ActiveLearner:
         self, estimator: Module, query_strategy: Callable, corpus: Corpus, **kwargs
     ) -> None:
         assert callable(query_strategy), "query_strategy must be callable"
-        self.estimator = estimator
+        self.clean_estimator = estimator
+        self.trained_estimator = None
         self.query_strategy = query_strategy
         self.corpus = corpus
         self.kwargs = kwargs
@@ -37,15 +38,27 @@ class ActiveLearner:
         Args:
             save_path (str, optional): Log and model save path. Defaults to "resources/init_train".
         """
-        trainer = ModelTrainer(self.estimator, self.corpus)
+        # estimator = copy.deepcopy(self.clean_estimator)  # TODO: Test error
+        estimator = self.clean_estimator
+        trainer = ModelTrainer(estimator, self.corpus)
         trainer.train(save_path, **self.kwargs)
+        self.trained_estimator = estimator
 
-    def query(self, sents: List[Sentence], query_number: int) -> Tuple[int, Sentence]:
-        """Query data
+    def query(
+        self, sents: List[Sentence], query_number: int
+    ) -> Tuple[List[Sentence], List[Sentence]]:
+        """Query data from pool (sents).
+
+        Args:
+            sents (List[Sentence]): Data pool that consist of sentences.
+            query_number (int): batch query number.
 
         Returns:
-            Tuple[int, Sentence]: Query index and sentence.
+            Tuple[List[Sentence], List[Sentence]]:
+                sents: The data pool after removing query samples.
+                query_samples: Query samples.
         """
+
         return self.query_strategy(sents, self.estimator, query_number)
 
     def teach(
