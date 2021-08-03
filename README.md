@@ -144,6 +144,11 @@ If you want to delete the local envirement, run below command.
 conda remove --name seqal --all
 ```
 
+## Performance
+
+See [performance.md](./docs/source/performance.md) for detail.
+
+
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
@@ -162,4 +167,4 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 - [Cookiecutter](https://github.com/audreyr/cookiecutter)
 - [browniebroke/cookiecutter-pypackage](https://github.com/browniebroke/cookiecutter-pypackage)
 - [flairNLP/flair](https://github.com/flairNLP/flair)
-- [seqal](https://github.com/seqal-python/seqal)
+- [modal](https://github.com/modAL-python/modAL)
