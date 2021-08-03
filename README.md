@@ -42,6 +42,24 @@ Install this via pip (or your favourite package manager):
 
 ## Usage
 
+### Prepare data
+
+The tagging scheme is the IOB scheme.
+
+```
+    U.N. NNP I-ORG
+official NN  O
+   Ekeus NNP I-PER
+   heads VBZ O
+     for IN  O
+ Baghdad NNP I-LOC
+       . .   O
+```
+
+Each line contains four fields: the word, its partof-speech tag and its named entity tag. Words tagged with O are outside of named entities. 
+
+### Examples
+
 ```python
 from flair.embeddings import WordEmbeddings, StackedEmbeddings
 from flair.models import SequenceTagger
@@ -84,10 +102,13 @@ sents, query_samples = learner.query(sents, percent_count)
 learner.teach(query_samples, save_path=f"output/retrain")
 ```
 
-## Construc envirement locally
+## Construct envirement locally
 
+If you want to make a PR or implement something locally, you can follow bellow instruction to construct the development envirement locally.
 
 First we create a environment "seqal" based on the `environment.yml` file.
+
+We use conda as envirement management tool, so install it first.
 
 ```
 conda env create -f environment.yml
