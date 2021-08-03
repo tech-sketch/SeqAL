@@ -1,3 +1,7 @@
+# Ignore output in test
+tests/fixtures/output
+!tests/fixtures/output/.gitkeep
+
 # Commitlint related
 .husky
 node_modules
@@ -12,6 +16,9 @@ playground/
 
 # IntelliJ settings files
 .idea/
+
+# Mac files
+.DS_Store
 
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template
