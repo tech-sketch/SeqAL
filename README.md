@@ -63,13 +63,17 @@ Each line contains four fields: the word, its partof-speech tag and its named en
 ### Examples
 
 ```python
-from flair.embeddings import WordEmbeddings, StackedEmbeddings
+from flair.embeddings import StackedEmbeddings, WordEmbeddings
 from flair.models import SequenceTagger
+
 from seqal.active_learner import ActiveLearner
+from seqal.datasets import ColumnCorpus, ColumnDataset
 from seqal.query_strategies import mnlp_sampling
 
 # 1. get the corpus
-corpus = Corpus(train="train.data", dev="dev.data", test="dev.data")
+columns = {0: "text", 1: "pos", 3: "ner"}
+data_folder = "../conll"
+corpus = ColumnCorpus(train="train.data", dev="dev.data", test="dev.data")
 
 # 2. what tag do we want to predict?
 tag_type = "ner"
@@ -96,13 +100,19 @@ learner = ActiveLearner(tagger, mnlp_sampling, corpus, **params)
 learner.fit(save_path="output/init_train")
 
 # 8. query for labels
-sents, query_samples = learner.query(sents, percent_count)
+data_pool_file = "../eng.train_pool"
+data_pool = ColumnDataset(pool_file, columns_pool)
+pool_sents = data_pool.sentences
+pool_sents, query_samples = learner.query(pool_sents, percent_count)
 
 # ...obtaining new labels for "query_samples" from the Oracle...
 
 # 9. retrain model with new labeled data
 learner.teach(query_samples, save_path=f"output/retrain")
 ```
+
+After get the new labels from oracle, we need to create a sentence with label. For more detail, see [Adding labels to sentences](https://github.com/flairNLP/flair/blob/master/resources/docs/TUTORIAL_1_BASICS.md#adding-labels-to-sentences)
+
 
 ## Construct envirement locally
 
