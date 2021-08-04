@@ -2,12 +2,12 @@ from flair.embeddings import StackedEmbeddings, WordEmbeddings
 from flair.models import SequenceTagger
 
 from seqal.active_learner import ActiveLearner
-from seqal.datasets import ColumnCorpus
+from seqal.datasets import ColumnCorpus, ColumnDataset
 from seqal.query_strategies import mnlp_sampling
 
 # 1. get the corpus
 columns = {0: "text", 1: "pos", 3: "ner"}
-data_folder = "../conll"
+data_folder = "/Users/smap/Project/seqal/datasets/conll"
 corpus = ColumnCorpus(
     data_folder,
     columns,
@@ -15,13 +15,11 @@ corpus = ColumnCorpus(
     test_file="eng.testb",
     dev_file="eng.testa",
 )
-corpus_pool = ColumnCorpus(
-    data_folder,
-    columns,
-    train_file="eng.train_pool",
-    test_file="eng.testb",
-    dev_file="eng.testa",
-)
+
+pool_columns = {0: "text", 1: "pos"}
+pool_file = data_folder + "/eng.train_pool"
+data_pool = ColumnDataset(pool_file, pool_columns)
+
 
 # 2. what tag do we want to predict?
 tag_type = "ner"
@@ -55,7 +53,7 @@ learner = ActiveLearner(tagger, mnlp_sampling, corpus, **params)
 learner.fit(save_path="output/init_train")
 
 # 8. iteration
-sents = corpus_pool.train.sentences
+sents = data_pool.sentences
 percent = 0.2
 query_number = int(len(corpus.train) * 0.2)  # 2297
 
