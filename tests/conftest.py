@@ -43,22 +43,17 @@ def embeddings(fixture_path: Path) -> StackedEmbeddings:
 
 @pytest.fixture
 def learner(corpus: Corpus, embeddings: StackedEmbeddings) -> ActiveLearner:
-    tag_type = "ner"
-    tag_dictionary = corpus.make_tag_dictionary(tag_type=tag_type)
+    tagger_params = {}
+    tagger_params["tag_type"] = "ner"  # what tag do we want to predict?
+    tagger_params["hidden_size"] = 256
+    tagger_params["embeddings"] = embeddings
 
-    # initialize sequence tagger
-    tagger = SequenceTagger(
-        hidden_size=256,
-        embeddings=embeddings,
-        tag_dictionary=tag_dictionary,
-        tag_type=tag_type,
-    )
-    params = {}
-    params["max_epochs"] = 1
-    params["learning_rate"] = 0.1
-    params["train_with_dev"] = True
-    params["train_with_test"] = True
-    learner = ActiveLearner(tagger, random_sampling, corpus, **params)
+    trainer_params = {}
+    trainer_params["max_epochs"] = 1
+    trainer_params["learning_rate"] = 0.1
+    trainer_params["train_with_dev"] = True
+    trainer_params["train_with_test"] = True
+    learner = ActiveLearner(tagger_params, random_sampling, corpus, trainer_params)
 
     return learner
 
@@ -67,28 +62,19 @@ def learner(corpus: Corpus, embeddings: StackedEmbeddings) -> ActiveLearner:
 def trained_tagger(
     fixture_path: Path, corpus: Corpus, embeddings: StackedEmbeddings
 ) -> SequenceTagger:
-    tag_type = "ner"
-    tag_dictionary = corpus.make_tag_dictionary(tag_type=tag_type)
+    tagger_params = {}
+    tagger_params["tag_type"] = "ner"  # what tag do we want to predict?
+    tagger_params["hidden_size"] = 256
+    tagger_params["embeddings"] = embeddings
 
-    # initialize sequence tagger
-    tagger = SequenceTagger(
-        hidden_size=256,
-        embeddings=embeddings,
-        tag_dictionary=tag_dictionary,
-        tag_type=tag_type,
-    )
-    # trainer = ModelTrainer(tagger, corpus)
-
-    # save_path = fixture_path / "output"
-    # trainer.train(str(save_path), train_with_dev=True, max_epochs=1)
-    params = {}
-    params["max_epochs"] = 1
-    params["learning_rate"] = 0.1
-    params["train_with_dev"] = True
-    params["train_with_test"] = True
-    learner = ActiveLearner(tagger, random_sampling, corpus, **params)
+    trainer_params = {}
+    trainer_params["max_epochs"] = 1
+    trainer_params["learning_rate"] = 0.1
+    trainer_params["train_with_dev"] = True
+    trainer_params["train_with_test"] = True
+    learner = ActiveLearner(tagger_params, random_sampling, corpus, trainer_params)
 
     save_path = fixture_path / "output"
     learner.fit(save_path)
 
-    return learner.trained_estimator
+    return learner.trained_tagger
