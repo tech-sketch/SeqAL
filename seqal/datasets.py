@@ -169,3 +169,8 @@ class ColumnDataset(ParentColumnDataset):
     def __len__(self):
         """Override method"""
         return len(self.sentences)
+
+    def obtain_statistics(self, name: str = "Pool", tag_type: str = None):
+        return Corpus._obtain_statistics_for(
+            self.sentences, name=name, tag_type=tag_type
+        )

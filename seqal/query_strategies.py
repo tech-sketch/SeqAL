@@ -1,153 +1,155 @@
 import random
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
 from flair.data import Sentence
-from torch.nn import Module
-
-
-def predict_data_pool(sents: List[Sentence], estimator: Module) -> None:
-    """Predict on data pool for query.
-
-    Args:
-        sents (List[Sentence]): Sentences in data pool.
-        estimator (Module): Trained model.
-    """
-    for sent in sents:
-        estimator.predict(sent)
-
-
-def remove_query_samples(sents: List[Sentence], query_idx: List[int]) -> None:
-    """Remove queried data from data pool.
-
-    Args:
-        sents (List[Sentence]): Sentences in data pool.
-        query_idx (List[int]): Index list of queried data.
-    """
-    new_sents = []
-    query_sents = []
-    for i, sent in enumerate(sents):
-        if i in query_idx:
-            query_sents.append(sent)
-        else:
-            new_sents.append(sent)
-    return new_sents, query_sents
 
 
 def random_sampling(
-    sents: List[Sentence], estimator=None, query_number=0, seed=0
-) -> Tuple[List[Sentence], List[Sentence]]:
+    sents: List[Sentence],
+    tag_type: str = None,
+    query_number=0,
+    token_based=False,
+    seed=0,
+) -> List[int]:
     """Random select data from pool.
 
     Args:
         sents (List[Sentence]): Sentences in data pool.
-        estimator (None): Random sampling does not need estimator. Here is a placeholder.
+        tag_type (str): Tag type to predict. This is a placeholder for random sampling method.
         query_number (int, optional): Batch query number. Defaults to 0.
+        token_based (bool, optional): If true, using query number as token number to query data.
+                                      If false, using query number as sentence number to query data.
         seed (int, optional): Random seed. Defaults to 0.
 
     Returns:
-        Tuple[List[Sentence], List[Sentence]]:
-            sents: The data pool after removing query samples.
-            query_samples: Query samples.
+        List[int]:
+            query_idx: The index of queried samples in sents.
     """
     random.seed(seed)
 
-    n_samples = len(sents)
-    if query_number == 0:
-        query_idx = random.choice(range(n_samples))
-        query_idx = [query_idx]
+    if token_based is True:
+        # Shuffle index
+        random_idx = list(range(len(sents)))
+        random.shuffle(random_idx)
+
+        queried_tokens = 0
+        query_idx = []
+        for indx in random_idx:
+            sent = sents[indx]
+            if queried_tokens < query_number:
+                queried_tokens += len(sent.tokens)
+                query_idx.append(indx)
     else:
-        if query_number > len(sents):
-            query_idx = random.sample(range(len(sents)), len(sents))
+        n_samples = len(sents)
+        if query_number == 0:
+            query_idx = random.choice(range(n_samples))
+            query_idx = [query_idx]
         else:
-            query_idx = random.sample(range(len(sents)), query_number)
+            if query_number > len(sents):
+                query_idx = random.sample(range(len(sents)), len(sents))
+            else:
+                query_idx = random.sample(range(len(sents)), query_number)
 
-    sents, query_samples = remove_query_samples(sents, query_idx)
-
-    return sents, query_samples
+    return query_idx
 
 
 def ls_sampling(
-    sents: List[Sentence], estimator: Module, query_number: int = 0
-) -> Tuple[List[Sentence], List[Sentence]]:
+    sents: List[Sentence],
+    tag_type: str,
+    query_number: int = 0,
+    token_based: bool = False,
+) -> List[int]:
     """Least confidence sampling.
 
     Args:
         sents (List[Sentence]): Sentences in data pool.
-        estimator (Module): Sequence tagger.
+        tag_type (str): Tag type to predict.
         query_number (int, optional): Batch query number. Defaults to 0.
+        token_based (bool, optional): If true, using query number as token number to query data.
+                                      If false, using query number as sentence number to query data.
 
     Returns:
-        Tuple[List[Sentence], List[Sentence]]:
-            sents: The data pool after removing query samples.
-            query_samples: Query samples.
+        List[int]:
+            query_idx: The index of queried samples in sents.
     """
-    # Predict on data pool
-    predict_data_pool(sents, estimator)
 
     # Select on data pool
     probs = np.ones(len(sents)) * float("Inf")
 
     for i, sent in enumerate(sents):
-        scores = [entity.score for entity in sent.get_spans("ner")]
+        scores = [entity.score for entity in sent.get_spans(tag_type)]
         if scores != []:
             probs[i] = 1 - max(scores)
 
     ascending_indices = list(np.argsort(probs))
 
-    if query_number == 0:
-        query_idx = ascending_indices[0]
-        query_idx = [query_idx]
+    if token_based is True:
+        queried_tokens = 0
+        query_idx = []
+        for indx in ascending_indices:
+            sent = sents[indx]
+            if queried_tokens < query_number:
+                queried_tokens += len(sent.tokens)
+                query_idx.append(indx)
     else:
-        if query_number > len(sents):
-            query_idx = ascending_indices
+        if query_number == 0:
+            query_idx = ascending_indices[0]
+            query_idx = [query_idx]
         else:
-            query_idx = ascending_indices[:query_number]
+            if query_number > len(sents):
+                query_idx = ascending_indices
+            else:
+                query_idx = ascending_indices[:query_number]
 
-    # Remove selected sample from data pool
-    sents, query_samples = remove_query_samples(sents, query_idx)
-
-    return sents, query_samples
+    return query_idx
 
 
 def mnlp_sampling(
-    sents: List[Sentence], estimator: Module, query_number: int = 0
-) -> Tuple[List[Sentence], List[Sentence]]:
+    sents: List[Sentence],
+    tag_type: str,
+    query_number: int = 0,
+    token_based: bool = False,
+) -> List[int]:
     """Least confidence sampling.
 
     Args:
         sents (List[Sentence]): Sentences in data pool.
-        estimator (Module): Sequence tagger.
+        tag_type (str): Tag type to predict.
         query_number (int, optional): Batch query number. Defaults to 0.
+        token_based (bool, optional): If true, using query number as token number to query data.
+                                      If false, using query number as sentence number to query data.
 
     Returns:
-        Tuple[List[Sentence], List[Sentence]]:
-            sents: The data pool after removing query samples.
-            query_samples: Query samples.
+        List[int]:
+            query_idx: The index of queried samples in sents.
     """
-    # Predict on data pool
-    predict_data_pool(sents, estimator)
-
     # Select on data pool
     probs = np.ones(len(sents)) * float("-Inf")
 
     for i, sent in enumerate(sents):
-        scores = [entity.score for entity in sent.get_spans("ner")]
+        scores = [entity.score for entity in sent.get_spans(tag_type)]
         if scores != []:
             probs[i] = max(scores) / len(sent)
 
     descend_indices = np.argsort(-probs)
 
-    if query_number == 0:
-        query_idx = descend_indices[0]
-        query_idx = [query_idx]
+    if token_based is True:
+        queried_tokens = 0
+        query_idx = []
+        for indx in descend_indices:
+            sent = sents[indx]
+            if queried_tokens < query_number:
+                queried_tokens += len(sent.tokens)
+                query_idx.append(indx)
     else:
-        if query_number > len(sents):
-            query_idx = descend_indices
+        if query_number == 0:
+            query_idx = descend_indices[0]
+            query_idx = [query_idx]
         else:
-            query_idx = descend_indices[:query_number]
+            if query_number > len(sents):
+                query_idx = descend_indices
+            else:
+                query_idx = descend_indices[:query_number]
 
-    # Remove selected sample from data pool
-    sents, query_samples = remove_query_samples(sents, query_idx)
-
-    return sents, query_samples
+    return query_idx
