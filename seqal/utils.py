@@ -1,4 +1,6 @@
-from flair.data import Corpus
+from typing import List
+
+from flair.data import Corpus, Sentence
 
 
 def assign_id_corpus(corpus: Corpus) -> Corpus:
@@ -22,3 +24,18 @@ def assign_id_corpus(corpus: Corpus) -> Corpus:
         id += 1
 
     return corpus
+
+
+def output_conll_format(sents: List[Sentence], save_path: str) -> None:
+    """Output dataset as conll format.
+
+    Args:
+        sents (List[Sentence]): [description]
+        save_path (str): [description]
+    """
+    with open(save_path, "w") as f:
+        for sent in sents:
+            for token in sent:
+                line = f"{token.text}\t{token.get_tag('pos').value}\t{token.get_tag('ner').value}\n"  # noqa: E731
+                f.write(line)
+            f.write("\n")
