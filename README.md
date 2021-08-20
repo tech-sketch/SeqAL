@@ -33,7 +33,7 @@
   <img src="https://img.shields.io/pypi/l/seqal.svg?style=flat-square" alt="License">
 </p>
 
-Sequence labeling active learning framework for Python
+SeqAL is a sequence labeling active learning framework based on Flair.
 
 ## Installation
 
@@ -62,56 +62,118 @@ Each line contains four fields: the word, its partof-speech tag and its named en
 
 ### Examples
 
+Because SeqAL is based on flair, we heavily recommend to read the [tutorial](https://github.com/flairNLP/flair/blob/5c4231b30865bf4426ba8076eb91492d329c8a9b/resources/docs/TUTORIAL_1_BASICS.md) of flair first. 
+
 ```python
+import json
+
 from flair.embeddings import StackedEmbeddings, WordEmbeddings
-from flair.models import SequenceTagger
 
 from seqal.active_learner import ActiveLearner
 from seqal.datasets import ColumnCorpus, ColumnDataset
 from seqal.query_strategies import mnlp_sampling
 
 # 1. get the corpus
-columns = {0: "text", 1: "pos", 3: "ner"}
+columns = {0: "text", 1: "pos", 2: "ner"}
 data_folder = "../conll"
-corpus = ColumnCorpus(train="train.data", dev="dev.data", test="dev.data")
-
-# 2. what tag do we want to predict?
-tag_type = "ner"
-
-# 3. make the tag dictionary from the corpus
-tag_dictionary = corpus.make_tag_dictionary(tag_type=tag_type)
-
-# 4. initialize embeddings
-embedding_types = [WordEmbeddings("glove")]
-embeddings = StackedEmbeddings(embeddings=embedding_types)
-
-# 5. initialize sequence tagger
-tagger = SequenceTagger(hidden_size=256, embeddings=embeddings, tag_dictionary=tag_dictionary, tag_type=tag_type)
-
-# 6. initialize learner
-params = {}
-params["max_epochs"] = 1
-params["learning_rate"] = 0.1
-params["train_with_dev"] = True
-
-learner = ActiveLearner(tagger, mnlp_sampling, corpus, **params)
-
-# 7. initial training
-learner.fit(save_path="output/init_train")
-
-# 8. query for labels
-data_pool_file = "../eng.train_pool"
-data_pool = ColumnDataset(pool_file, columns_pool)
-pool_sents = data_pool.sentences
-pool_sents, query_samples = learner.query(pool_sents, percent_count)
-
-# ...obtaining new labels for "query_samples" from the Oracle...
-
-# 9. retrain model with new labeled data
-learner.teach(query_samples, save_path=f"output/retrain")
+corpus = ColumnCorpus(
+    data_folder,
+    columns,
+    train_file="seed.data",
+    dev_file="dev.data",
+    test_file="test.data",
+)
 ```
 
-After get the new labels from oracle, we need to create a sentence with label. For more detail, see [Adding labels to sentences](https://github.com/flairNLP/flair/blob/master/resources/docs/TUTORIAL_1_BASICS.md#adding-labels-to-sentences)
+First we need to create the corpus. `date_folder` is the directry path where we store datasets. `seed.data` contains NER labels, which usually just a small part of data (around 2% of total train data). `dev.data` and `test.data` should contains NER labels for evaluation. All three kinds of data should follow the IOB scheme. But if you have 4 columns, you can just change `columns` to specify the tag column.
+
+
+```python
+# 2. tagger params
+tagger_params = {}
+tagger_params["tag_type"] = "ner"  # what tag do we want to predict?
+tagger_params["hidden_size"] = 256
+embedding_types = [WordEmbeddings("glove")]
+embeddings = StackedEmbeddings(embeddings=embedding_types)
+tagger_params["embeddings"] = embeddings
+
+# 3. Trainer params
+trainer_params = {}
+trainer_params["max_epochs"] = 10
+trainer_params["mini_batch_size"] = 32
+trainer_params["learning_rate"] = 0.01
+trainer_params["train_with_dev"] = True
+
+# 4. initialize learner
+learner = ActiveLearner(tagger_params, mnlp_sampling, corpus, trainer_params)
+```
+
+This part is where we set the parameters for sequence tagger and trainer. The above setup can conver most of situations. If you want to add more paramters, I recommend to the read [SequenceTagger](https://github.com/flairNLP/flair/blob/master/flair/models/sequence_tagger_model.py#L68) and [ModelTrainer](https://github.com/flairNLP/flair/blob/master/flair/trainers/trainer.py#L42) in flair.
+
+
+```python
+# 5. initial training
+learner.fit(save_path="output/init_train")
+```
+
+The initial training will be trained on the seed data.
+
+```python
+# 6. prepare data pool
+pool_columns = {0: "text", 1: "pos"}
+pool_file = data_folder + "/pool.data"
+data_pool = ColumnDataset(pool_file, pool_columns)
+sents = data_pool.sentences
+```
+Here we prepare the unlabeled data pool.
+
+```python
+# 7. query data
+query_number = 1
+sents, query_samples = learner.query(sents, query_number, token_based=True)
+```
+
+We can query samples from data pool by the `learner.query()` method. `query_number` means how many sentence we want to query. But if we set `token_based=True`, the `query_number` means how many tokens we want to query. For the sequence labeling task, we usually set `token_based=True`.
+
+`query_samples` is a list that contains queried sentences (the Sentence class in flair). `sents` contains the rest of unqueried sentences.
+
+```
+In [1]: query_samples[0].to_plain_string()
+Out[1]: 'I love Berlin .'
+```
+
+We can get the text by calling `to_plain_strin()` method and put it into the interface for human annotation.
+
+
+```python
+# 8. obtaining labels for "query_samples" by the human
+query_labels = [
+      {
+        "text": "I love Berlin .",
+        "labels": [{"start_pos": 7, "text": "Berlin", "label": "S-LOC"}]
+      },
+      {
+        "text": "This book is great.",
+        "labels": []
+      }
+]
+
+
+annotated_sents = assign_labels(query_labels)
+```
+`query_labels` is the label information of a sentence after annotation by human. We use such information to create Flair Sentence class by calling `assign_labels()` method.
+
+For more detail, see [Adding labels to sentences](https://github.com/flairNLP/flair/blob/master/resources/docs/TUTORIAL_1_BASICS.md#adding-labels-to-sentences)
+
+
+```python
+# 9. retrain model with new labeled data
+learner.teach(annotated_sents, save_path=f"output/retrain")
+```
+
+Finally, we call `learner.teach()` to retrain the model. The `annotated_sents` will be added to `corpus.train` automatically.
+
+If you want to run the workflow in a loop, you can take a look at the `examples` folders.
 
 
 ## Construct envirement locally
