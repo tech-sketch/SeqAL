@@ -39,3 +39,34 @@ def output_conll_format(sents: List[Sentence], save_path: str) -> None:
                 line = f"{token.text}\t{token.get_tag('pos').value}\t{token.get_tag('ner').value}\n"  # noqa: E731
                 f.write(line)
             f.write("\n")
+
+
+def add_tags(query_labels: List[dict]) -> List[Sentence]:
+    """Add tags to create sentences.
+
+    Args:
+        query_labels (List[dict]): Each dictionary contians text and labels.
+
+    Returns:
+        List[Sentence]: A list of sentences.
+    """
+    annotated_sents = []
+    for sent in query_labels:
+        sentence = Sentence(sent["text"])
+        sent_labels = sent["labels"]
+        if len(sent_labels) != 0:
+            for token in sentence:
+                for token_label_info in sent_labels:
+                    if (
+                        token.start_pos == token_label_info["start_pos"]
+                        and token.text == token_label_info["text"]
+                    ):
+                        token.add_tag("ner", token_label_info["label"])
+                        break
+                    token.add_tag("ner", "O")
+        else:
+            for token in sentence:
+                token.add_tag("ner", "O")
+        annotated_sents.append(sentence)
+
+    return annotated_sents
