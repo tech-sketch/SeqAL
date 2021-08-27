@@ -44,136 +44,77 @@ Install this via pip (or your favourite package manager):
 
 ## Usage
 
-### Prepare data
+To understand how the code runs the active learning cycle, we introduce the active learning cycle first.
 
-The tagging scheme is the IOB scheme.
+![al_cycle](docs/source/_static/al_cycle.png)
 
-```
-    U.N. NNP I-ORG
-official NN  O
-   Ekeus NNP I-PER
-   heads VBZ O
-     for IN  O
- Baghdad NNP I-LOC
-       . .   O
-```
-
-Each line contains four fields: the word, its partof-speech tag and its named entity tag. Words tagged with O are outside of named entities. 
-
-### Examples
-
-Because SeqAL is based on flair, we heavily recommend to read the [tutorial](https://github.com/flairNLP/flair/blob/5c4231b30865bf4426ba8076eb91492d329c8a9b/resources/docs/TUTORIAL_1_BASICS.md) of flair first. 
+- Step 0: Create a small number of training data (seed data)
+- Step 1: Train the model with seed data
+  - Step 2: Predict unlabeled data with the trained model
+  - Step 3: Query informative samples based on predictions
+  - Step 4: Annotator (Oracle) annotate the selected samples
+  - Step 5: Input the new labeled samples to training data
+  - Step 6: Retrain model
+- Repeat step2~step6 until the f1 score of the model beyond the threshold or annotation budget is no left. 
 
 ```python
-import json
-
-from flair.embeddings import StackedEmbeddings, WordEmbeddings
-
 from seqal.active_learner import ActiveLearner
-from seqal.datasets import ColumnCorpus, ColumnDataset
 from seqal.query_strategies import mnlp_sampling
+from seqal.utils import add_tags
+from xxxx import annotate_by_human  # User need to prepare this method
 
-# 1. get the corpus
-columns = {0: "text", 1: "pos", 2: "ner"}
-data_folder = "../conll"
-corpus = ColumnCorpus(
-    data_folder,
-    columns,
-    train_file="seed.data",
-    dev_file="dev.data",
-    test_file="test.data",
+# Active learner initialization
+learner = ActiveLearner(
+  tagger_params=tagger_params,   # Model parameters (hidden size, embedding, etc.)
+  query_strategy=mnlp_sampling,  # Query algorithm
+  corpus=corpus,                 # Corpus contains training, validation, test data
+  trainer_params=trainer_params  # Trainer parameters (epoch, batch size, etc.)
 )
+
+# Step 1: Initial training on model
+learner.fit()
+
+# Step 2&3: Predict on unlabeled data and query informative data
+_, query_samples = learner.query(data_pool)
+query_samples = [{"text": sent.to_plain_string()} for sent in query_samples]  # Convert sentence class to plain text
+# query_samples:
+# [
+#   {
+#     "text": "I love Berlin"
+#   }
+# ]
+
+# Step 4: Annotator annotate the selected samples
+new_labels = annotate_by_human(query_samples)
+# new_labels:
+# [　
+#   {
+#     "text": "I love Berlin .",
+#     "labels": [  # The labels created by annotators
+#       {
+#         "start_pos": 7,
+#         "text": "Berlin",
+#         "label": "S-LOC"
+#       }
+#     ]
+#   }
+# ]
+
+# Step 4: Convert data to Sentence class
+new_labeled_samples = add_tags(new_labels)
+
+# Step 5&6: Add new labeled samples to training and retrain model
+learner.teach(new_labeled_samples)
 ```
 
-First we need to create the corpus. `date_folder` is the directry path where we store datasets. `seed.data` contains NER labels, which usually just a small part of data (around 2% of total train data). `dev.data` and `test.data` should contains NER labels for evaluation. All three kinds of data should follow the IOB scheme. But if you have 4 columns, you can just change `columns` to specify the tag column.
+The [usage](./docs/source/usage.md) page has more detail on parameter setup and method explanations.
 
 
-```python
-# 2. tagger params
-tagger_params = {}
-tagger_params["tag_type"] = "ner"  # what tag do we want to predict?
-tagger_params["hidden_size"] = 256
-embedding_types = [WordEmbeddings("glove")]
-embeddings = StackedEmbeddings(embeddings=embedding_types)
-tagger_params["embeddings"] = embeddings
+## Performance
 
-# 3. Trainer params
-trainer_params = {}
-trainer_params["max_epochs"] = 10
-trainer_params["mini_batch_size"] = 32
-trainer_params["learning_rate"] = 0.01
-trainer_params["train_with_dev"] = True
+Active learning algorithms achieve 97% performance of the best deep model trained on full data using only 30%% of the training data on the CoNLL 2003 English dataset.
 
-# 4. initialize learner
-learner = ActiveLearner(tagger_params, mnlp_sampling, corpus, trainer_params)
-```
-
-This part is where we set the parameters for sequence tagger and trainer. The above setup can conver most of situations. If you want to add more paramters, I recommend to the read [SequenceTagger](https://github.com/flairNLP/flair/blob/master/flair/models/sequence_tagger_model.py#L68) and [ModelTrainer](https://github.com/flairNLP/flair/blob/master/flair/trainers/trainer.py#L42) in flair.
-
-
-```python
-# 5. initial training
-learner.fit(save_path="output/init_train")
-```
-
-The initial training will be trained on the seed data.
-
-```python
-# 6. prepare data pool
-pool_columns = {0: "text", 1: "pos"}
-pool_file = data_folder + "/pool.data"
-data_pool = ColumnDataset(pool_file, pool_columns)
-sents = data_pool.sentences
-```
-Here we prepare the unlabeled data pool.
-
-```python
-# 7. query data
-query_number = 1
-sents, query_samples = learner.query(sents, query_number, token_based=True)
-```
-
-We can query samples from data pool by the `learner.query()` method. `query_number` means how many sentence we want to query. But if we set `token_based=True`, the `query_number` means how many tokens we want to query. For the sequence labeling task, we usually set `token_based=True`.
-
-`query_samples` is a list that contains queried sentences (the Sentence class in flair). `sents` contains the rest of unqueried sentences.
-
-```
-In [1]: query_samples[0].to_plain_string()
-Out[1]: 'I love Berlin .'
-```
-
-We can get the text by calling `to_plain_strin()` method and put it into the interface for human annotation.
-
-
-```python
-# 8. obtaining labels for "query_samples" by the human
-query_labels = [
-      {
-        "text": "I love Berlin .",
-        "labels": [{"start_pos": 7, "text": "Berlin", "label": "S-LOC"}]
-      },
-      {
-        "text": "This book is great.",
-        "labels": []
-      }
-]
-
-
-annotated_sents = assign_labels(query_labels)
-```
-`query_labels` is the label information of a sentence after annotation by human. We use such information to create Flair Sentence class by calling `assign_labels()` method.
-
-For more detail, see [Adding labels to sentences](https://github.com/flairNLP/flair/blob/master/resources/docs/TUTORIAL_1_BASICS.md#adding-labels-to-sentences)
-
-
-```python
-# 9. retrain model with new labeled data
-learner.teach(annotated_sents, save_path=f"output/retrain")
-```
-
-Finally, we call `learner.teach()` to retrain the model. The `annotated_sents` will be added to `corpus.train` automatically.
-
-If you want to run the workflow in a loop, you can take a look at the `examples` folders.
+See [performance.md](./docs/source/performance.md) for detail.
 
 
 ## Construct envirement locally
@@ -217,11 +158,6 @@ If you want to delete the local envirement, run below command.
 ```
 conda remove --name seqal --all
 ```
-
-## Performance
-
-See [performance.md](./docs/source/performance.md) for detail.
-
 
 ## Contributors ✨
 
