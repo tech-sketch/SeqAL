@@ -178,6 +178,7 @@ class ActiveLearner:
                 query_samples: Query samples.
         """
         tag_type = self.tagger_params["tag_type"]
+        embeddings = self.tagger_params["embeddings"]
 
         if simulation_mode is True:
             # Save labels information before prediction in case of overwriting real NER tags.
@@ -186,7 +187,12 @@ class ActiveLearner:
 
         predict_data_pool(sents, self.trained_tagger)
         query_idx = self.query_strategy(
-            sents, tag_type, query_number, token_based, label_names=self.label_names
+            sents,
+            tag_type,
+            query_number,
+            token_based,
+            label_names=self.label_names,
+            embeddings=embeddings,
         )
 
         if simulation_mode is True:

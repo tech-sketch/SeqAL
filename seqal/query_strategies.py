@@ -168,7 +168,7 @@ def similarity_samping(
 ) -> List[int]:
     label_names = kwargs["label_names"]
     if "O" in label_names:
-        del label_names["O"]
+        label_names.remove("O")
     embeddings = kwargs["embeddings"]
     embedding_dim = None
 
