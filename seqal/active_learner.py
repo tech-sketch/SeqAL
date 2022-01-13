@@ -1,3 +1,4 @@
+import json
 from collections import namedtuple
 from typing import Callable, List, Tuple
 
@@ -9,6 +10,25 @@ from torch.nn import Module
 from seqal.datasets import Corpus
 
 LabelInfo = namedtuple("LabelInfo", "idx text label")
+
+
+def get_label_names(corpus: Corpus, label_type: str) -> List[str]:
+    """Get all label names from corpus
+
+    Args:
+        corpus (Corpus): Corpus contains train, valid, test data.
+
+    Returns:
+        List: label name list.
+    """
+    data = corpus.obtain_statistics(label_type=label_type)
+    data = json.loads(data)
+    label_names = []
+    for value in data.values():
+        label_names.extend(value["number_of_tokens_per_tag"].keys())
+    label_names = list(set(label_names))
+
+    return label_names
 
 
 def predict_data_pool(sents: List[Sentence], tagger: Module) -> None:
@@ -109,6 +129,7 @@ class ActiveLearner:
         self.query_strategy = query_strategy
         self.corpus = corpus
         self.trainer_params = trainer_params
+        self.label_names = None
 
     def fit(self, save_path: str = "resources/init_train") -> None:
         """Train model on labeled data.
@@ -121,6 +142,7 @@ class ActiveLearner:
         hidden_size = self.tagger_params["hidden_size"]
         embeddings = self.tagger_params["embeddings"]
         tag_dictionary = self.corpus.make_tag_dictionary(tag_type=tag_type)
+        self.label_names = get_label_names(self.corpus, tag_type)
 
         tagger = SequenceTagger(
             hidden_size=hidden_size,
@@ -156,6 +178,7 @@ class ActiveLearner:
                 query_samples: Query samples.
         """
         tag_type = self.tagger_params["tag_type"]
+        embeddings = self.tagger_params["embeddings"]
 
         if simulation_mode is True:
             # Save labels information before prediction in case of overwriting real NER tags.
@@ -163,7 +186,14 @@ class ActiveLearner:
             labels_info = save_label_info(sents)
 
         predict_data_pool(sents, self.trained_tagger)
-        query_idx = self.query_strategy(sents, tag_type, query_number, token_based)
+        query_idx = self.query_strategy(
+            sents,
+            tag_type,
+            query_number,
+            token_based,
+            label_names=self.label_names,
+            embeddings=embeddings,
+        )
 
         if simulation_mode is True:
             # Reload the real NER labels
