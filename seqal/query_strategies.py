@@ -159,7 +159,7 @@ def mnlp_sampling(
     return query_idx
 
 
-def similarity_samping(
+def similarity_sampling(
     sents: List[Sentence],
     tag_type: str,
     query_number: int = 0,
@@ -191,7 +191,7 @@ def similarity_samping(
                         "token_embedding": token.embedding,
                     }
                     if embedding_dim is None:
-                        embedding_dim = len(token.embedding.shape)
+                        embedding_dim = len(token.embedding.shape) - 1
                     label_entity_list[tag.value].append(tag_info)
 
     # Calculate similarity of entity pair
