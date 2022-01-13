@@ -85,25 +85,25 @@ def ls_sampling(
         if scores != []:
             probs[i] = 1 - max(scores)
 
-    ascending_indices = list(np.argsort(probs))
+    descend_indices = list(np.argsort(-probs))
 
     if token_based is True:
         queried_tokens = 0
         query_idx = []
-        for indx in ascending_indices:
+        for indx in descend_indices:
             sent = sents[indx]
             if queried_tokens < query_number:
                 queried_tokens += len(sent.tokens)
                 query_idx.append(indx)
     else:
         if query_number == 0:
-            query_idx = ascending_indices[0]
+            query_idx = descend_indices[0]
             query_idx = [query_idx]
         else:
             if query_number > len(sents):
-                query_idx = ascending_indices
+                query_idx = descend_indices
             else:
-                query_idx = ascending_indices[:query_number]
+                query_idx = descend_indices[:query_number]
 
     return query_idx
 
@@ -136,25 +136,25 @@ def mnlp_sampling(
         if scores != []:
             probs[i] = max(scores) / len(sent)
 
-    descend_indices = np.argsort(-probs)
+    ascend_indices = np.argsort(probs)
 
     if token_based is True:
         queried_tokens = 0
         query_idx = []
-        for indx in descend_indices:
+        for indx in ascend_indices:
             sent = sents[indx]
             if queried_tokens < query_number:
                 queried_tokens += len(sent.tokens)
                 query_idx.append(indx)
     else:
         if query_number == 0:
-            query_idx = descend_indices[0]
+            query_idx = ascend_indices[0]
             query_idx = [query_idx]
         else:
             if query_number > len(sents):
-                query_idx = descend_indices
+                query_idx = ascend_indices
             else:
-                query_idx = descend_indices[:query_number]
+                query_idx = ascend_indices[:query_number]
 
     return query_idx
 
