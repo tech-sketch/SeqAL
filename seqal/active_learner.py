@@ -12,6 +12,44 @@ from seqal.datasets import Corpus
 LabelInfo = namedtuple("LabelInfo", "idx text label")
 
 
+def query_data_by_indices(
+    sents: List[Sentence],
+    ordered_indices: list,
+    query_number: int = 0,
+    token_based: bool = False,
+) -> List[int]:
+    """Query data based on ordered indices.
+
+    Args:
+        sents (List[Sentence]): Sentences in data pool.
+        ordered_indices (list): Ordered indices.
+        query_number (int, optional): Batch query number. Defaults to 0.
+        token_based (bool, optional): If true, using query number as token number to query data.
+                                      If false, using query number as sentence number to query data.
+    Returns:
+        List[int]: The index of queried samples in sents.
+    """
+    if token_based is True:
+        queried_tokens = 0
+        query_idx = []
+        for indx in ordered_indices:
+            sent = sents[indx]
+            if queried_tokens < query_number:
+                queried_tokens += len(sent.tokens)
+                query_idx.append(indx)
+    else:
+        if query_number == 0:
+            query_idx = ordered_indices[0]
+            query_idx = [query_idx]
+        else:
+            if query_number > len(sents):
+                query_idx = ordered_indices
+            else:
+                query_idx = ordered_indices[:query_number]
+
+    return query_idx
+
+
 def get_label_names(corpus: Corpus, label_type: str) -> List[str]:
     """Get all label names from corpus
 
@@ -186,13 +224,14 @@ class ActiveLearner:
             labels_info = save_label_info(sents)
 
         predict_data_pool(sents, self.trained_tagger)
-        query_idx = self.query_strategy(
+        ordered_indices = self.query_strategy(
             sents,
             tag_type,
-            query_number,
-            token_based,
             label_names=self.label_names,
             embeddings=embeddings,
+        )
+        query_idx = query_data_by_indices(
+            sents, ordered_indices, query_number, token_based
         )
 
         if simulation_mode is True:

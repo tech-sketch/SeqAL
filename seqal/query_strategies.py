@@ -7,21 +7,13 @@ from torch import nn
 
 
 def random_sampling(
-    sents: List[Sentence],
-    tag_type: str = None,
-    query_number=0,
-    token_based=False,
-    seed=0,
-    **kwargs
+    sents: List[Sentence], tag_type: str = None, seed: int = 0, **kwargs
 ) -> List[int]:
     """Random select data from pool.
 
     Args:
         sents (List[Sentence]): Sentences in data pool.
         tag_type (str): Tag type to predict. This is a placeholder for random sampling method.
-        query_number (int, optional): Batch query number. Defaults to 0.
-        token_based (bool, optional): If true, using query number as token number to query data.
-                                      If false, using query number as sentence number to query data.
         seed (int, optional): Random seed. Defaults to 0.
 
     Returns:
@@ -30,47 +22,20 @@ def random_sampling(
     """
     random.seed(seed)
 
-    if token_based is True:
-        # Shuffle index
-        random_idx = list(range(len(sents)))
-        random.shuffle(random_idx)
+    random_idx = list(range(len(sents)))
+    random.shuffle(random_idx)
 
-        queried_tokens = 0
-        query_idx = []
-        for indx in random_idx:
-            sent = sents[indx]
-            if queried_tokens < query_number:
-                queried_tokens += len(sent.tokens)
-                query_idx.append(indx)
-    else:
-        n_samples = len(sents)
-        if query_number == 0:
-            query_idx = random.choice(range(n_samples))
-            query_idx = [query_idx]
-        else:
-            if query_number > len(sents):
-                query_idx = random.sample(range(len(sents)), len(sents))
-            else:
-                query_idx = random.sample(range(len(sents)), query_number)
-
-    return query_idx
+    return random_idx
 
 
-def ls_sampling(
-    sents: List[Sentence],
-    tag_type: str,
-    query_number: int = 0,
-    token_based: bool = False,
-    **kwargs
-) -> List[int]:
+def lc_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
     """Least confidence sampling.
+
+    https://dl.acm.org/doi/10.5555/1619410.1619452
 
     Args:
         sents (List[Sentence]): Sentences in data pool.
         tag_type (str): Tag type to predict.
-        query_number (int, optional): Batch query number. Defaults to 0.
-        token_based (bool, optional): If true, using query number as token number to query data.
-                                      If false, using query number as sentence number to query data.
 
     Returns:
         List[int]:
@@ -87,42 +52,17 @@ def ls_sampling(
 
     descend_indices = list(np.argsort(-probs))
 
-    if token_based is True:
-        queried_tokens = 0
-        query_idx = []
-        for indx in descend_indices:
-            sent = sents[indx]
-            if queried_tokens < query_number:
-                queried_tokens += len(sent.tokens)
-                query_idx.append(indx)
-    else:
-        if query_number == 0:
-            query_idx = descend_indices[0]
-            query_idx = [query_idx]
-        else:
-            if query_number > len(sents):
-                query_idx = descend_indices
-            else:
-                query_idx = descend_indices[:query_number]
-
-    return query_idx
+    return descend_indices
 
 
-def mnlp_sampling(
-    sents: List[Sentence],
-    tag_type: str,
-    query_number: int = 0,
-    token_based: bool = False,
-    **kwargs
-) -> List[int]:
-    """Least confidence sampling.
+def mnlp_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
+    """Maximum Normalized Log-Probability sampling.
+
+    https://arxiv.org/abs/1707.05928
 
     Args:
         sents (List[Sentence]): Sentences in data pool.
         tag_type (str): Tag type to predict.
-        query_number (int, optional): Batch query number. Defaults to 0.
-        token_based (bool, optional): If true, using query number as token number to query data.
-                                      If false, using query number as sentence number to query data.
 
     Returns:
         List[int]:
@@ -138,34 +78,28 @@ def mnlp_sampling(
 
     ascend_indices = np.argsort(probs)
 
-    if token_based is True:
-        queried_tokens = 0
-        query_idx = []
-        for indx in ascend_indices:
-            sent = sents[indx]
-            if queried_tokens < query_number:
-                queried_tokens += len(sent.tokens)
-                query_idx.append(indx)
-    else:
-        if query_number == 0:
-            query_idx = ascend_indices[0]
-            query_idx = [query_idx]
-        else:
-            if query_number > len(sents):
-                query_idx = ascend_indices
-            else:
-                query_idx = ascend_indices[:query_number]
-
-    return query_idx
+    return ascend_indices
 
 
-def similarity_sampling(
-    sents: List[Sentence],
-    tag_type: str,
-    query_number: int = 0,
-    token_based: bool = False,
-    **kwargs
-) -> List[int]:
+def similarity_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
+    """Similarity sampling
+
+    We create similarity sampling as a kind of diversity sampling method.
+    Different with most of sampling methods that are based on sentence level,
+    Similarity sampling method is implemented on entity level.
+    We calculate the similarity between entity pair, the low similarity pair means high diversity.
+
+    Args:
+        sents (List[Sentence]): flair sentences
+        tag_type (str): label type, e.g. "ner"
+    kwargs:
+        label_names (List[str]): label name of all dataset
+        embeddings: the embeddings method
+
+    Returns:
+        List[int]:
+            query_idx: The index of queried samples in sents.
+    """
     label_names = kwargs["label_names"]
     if "O" in label_names:
         label_names.remove("O")
@@ -176,14 +110,12 @@ def similarity_sampling(
     label_entity_list = {label: [] for label in label_names}
     for label in label_names:
         for sent_idx, sent in enumerate(sents):
-            if len(sent.get_spans("ner")) != 0:
+            if len(sent.get_spans(tag_type)) != 0:
                 embeddings.embed(sent)
                 for token_idx, token in enumerate(sent):
                     tag = token.get_tag("ner")
-                    if (
-                        tag.value == "O"
-                    ):  # Skip if the "O" label. tag.value is the label name
-                        continue
+                    if tag.value == "O":  # tag.value is the label name
+                        continue  # Skip the "O" label
                     tag_info = {
                         "sent_idx": sent_idx,
                         "token_idx": token_idx,
@@ -227,25 +159,6 @@ def similarity_sampling(
             entity2 = entity_pair[1]
             sentence_score[entity2["sent_idx"]] += cosine_score
 
-    ascending_indices = np.argsort(sentence_score)
+    ascend_indices = np.argsort(sentence_score)
 
-    # Query data
-    if token_based is True:
-        queried_tokens = 0
-        query_idx = []
-        for indx in ascending_indices:
-            sent = sents[indx]
-            if queried_tokens < query_number:
-                queried_tokens += len(sent.tokens)
-                query_idx.append(indx)
-    else:
-        if query_number == 0:
-            query_idx = ascending_indices[0]
-            query_idx = [query_idx]
-        else:
-            if query_number > len(sents):
-                query_idx = ascending_indices
-            else:
-                query_idx = ascending_indices[:query_number]
-
-    return query_idx
+    return ascend_indices
