@@ -76,8 +76,7 @@ def predict_data_pool(sents: List[Sentence], tagger: Module) -> None:
         sents (List[Sentence]): Sentences in data pool.
         tagger (Module): Trained model.
     """
-    for sent in sents:
-        tagger.predict(sent)
+    tagger.predict(sents, mini_batch_size=32)
 
 
 def remove_query_samples(sents: List[Sentence], query_idx: List[int]) -> None:
