@@ -6,6 +6,7 @@ from flair.embeddings import StackedEmbeddings
 
 from seqal.datasets import Corpus
 from seqal.query_strategies import (
+    cluster_sampling,
     lc_sampling,
     mnlp_sampling,
     random_sampling,
@@ -60,5 +61,19 @@ def test_similarity_sampling(sents: Sentence, embeddings: StackedEmbeddings) -> 
         tag_type,
         label_names=label_names,
         embeddings=embeddings,
+    )
+    assert ascend_indices == list(ordered_idx)
+
+
+def test_cluster_sampling(sents: Sentence, embeddings: StackedEmbeddings) -> None:
+    tag_type = "ner"
+    label_names = ["O", "I-PER", "I-LOC", "I-ORG", "I-MISC"]
+
+    # Expected result
+    ascend_indices = [7, 8, 1, 5, 3, 4, 2, 0, 9, 6]
+
+    # Method result
+    ordered_idx = cluster_sampling(
+        sents, tag_type, label_names=label_names, embeddings=embeddings
     )
     assert ascend_indices == list(ordered_idx)

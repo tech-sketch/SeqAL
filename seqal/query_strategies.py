@@ -3,7 +3,8 @@ from typing import List
 
 import numpy as np
 from flair.data import Sentence
-from torch import nn
+from sklearn.cluster import KMeans
+from torch import nn, stack
 
 
 def random_sampling(
@@ -160,5 +161,124 @@ def similarity_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[
             sentence_score[entity2["sent_idx"]] += cosine_score
 
     ascend_indices = np.argsort(sentence_score)
+
+    return ascend_indices
+
+
+def cluster_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
+    """Cluster sampling.
+
+    We create cluster sampling as a kind of diversity sampling method.
+    Different with most of sampling methods that are based on sentence level,
+    Cluster sampling method is implemented on entity level.
+    Cluster sampling classify all entity into cluster, and find the centen in each cluster.
+    We calculate the similarity between center and entity in the same cluster,
+    the low similarity pair means high diversity.
+
+    Args:
+        sents (List[Sentence]): [description]
+        tag_type (str): [description]
+
+    Returns:
+        List[int]: [description]
+    """
+    label_names = kwargs["label_names"]
+    if "O" in label_names:
+        label_names.remove("O")
+    embeddings = kwargs["embeddings"]
+    embedding_dim = None
+
+    # Get entities in each class, each entity has {sent_idx, token_idx, token_text, token_embedding}
+    label_entity_list = []
+
+    for sent_idx, sent in enumerate(sents):
+        if len(sent.get_spans("ner")) != 0:
+            embeddings.embed(sent)
+            for token_idx, token in enumerate(sent):
+                tag = token.get_tag("ner")
+                if (
+                    tag.value == "O"
+                ):  # Skip if the "O" label. tag.value is the label name
+                    continue
+                tag_info = {
+                    "sent_idx": sent_idx,
+                    "token_idx": token_idx,
+                    "token_text": token.text,
+                    "token_embedding": token.embedding,
+                }
+                if embedding_dim is None:
+                    embedding_dim = len(token.embedding.shape) - 1
+                label_entity_list.append(tag_info)
+
+    # Get all entity embedding matrix
+    entity_embedding_matrix = [tag["token_embedding"] for tag in label_entity_list]
+    if entity_embedding_matrix == []:
+        return random_sampling(sents)
+    else:
+        entity_embedding_matrix = stack(entity_embedding_matrix)
+
+    # Clustering
+    kmeans = KMeans(n_clusters=len(label_names))
+    kmeans.fit(entity_embedding_matrix)
+
+    cluster_centers_matrix = kmeans.cluster_centers_
+    entity_labels = kmeans.labels_
+
+    # Find the center in matrix
+    center_cluster_num = {}  # {center_num_in_cluster: center_index_in_matrix}
+    for i, token_matrix in enumerate(entity_embedding_matrix):
+        for center_matrix in cluster_centers_matrix:
+            if center_matrix == token_matrix:
+                center_num_in_cluster = entity_labels[i]
+                center_cluster_num[center_num_in_cluster] = i
+
+    # Find the entity in each cluster
+    label_entity_cluster = {
+        cluster_num: {"cluster_center_idx": 0, "cluster_member_idx": []}
+        for cluster_num in center_cluster_num.keys()
+    }
+    for cluster_num in label_entity_cluster.keys():
+        label_entity_cluster[cluster_num]["cluster_center"] = center_cluster_num[
+            cluster_num
+        ]
+        for i, entity_cluster_num in enumerate(entity_labels):
+            if entity_cluster_num == cluster_num:
+                label_entity_cluster[cluster_num]["cluster_member_idx"].append(i)
+
+    # Calculate each the similarity between center and entities
+    for cluster_num, cluster_info in label_entity_cluster.items():
+        center_idx = cluster_info["cluster_center_idx"]
+        scores = []
+        for member_idx in cluster_info["cluster_member_idx"]:
+            cos = nn.CosineSimilarity(dim=embedding_dim)
+            cosine_score = cos(
+                entity_embedding_matrix[center_idx], entity_embedding_matrix[member_idx]
+            )
+            scores.append(cosine_score)
+        label_entity_cluster["sim_scores"] = scores
+
+    # Used for debug the order
+    for cluster_num, cluster_info in label_entity_cluster.items():
+        cluster_member_idx = cluster_info["cluster_member_idx"]
+        sim_scores = cluster_info["sim_scores"]
+
+        cluster_info["sim_scores"] = [
+            x for _, x in sorted(zip(sim_scores, cluster_member_idx))
+        ]
+        cluster_info["cluster_member_idx"] = sorted(sim_scores)
+
+    # Flat the entity score
+    entity_scores = [0] * len(label_entity_list)
+    for cluster_num, cluster_info in label_entity_cluster.items():
+        for i, member_idx in enumerate(cluster_info["cluster_member_idx"]):
+            entity_scores[member_idx] += cluster_info["sim_scores"][i]
+
+    # Reorder the sentence index
+    sentence_scores = [99] * len(sents)
+    for entity_idx, entity_info in enumerate(label_entity_list):
+        sent_idx = entity_info["sent_idx"]
+        sentence_scores[sent_idx] += entity_scores[entity_idx]
+
+    ascend_indices = np.argsort(sentence_scores)
 
     return ascend_indices
