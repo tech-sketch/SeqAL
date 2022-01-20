@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 from flair.data import Sentence
 from sklearn.cluster import KMeans
-from torch import nn, stack
+from torch import nn, stack, tensor
 
 
 def random_sampling(
@@ -42,18 +42,10 @@ def lc_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
         List[int]:
             query_idx: The index of queried samples in sents.
     """
-
-    # Select on data pool
-    probs = np.ones(len(sents)) * float("Inf")
-
-    for i, sent in enumerate(sents):
-        scores = [entity.score for entity in sent.get_spans(tag_type)]
-        if scores != []:
-            probs[i] = 1 - max(scores)
-
-    descend_indices = list(np.argsort(-probs))
-
-    return descend_indices
+    tagger = kwargs["tagger"]
+    probs = tagger.log_probability(sents).exp()
+    indices = (1 - probs).argsort().cpu().tolist()
+    return indices
 
 
 def mnlp_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
@@ -69,17 +61,12 @@ def mnlp_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
         List[int]:
             query_idx: The index of queried samples in sents.
     """
-    # Select on data pool
-    probs = np.ones(len(sents)) * float("-Inf")
-
-    for i, sent in enumerate(sents):
-        scores = [entity.score for entity in sent.get_spans(tag_type)]
-        if scores != []:
-            probs[i] = max(scores) / len(sent)
-
-    ascend_indices = np.argsort(probs)
-
-    return ascend_indices
+    tagger = kwargs["tagger"]
+    log_probs = tagger.log_probability(sents)
+    lengths = tensor([len(sent) for sent in sents], device=log_probs.device)
+    normed_log_probs = log_probs / lengths
+    indices = normed_log_probs.argsort().cpu().tolist()
+    return indices
 
 
 def similarity_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:

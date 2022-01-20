@@ -3,11 +3,11 @@ from collections import namedtuple
 from typing import Callable, List, Tuple
 
 from flair.data import Sentence
-from flair.models import SequenceTagger
 from flair.trainers import ModelTrainer
 from torch.nn import Module
 
 from seqal.datasets import Corpus
+from seqal.tagger import SequenceTagger
 
 LabelInfo = namedtuple("LabelInfo", "idx text label")
 
@@ -226,6 +226,7 @@ class ActiveLearner:
         ordered_indices = self.query_strategy(
             sents,
             tag_type,
+            tagger=self.trained_tagger,
             label_names=self.label_names,
             embeddings=embeddings,
         )

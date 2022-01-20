@@ -4,6 +4,7 @@ from typing import List
 from flair.data import Sentence
 from flair.embeddings import StackedEmbeddings
 
+from seqal.active_learner import predict_data_pool
 from seqal.datasets import Corpus
 from seqal.query_strategies import (
     cluster_sampling,
@@ -12,7 +13,7 @@ from seqal.query_strategies import (
     random_sampling,
     similarity_sampling,
 )
-from tests.conftest import FakeSentence
+from seqal.tagger import SequenceTagger
 
 
 def test_random_sampling(corpus: Corpus) -> None:
@@ -27,24 +28,27 @@ def test_random_sampling(corpus: Corpus) -> None:
     assert expected_idx == ordered_idx
 
 
-def test_lc_sampling(fake_sents: List[FakeSentence]) -> None:
-    tag_type = "ner"
-    # Expected result
-    descend_indices = [0, 9, 5, 3, 4, 8, 7, 6, 2, 1]
-
-    # Method result
-    ordered_idx = lc_sampling(fake_sents, tag_type)
-    assert descend_indices == list(ordered_idx)
-
-
-def test_mnlp_sampling(fake_sents: List[FakeSentence]) -> None:
+def test_lc_sampling(sents: List[Sentence], trained_tagger: SequenceTagger) -> None:
     tag_type = "ner"
 
+    predict_data_pool(sents, trained_tagger)
     # Expected result
-    ascend_indices = [6, 2, 1, 0, 9, 5, 3, 4, 8, 7]
+    ascend_indices = [2, 1, 0, 6, 3, 8, 4, 5, 9, 7]
 
     # Method result
-    ordered_idx = mnlp_sampling(fake_sents, tag_type)
+    ordered_idx = lc_sampling(sents, tag_type, tagger=trained_tagger)
+    assert ascend_indices == list(ordered_idx)
+
+
+def test_mnlp_sampling(sents: List[Sentence], trained_tagger: SequenceTagger) -> None:
+    tag_type = "ner"
+
+    predict_data_pool(sents, trained_tagger)
+    # Expected result
+    ascend_indices = [6, 7, 9, 3, 8, 4, 5, 0, 2, 1]
+
+    # Method result
+    ordered_idx = mnlp_sampling(sents, tag_type, tagger=trained_tagger)
     assert ascend_indices == list(ordered_idx)
 
 
