@@ -1,10 +1,11 @@
 import random
 from typing import List
+from unittest.mock import MagicMock
 
 from flair.data import Sentence
 from flair.embeddings import StackedEmbeddings
+from torch import tensor
 
-from seqal.active_learner import predict_data_pool
 from seqal.datasets import Corpus
 from seqal.query_strategies import (
     cluster_sampling,
@@ -13,7 +14,6 @@ from seqal.query_strategies import (
     random_sampling,
     similarity_sampling,
 )
-from seqal.tagger import SequenceTagger
 
 
 def test_random_sampling(corpus: Corpus) -> None:
@@ -28,36 +28,52 @@ def test_random_sampling(corpus: Corpus) -> None:
     assert expected_idx == ordered_idx
 
 
-def test_lc_sampling(sents: List[Sentence], trained_tagger: SequenceTagger) -> None:
+def test_lc_sampling(sents: List[Sentence]) -> None:
     tag_type = "ner"
 
-    predict_data_pool(sents, trained_tagger)
-    # Expected result
-    ascend_indices = [2, 1, 0, 6, 3, 8, 4, 5, 9, 7]
+    tagger = MagicMock()
+    tagger.log_probability = MagicMock(return_value=tensor([1, 2, 3, 4]))
 
     # Method result
-    ordered_idx = lc_sampling(sents, tag_type, tagger=trained_tagger)
-    assert ascend_indices == list(ordered_idx)
+    ordered_idx = lc_sampling(sents, tag_type, tagger=tagger)
+
+    # Expected result
+    expected = [3, 2, 1, 0]
+
+    assert expected == ordered_idx
 
 
-def test_mnlp_sampling(sents: List[Sentence], trained_tagger: SequenceTagger) -> None:
+def test_mnlp_sampling() -> None:
     tag_type = "ner"
 
-    predict_data_pool(sents, trained_tagger)
-    # Expected result
-    ascend_indices = [6, 7, 9, 3, 8, 4, 5, 0, 2, 1]
+    s1 = MagicMock()
+    s2 = MagicMock()
+    s3 = MagicMock()
+    s1.__len__ = MagicMock(return_value=10)
+    s2.__len__ = MagicMock(return_value=20)
+    s3.__len__ = MagicMock(return_value=30)
+    sents = [s1, s2, s3]
+
+    tagger = MagicMock()
+    tagger.log_probability = MagicMock(return_value=tensor([1, 2, 3]))
 
     # Method result
-    ordered_idx = mnlp_sampling(sents, tag_type, tagger=trained_tagger)
-    assert ascend_indices == list(ordered_idx)
+    ordered_idx = mnlp_sampling(sents, tag_type, tagger=tagger)
+
+    # Expected result
+    expected = [0, 1, 2]
+
+    assert expected == ordered_idx
 
 
-def test_similarity_sampling(sents: Sentence, embeddings: StackedEmbeddings) -> None:
+def test_similarity_sampling(
+    sents: List[Sentence], embeddings: StackedEmbeddings
+) -> None:
     tag_type = "ner"
     label_names = ["O", "I-PER", "I-LOC", "I-ORG", "I-MISC"]
 
     # Expected result
-    ascend_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    expected = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
     # Method result
     ordered_idx = similarity_sampling(
@@ -66,18 +82,18 @@ def test_similarity_sampling(sents: Sentence, embeddings: StackedEmbeddings) -> 
         label_names=label_names,
         embeddings=embeddings,
     )
-    assert ascend_indices == list(ordered_idx)
+    assert expected == list(ordered_idx)
 
 
-def test_cluster_sampling(sents: Sentence, embeddings: StackedEmbeddings) -> None:
+def test_cluster_sampling(sents: List[Sentence], embeddings: StackedEmbeddings) -> None:
     tag_type = "ner"
     label_names = ["O", "I-PER", "I-LOC", "I-ORG", "I-MISC"]
 
     # Expected result
-    ascend_indices = [7, 8, 1, 5, 3, 4, 2, 0, 9, 6]
+    expected = [7, 8, 1, 5, 3, 4, 2, 0, 9, 6]
 
     # Method result
     ordered_idx = cluster_sampling(
         sents, tag_type, label_names=label_names, embeddings=embeddings
     )
-    assert ascend_indices == list(ordered_idx)
+    assert expected == list(ordered_idx)

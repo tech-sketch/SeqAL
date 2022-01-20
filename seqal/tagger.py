@@ -12,7 +12,7 @@ class SequenceTagger(FlairSequenceTagger):
     def log_probability(
         self, sentences: List[Sentence], batch_szie: int = 32
     ) -> torch.tensor:
-        """Calculate probabiliry of each sentence.
+        """Calculate probability of each sentence.
 
         Args:
             sentences (List[Sentence]): Sentences must be predicted.
@@ -31,14 +31,23 @@ class SequenceTagger(FlairSequenceTagger):
                 batch_scores, _ = self._calculate_loss(
                     features, batch, reduction="none"
                 )
-                batch_scores = batch_scores.neg()
-                scores.extend(batch_scores.tolist())
+                scores.extend(batch_scores.neg().tolist())
 
         return torch.tensor(scores)
 
     def _calculate_loss(
         self, features: torch.tensor, sentences: List[Sentence], reduction: str = "sum"
     ) -> Tuple[Union[float, torch.Tensor], int]:
+        """Overided _calculate_loss with reduction parameter
+
+        Args:
+            features (torch.tensor): features after forward
+            sentences (List[Sentence]): sentence after prediction
+            reduction (str, optional): reduction method. Defaults to "sum".
+
+        Returns:
+            Tuple[Union[float, torch.Tensor], int]: scores and token_count
+        """
 
         lengths: List[int] = [len(sentence.tokens) for sentence in sentences]
 
