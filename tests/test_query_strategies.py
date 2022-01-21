@@ -2,9 +2,9 @@ import random
 from typing import List
 from unittest.mock import MagicMock
 
+import numpy as np
 from flair.data import Sentence
 from flair.embeddings import StackedEmbeddings
-from torch import tensor
 
 from seqal.datasets import Corpus
 from seqal.query_strategies import (
@@ -32,13 +32,13 @@ def test_lc_sampling(sents: List[Sentence]) -> None:
     tag_type = "ner"
 
     tagger = MagicMock()
-    tagger.log_probability = MagicMock(return_value=tensor([1, 2, 3, 4]))
+    tagger.log_probability = MagicMock(return_value=np.array([1, 2, 3, 4]))
 
     # Method result
     ordered_idx = lc_sampling(sents, tag_type, tagger=tagger)
 
     # Expected result
-    expected = [3, 2, 1, 0]
+    expected = [0, 1, 2, 3]
 
     assert expected == ordered_idx
 
@@ -49,19 +49,21 @@ def test_mnlp_sampling() -> None:
     s1 = MagicMock()
     s2 = MagicMock()
     s3 = MagicMock()
-    s1.__len__ = MagicMock(return_value=10)
-    s2.__len__ = MagicMock(return_value=20)
-    s3.__len__ = MagicMock(return_value=30)
-    sents = [s1, s2, s3]
+    s4 = MagicMock()
+    s1.__len__ = MagicMock(return_value=1)
+    s2.__len__ = MagicMock(return_value=1)
+    s3.__len__ = MagicMock(return_value=1)
+    s4.__len__ = MagicMock(return_value=1)
+    sents = [s1, s2, s3, s4]
 
     tagger = MagicMock()
-    tagger.log_probability = MagicMock(return_value=tensor([1, 2, 3]))
+    tagger.log_probability = MagicMock(return_value=np.array([1, 2, 3, 4]))
 
     # Method result
     ordered_idx = mnlp_sampling(sents, tag_type, tagger=tagger)
 
     # Expected result
-    expected = [0, 1, 2]
+    expected = [0, 1, 2, 3]
 
     assert expected == ordered_idx
 

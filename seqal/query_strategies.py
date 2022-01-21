@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 from flair.data import Sentence
 from sklearn.cluster import KMeans
-from torch import nn, stack, tensor
+from torch import nn, stack
 
 
 def random_sampling(
@@ -43,9 +43,11 @@ def lc_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
             query_idx: The index of queried samples in sents.
     """
     tagger = kwargs["tagger"]
-    probs = tagger.log_probability(sents).exp()
-    indices = (1 - probs).argsort().cpu().tolist()
-    return indices
+    probs = tagger.log_probability(sents)
+    # to get descending order of "(1 - probs).argsort()"
+    # we change it to "(probs - 1).argsort()"
+    indices = (np.exp(probs) - 1).argsort()
+    return indices.tolist()
 
 
 def mnlp_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
@@ -63,10 +65,10 @@ def mnlp_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
     """
     tagger = kwargs["tagger"]
     log_probs = tagger.log_probability(sents)
-    lengths = tensor([len(sent) for sent in sents], device=log_probs.device)
+    lengths = np.array([len(sent) for sent in sents])
     normed_log_probs = log_probs / lengths
-    indices = normed_log_probs.argsort().cpu().tolist()
-    return indices
+    indices = normed_log_probs.argsort()
+    return indices.tolist()
 
 
 def similarity_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
@@ -149,7 +151,7 @@ def similarity_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[
 
     ascend_indices = np.argsort(sentence_score)
 
-    return ascend_indices
+    return ascend_indices.tolist()
 
 
 def cluster_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
@@ -268,4 +270,4 @@ def cluster_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int
 
     ascend_indices = np.argsort(sentence_scores)
 
-    return ascend_indices
+    return ascend_indices.tolist()

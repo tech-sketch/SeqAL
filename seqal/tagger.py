@@ -1,6 +1,7 @@
 from typing import List, Tuple, Union
 
 import flair.data
+import numpy as np
 import torch
 from flair.data import Sentence
 from flair.datasets import DataLoader, SentenceDataset
@@ -11,8 +12,8 @@ from flair.models.sequence_tagger_model import pad_tensors
 class SequenceTagger(FlairSequenceTagger):
     def log_probability(
         self, sentences: List[Sentence], batch_szie: int = 32
-    ) -> torch.tensor:
-        """Calculate probability of each sentence.
+    ) -> np.array:
+        """Calculate probabiliry of each sentence.
 
         Args:
             sentences (List[Sentence]): Sentences must be predicted.
@@ -28,17 +29,15 @@ class SequenceTagger(FlairSequenceTagger):
         with torch.no_grad():
             for batch in dataloader:
                 features = self.forward(batch)
-                batch_scores, _ = self._calculate_loss(
-                    features, batch, reduction="none"
-                )
-                scores.extend(batch_scores.neg().tolist())
+                batch_loss, _ = self._calculate_loss(features, batch, reduction="none")
+                scores.extend(batch_loss.neg().tolist())
 
-        return torch.tensor(scores)
+        return np.array(scores)
 
     def _calculate_loss(
         self, features: torch.tensor, sentences: List[Sentence], reduction: str = "sum"
     ) -> Tuple[Union[float, torch.Tensor], int]:
-        """Overided _calculate_loss with reduction parameter
+        """Overided FlairSequenceTagger._calculate_loss with reduction parameter
 
         Args:
             features (torch.tensor): features after forward
@@ -95,3 +94,52 @@ class SequenceTagger(FlairSequenceTagger):
                 )
 
             return score, token_count
+
+    @staticmethod
+    def _init_model_with_state_dict(state):
+
+        rnn_type = "LSTM" if "rnn_type" not in state.keys() else state["rnn_type"]
+        use_dropout = 0.0 if "use_dropout" not in state.keys() else state["use_dropout"]
+        use_word_dropout = (
+            0.0 if "use_word_dropout" not in state.keys() else state["use_word_dropout"]
+        )
+        use_locked_dropout = (
+            0.0
+            if "use_locked_dropout" not in state.keys()
+            else state["use_locked_dropout"]
+        )
+
+        train_initial_hidden_state = (
+            False
+            if "train_initial_hidden_state" not in state.keys()
+            else state["train_initial_hidden_state"]
+        )
+        beta = 1.0 if "beta" not in state.keys() else state["beta"]
+        weights = None if "weight_dict" not in state.keys() else state["weight_dict"]
+        reproject_embeddings = (
+            True
+            if "reproject_embeddings" not in state.keys()
+            else state["reproject_embeddings"]
+        )
+        if "reproject_to" in state.keys():
+            reproject_embeddings = state["reproject_to"]
+
+        model = SequenceTagger(
+            hidden_size=state["hidden_size"],
+            embeddings=state["embeddings"],
+            tag_dictionary=state["tag_dictionary"],
+            tag_type=state["tag_type"],
+            use_crf=state["use_crf"],
+            use_rnn=state["use_rnn"],
+            rnn_layers=state["rnn_layers"],
+            dropout=use_dropout,
+            word_dropout=use_word_dropout,
+            locked_dropout=use_locked_dropout,
+            train_initial_hidden_state=train_initial_hidden_state,
+            rnn_type=rnn_type,
+            beta=beta,
+            loss_weights=weights,
+            reproject_embeddings=reproject_embeddings,
+        )
+        model.load_state_dict(state["state_dict"])
+        return model
