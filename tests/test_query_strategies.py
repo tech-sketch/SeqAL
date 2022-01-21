@@ -32,7 +32,7 @@ def test_lc_sampling(sents: List[Sentence]) -> None:
     tag_type = "ner"
 
     tagger = MagicMock()
-    tagger.log_probability = MagicMock(return_value=np.array([0.1, 0.2, 0.3, 0.4]))
+    tagger.log_probability = MagicMock(return_value=np.array([-0.4, -0.3, -0.2, -0.1]))
 
     # Method result
     ordered_idx = lc_sampling(sents, tag_type, tagger=tagger)
@@ -57,7 +57,7 @@ def test_mnlp_sampling() -> None:
     sents = [s1, s2, s3, s4]
 
     tagger = MagicMock()
-    tagger.log_probability = MagicMock(return_value=np.array([0.1, 0.2, 0.3, 0.4]))
+    tagger.log_probability = MagicMock(return_value=np.array([-0.4, -0.3, -0.2, -0.1]))
 
     # Method result
     ordered_idx = mnlp_sampling(sents, tag_type, tagger=tagger)

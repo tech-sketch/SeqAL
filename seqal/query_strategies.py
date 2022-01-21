@@ -43,10 +43,10 @@ def lc_sampling(sents: List[Sentence], tag_type: str, **kwargs) -> List[int]:
             query_idx: The index of queried samples in sents.
     """
     tagger = kwargs["tagger"]
-    probs = tagger.log_probability(sents)
-    # to get descending order of "(1 - probs).argsort()"
-    # we change it to "(probs - 1).argsort()"
-    indices = (np.exp(probs) - 1).argsort()
+    log_probs = tagger.log_probability(sents)
+    # to get descending order of "(1 - log_probs).argsort()"
+    # we change it to "(log_probs - 1).argsort()"
+    indices = (np.exp(log_probs) - 1).argsort()
     return indices.tolist()
 
 
