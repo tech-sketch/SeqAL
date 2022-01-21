@@ -4,11 +4,11 @@ from typing import List
 import pytest
 from flair.data import Sentence
 from flair.embeddings import BytePairEmbeddings, StackedEmbeddings
-from flair.models import SequenceTagger
 
 from seqal.active_learner import ActiveLearner
 from seqal.datasets import ColumnCorpus, Corpus
 from seqal.query_strategies import random_sampling
+from seqal.tagger import SequenceTagger
 
 
 class FakeEntity:
