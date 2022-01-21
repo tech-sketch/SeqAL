@@ -13,14 +13,14 @@ class SequenceTagger(FlairSequenceTagger):
     def log_probability(
         self, sentences: List[Sentence], batch_szie: int = 32
     ) -> np.array:
-        """Calculate probabiliry of each sentence.
+        """Calculate probability of each sentence.
 
         Args:
             sentences (List[Sentence]): Sentences must be predicted.
             batch_szie (int, optional): Defaults to 32.
 
         Returns:
-            [type]: [description]
+            [np.array]: The log probability of each sentences
         """
         scores = []
         dataloader = DataLoader(
