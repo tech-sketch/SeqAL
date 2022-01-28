@@ -3,11 +3,13 @@ from typing import List
 from unittest.mock import MagicMock
 
 import numpy as np
+import torch
 from flair.data import Sentence
 from flair.embeddings import StackedEmbeddings
 
 from seqal.datasets import Corpus
 from seqal.query_strategies import (
+    Entity,
     cluster_sampling,
     lc_sampling,
     mnlp_sampling,
@@ -99,3 +101,15 @@ def test_cluster_sampling(sents: List[Sentence], embeddings: StackedEmbeddings) 
         sents, tag_type, label_names=label_names, embeddings=embeddings
     )
     assert expected == list(ordered_idx)
+
+
+def test_entity_vector():
+    span = MagicMock(
+        tokens=[
+            MagicMock(embedding=torch.tensor([0.0, -1.0])),
+            MagicMock(embedding=torch.tensor([1.0, 0.0])),
+        ]
+    )
+    entity = Entity(0, 0, span)
+    expected = torch.tensor([0.5, -0.5])
+    assert torch.equal(entity.vector, expected)
