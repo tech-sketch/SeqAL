@@ -1,4 +1,5 @@
 import random
+from dataclasses import dataclass
 from pickletools import float8
 from typing import List
 
@@ -7,6 +8,14 @@ import torch
 from flair.data import Sentence
 from flair.embeddings import StackedEmbeddings
 from sklearn.cluster import KMeans
+
+
+@dataclass
+class Entity:
+    id: int
+    sent_id: int
+    text: str
+    embedding: List
 
 
 def sim_matrix(a: torch.tensor, b: torch.tensor, eps: float8 = 1e-8) -> torch.tensor:
@@ -152,21 +161,16 @@ def similarity_sampling(
 
     # Get entities in each class, each entity has {sent_idx, token_idx, token_text, token_embedding}
     label_entity_list = {label: [] for label in label_names}
-    for sent_idx, sent in enumerate(sents):
+    for sent_id, sent in enumerate(sents):
         if len(sent.get_spans(tag_type)) == 0:
             continue
         embeddings.embed(sent)
-        for token_idx, token in enumerate(sent):
+        for token_id, token in enumerate(sent):
             tag = token.get_tag("ner")
-            if tag.value == "O":  # tag.value is the label name
-                continue  # Skip the "O" label
-            tag_info = {
-                "sent_idx": sent_idx,
-                "token_idx": token_idx,
-                "token_text": token.text,
-                "token_embedding": token.embedding,
-            }
-            label_entity_list[tag.value].append(tag_info)
+            if tag.value == "O":
+                continue
+            entity = Entity(token_id, sent_id, token.text, token.embedding)
+            label_entity_list[tag.value].append(entity)
 
     # Assign similarity score to entity pair
     label_entity_pair_similarity = {label: [] for label in label_names}
