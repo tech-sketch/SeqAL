@@ -15,7 +15,11 @@ class Entity:
     id: int
     sent_id: int
     text: str
-    embedding: List
+    embeddings: List[torch.Tensor]
+
+    @property
+    def vector(self) -> torch.Tensor:
+        return torch.mean(torch.stack(self.embeddings), dim=0)
 
 
 def sim_matrix(a: torch.tensor, b: torch.tensor, eps: float8 = 1e-8) -> torch.tensor:
