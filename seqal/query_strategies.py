@@ -190,13 +190,6 @@ def similarity_sampling(
                 triple = (entity_list[i], entity_list[j], cosine_score)
                 label_entity_pair_similarity[label].append(triple)
 
-    # Reorder entity pair from low to high based on cosine_score.
-    # If cosine_score is low, it means two entity are not similar, and the pair diversity is high
-    for label, entity_pair_similarity_list in label_entity_pair_similarity.items():
-        label_entity_pair_similarity[label] = sorted(
-            entity_pair_similarity_list, key=lambda x: x[2]
-        )
-
     sentence_score = [0] * len(sents)
     for label, entity_pair_similarity_list in label_entity_pair_similarity.items():
         for entity_pair in entity_pair_similarity_list:
