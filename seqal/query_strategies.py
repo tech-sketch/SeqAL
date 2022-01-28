@@ -22,6 +22,49 @@ class Entity:
         embeddings = [token.embedding for token in self.span.tokens]
         return torch.mean(torch.stack(embeddings), dim=0)
 
+    @property
+    def label(self) -> str:
+        return self.span.tag
+
+
+class Entities:
+    def __init__(self):
+        self.entities = []
+
+    def add(self, entity: Entity):
+        self.entities.append(entity)
+
+    def group_by_sentence(self) -> dict[int, list[Entity]]:
+        entities_per_sentence = defaultdict(list)
+        for entity in self.entities:
+            entities_per_sentence[entity.sent_id].append(entity)
+        return entities_per_sentence
+
+    def group_by_label(self) -> dict[str, list[Entity]]:
+        entities_per_label = defaultdict(list)
+        for entity in self.entities:
+            entities_per_label[entity.label].append(entity)
+        return entities_per_label
+
+    def sentence_diversities(self) -> dict[int, float]:
+        entities_per_sentence = self.group_by_sentence()
+        return {
+            sent_id: self.calculate_diversity(entities)
+            for sent_id, entities in entities_per_sentence.items()
+        }
+
+    def calculate_diversity(self, entities: list[Entity]):
+        entities_per_label = self.group_by_label()
+        scores = []
+        for entity in entities:
+            vectors = torch.stack(
+                [entity.vector for entity in entities_per_label[entity.label]]
+            )
+            similarities = sim_matrix(torch.stack([entity.vector]), vectors)
+            score = torch.min(similarities)
+            scores.append(float(score))
+        return sum(scores) / len(entities)
+
 
 def sim_matrix(a: torch.tensor, b: torch.tensor, eps: float8 = 1e-8) -> torch.tensor:
     """Calculate similarity bewteen matrix
