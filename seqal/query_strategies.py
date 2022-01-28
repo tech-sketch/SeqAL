@@ -1,11 +1,12 @@
 import random
+from collections import defaultdict
 from dataclasses import dataclass
 from pickletools import float8
 from typing import List
 
 import numpy as np
 import torch
-from flair.data import Sentence
+from flair.data import Sentence, Span
 from flair.embeddings import StackedEmbeddings
 from sklearn.cluster import KMeans
 
@@ -14,12 +15,12 @@ from sklearn.cluster import KMeans
 class Entity:
     id: int
     sent_id: int
-    text: str
-    embeddings: List[torch.Tensor]
+    span: Span
 
     @property
     def vector(self) -> torch.Tensor:
-        return torch.mean(torch.stack(self.embeddings), dim=0)
+        embeddings = [token.embedding for token in self.span.tokens]
+        return torch.mean(torch.stack(embeddings), dim=0)
 
 
 def sim_matrix(a: torch.tensor, b: torch.tensor, eps: float8 = 1e-8) -> torch.tensor:
@@ -164,23 +165,18 @@ def similarity_sampling(
     embeddings = kwargs["embeddings"]
 
     # Get entities in each class, each entity has {sent_idx, token_idx, token_text, token_embedding}
-    label_entity_list = {label: [] for label in label_names}
+    label_entity_list = defaultdict(list)
     for sent_id, sent in enumerate(sents):
-        if len(sent.get_spans(tag_type)) == 0:
-            continue
         embeddings.embed(sent)
-        for token_id, token in enumerate(sent):
-            tag = token.get_tag("ner")
-            if tag.value == "O":
-                continue
-            entity = Entity(token_id, sent_id, token.text, token.embedding)
-            label_entity_list[tag.value].append(entity)
+        for entity_id, span in enumerate(sent.get_spans(tag_type)):
+            entity = Entity(entity_id, sent_id, span)
+            label_entity_list[span.tag].append(entity)
 
     # Assign similarity score to entity pair
     label_entity_pair_similarity = {label: [] for label in label_names}
     for label, entity_list in label_entity_list.items():
-        class_entity_embedding_matrix = [tag["token_embedding"] for tag in entity_list]
-        if class_entity_embedding_matrix == []:
+        class_entity_embedding_matrix = [entity.vector for entity in entity_list]
+        if not class_entity_embedding_matrix:
             continue
         # Calculate similarity of entity pair
         class_entity_embedding_matrix = torch.stack(class_entity_embedding_matrix)
@@ -207,10 +203,10 @@ def similarity_sampling(
             cosine_score = entity_pair[2]
 
             entity1 = entity_pair[0]
-            sentence_score[entity1["sent_idx"]] -= cosine_score
+            sentence_score[entity1.sent_id] -= cosine_score
 
             entity2 = entity_pair[1]
-            sentence_score[entity2["sent_idx"]] -= cosine_score
+            sentence_score[entity2.sent_id] -= cosine_score
 
     ascend_indices = np.argsort(sentence_score)
 

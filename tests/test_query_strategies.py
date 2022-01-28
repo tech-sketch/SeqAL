@@ -104,7 +104,12 @@ def test_cluster_sampling(sents: List[Sentence], embeddings: StackedEmbeddings) 
 
 
 def test_entity_vector():
-    embeddings = [torch.tensor([0.0, -1.0]), torch.tensor((1, 0))]
-    entity = Entity(0, 0, "", embeddings=embeddings)
+    span = MagicMock(
+        tokens=[
+            MagicMock(embedding=torch.tensor([0.0, -1.0])),
+            MagicMock(embedding=torch.tensor([1.0, 0.0])),
+        ]
+    )
+    entity = Entity(0, 0, span)
     expected = torch.tensor([0.5, -0.5])
     assert torch.equal(entity.vector, expected)
