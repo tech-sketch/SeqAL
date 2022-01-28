@@ -1,3 +1,4 @@
+import functools
 import random
 from collections import defaultdict
 from dataclasses import dataclass
@@ -34,12 +35,14 @@ class Entities:
     def add(self, entity: Entity):
         self.entities.append(entity)
 
+    @functools.cached_property
     def group_by_sentence(self) -> dict[int, list[Entity]]:
         entities_per_sentence = defaultdict(list)
         for entity in self.entities:
             entities_per_sentence[entity.sent_id].append(entity)
         return entities_per_sentence
 
+    @functools.cached_property
     def group_by_label(self) -> dict[str, list[Entity]]:
         entities_per_label = defaultdict(list)
         for entity in self.entities:
@@ -47,14 +50,14 @@ class Entities:
         return entities_per_label
 
     def sentence_diversities(self) -> dict[int, float]:
-        entities_per_sentence = self.group_by_sentence()
+        entities_per_sentence = self.group_by_sentence
         return {
             sent_id: self.calculate_diversity(entities)
             for sent_id, entities in entities_per_sentence.items()
         }
 
     def calculate_diversity(self, entities: list[Entity]):
-        entities_per_label = self.group_by_label()
+        entities_per_label = self.group_by_label
         scores = []
         for entity in entities:
             vectors = torch.stack(
@@ -207,52 +210,19 @@ def similarity_sampling(
         label_names.remove("O")
     embeddings = kwargs["embeddings"]
 
-    # Get entities in each class, each entity has {sent_idx, token_idx, token_text, token_embedding}
-    label_entity_list = defaultdict(list)
+    entities = Entities()
     for sent_id, sent in enumerate(sents):
         embeddings.embed(sent)
         for entity_id, span in enumerate(sent.get_spans(tag_type)):
             entity = Entity(entity_id, sent_id, span)
-            label_entity_list[span.tag].append(entity)
-
-    # Assign similarity score to entity pair
-    label_entity_pair_similarity = {label: [] for label in label_names}
-    for label, entity_list in label_entity_list.items():
-        class_entity_embedding_matrix = [entity.vector for entity in entity_list]
-        if not class_entity_embedding_matrix:
-            continue
-        # Calculate similarity of entity pair
-        class_entity_embedding_matrix = torch.stack(class_entity_embedding_matrix)
-        class_entity_embedding_sim_matrix = sim_matrix(
-            class_entity_embedding_matrix, class_entity_embedding_matrix
-        )
-        length = len(entity_list)
-        for i in range(length - 1):
-            for j in range(i + 1, length):
-                cosine_score = class_entity_embedding_sim_matrix[i][j]
-                triple = (entity_list[i], entity_list[j], cosine_score)
-                label_entity_pair_similarity[label].append(triple)
-
-    # Reorder entity pair from low to high based on cosine_score.
-    # If cosine_score is low, it means two entity are not similar, and the pair diversity is high
-    for label, entity_pair_similarity_list in label_entity_pair_similarity.items():
-        label_entity_pair_similarity[label] = sorted(
-            entity_pair_similarity_list, key=lambda x: x[2]
-        )
+            entities.add(entity)
 
     sentence_score = [0] * len(sents)
-    for label, entity_pair_similarity_list in label_entity_pair_similarity.items():
-        for entity_pair in entity_pair_similarity_list:
-            cosine_score = entity_pair[2]
-
-            entity1 = entity_pair[0]
-            sentence_score[entity1.sent_id] -= cosine_score
-
-            entity2 = entity_pair[1]
-            sentence_score[entity2.sent_id] -= cosine_score
+    diversities_per_sent = entities.sentence_diversities()
+    for sent_id, score in diversities_per_sent:
+        sentence_score[sent_id] = score
 
     ascend_indices = np.argsort(sentence_score)
-
     return ascend_indices.tolist()
 
 
