@@ -84,8 +84,6 @@ class TestMaxNormLogProbScorer:
         tagger.log_probability = MagicMock(
             return_value=np.array([-0.4, -0.3, -0.2, -0.1])
         )
-
-        # Method result
         scores = mnlp_scorer.score(mnlp_sents, tagger=tagger)
 
         # Expected result

@@ -97,7 +97,7 @@ class TestBaseScorer:
     def test_similarity_matrix(self, base_scorer: BaseScorer) -> None:
         # Correct case
         a = torch.tensor([[3, 4], [3, 4]], dtype=torch.float32)
-        b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)  # (3, 2)
+        b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)
         sim_mt = base_scorer.similarity_matrix(a, b)
         expected = torch.tensor(
             [[0.9360, 0.9360, 0.9360], [0.9360, 0.9360, 0.9360]], dtype=torch.float32
@@ -107,19 +107,19 @@ class TestBaseScorer:
         # Raise error is input is not tensor
         with pytest.raises(TypeError):
             a = np.array([[3, 4], [3, 4]])  # (2, 2)
-            b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)  # (3, 2)
+            b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)
             sim_mt = base_scorer.similarity_matrix(a, b)
 
         # Normalize input dtype is to tensor.float32
         a = torch.tensor([[3, 4], [3, 4]], dtype=torch.int32)
-        b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float64)  # (3, 2)
+        b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float64)
         sim_mt = base_scorer.similarity_matrix(a, b)
         assert torch.equal(sim_mt, expected) is True
 
         # Raise error if input shape is not compatible
         with pytest.raises(RuntimeError):
             a = torch.tensor([[3, 4], [3, 4]], dtype=torch.float32)
-            b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)  # (3, 2)
+            b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)
             b = b.transpose(0, 1)
             sim_mt = base_scorer.similarity_matrix(a, b)
 
