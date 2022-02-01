@@ -1,16 +1,7 @@
-import random
-from email.mime import base
-from pathlib import Path
-from typing import List
-from unittest.mock import MagicMock
-
 import numpy as np
 import pytest
 import torch
-from flair.data import Sentence
-from flair.embeddings import StackedEmbeddings
 
-from seqal.active_learner import ActiveLearner
 from seqal.base_scorer import BaseScorer
 from seqal.datasets import Corpus
 

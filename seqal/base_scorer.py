@@ -5,11 +5,21 @@ import numpy as np
 import torch
 
 from seqal.datasets import Sentence
+from seqal.tagger import SequenceTagger
 
 
 class BaseScorer:
-    def score(self):
+    def __call__(self):
         raise NotImplementedError
+
+    def predict(self, sents: List[Sentence], tagger: SequenceTagger) -> None:
+        """Predict unlabel data
+
+        Args:
+            sents (List[Sentence]): Sentences in data pool.
+            tagger (Module): Trained model.
+        """
+        tagger.predict(sents, mini_batch_size=32)
 
     def sort(self, sent_scores: np.ndarray, order: str = "ascend") -> List[int]:
         """Sort sentence id based on sentence scores
@@ -77,35 +87,6 @@ class BaseScorer:
                     queried_sent_id = ordered_indices[:query_number]
 
         return queried_sent_id
-
-    def similarity_matrix(
-        self, a: torch.tensor, b: torch.tensor, eps: float8 = 1e-8
-    ) -> torch.tensor:
-        """Calculate similarity bewteen matrix
-
-        https://en.wikipedia.org/wiki/Cosine_similarity
-
-        Args:
-            a (torch.tensor): Matrix of embedding. shape=(entity_count, embedding_dim)
-            b (torch.tensor): Matrix of embedding. shape=(entity_count, embedding_dim)
-            eps (float8, optional): Eps for numerical stability. Defaults to 1e-8.
-
-        Returns:
-            torch.tensor: similarity of matrix. shape=(entity_count, entity_count)
-        """
-        if torch.is_tensor(a) is False or torch.is_tensor(b) is False:
-            raise TypeError("Input matrix type is not torch.tensor")
-        if a.dtype != torch.float32:
-            a = a.type(torch.float32)
-        if b.dtype != torch.float32:
-            b = b.type(torch.float32)
-
-        a_n, b_n = a.norm(dim=1)[:, None], b.norm(dim=1)[:, None]
-        a_norm = a / torch.max(a_n, eps * torch.ones_like(a_n))
-        b_norm = b / torch.max(b_n, eps * torch.ones_like(b_n))
-        sim_mt = torch.mm(a_norm, b_norm.transpose(0, 1))
-
-        return sim_mt
 
     def similarity_matrix(
         self, a: torch.tensor, b: torch.tensor, eps: float8 = 1e-8

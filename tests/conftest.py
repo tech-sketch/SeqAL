@@ -11,54 +11,6 @@ from seqal.query_strategies import random_sampling
 from seqal.tagger import SequenceTagger
 
 
-class FakeEntity:
-    def __init__(self, x: float):
-        self.score = x
-
-
-class FakeSentence:
-    def __init__(self, entity_list: List[FakeEntity]):
-        self.entity_list = entity_list
-
-    def __len__(self):
-        return len(self.entity_list)
-
-    def get_spans(self, tag_type: str):
-        return self.entity_list
-
-
-@pytest.fixture
-def fake_sents() -> List[FakeSentence]:
-    e1 = FakeEntity(0.25)
-    e2 = FakeEntity(0.3)
-    e3 = FakeEntity(0.289)
-    e4 = FakeEntity(0.2988)
-    e5 = FakeEntity(0.2971)
-    e6 = FakeEntity(0.268)
-    e7 = FakeEntity(0.2707)
-    e8 = FakeEntity(0.2679)
-    e9 = FakeEntity(0.2942)
-    e10 = FakeEntity(0.2902)
-    e11 = FakeEntity(0.2831)
-    e12 = FakeEntity(0.2821)
-    e13 = FakeEntity(0.2712)
-    e14 = FakeEntity(0.2646)
-
-    s1 = FakeSentence([e1])
-    s2 = FakeSentence([e2, e3])
-    s3 = FakeSentence([e4, e5])
-    s4 = FakeSentence([e6])
-    s5 = FakeSentence([e7])
-    s6 = FakeSentence([e8])
-    s7 = FakeSentence([e9, e10, e11])
-    s8 = FakeSentence([e12])
-    s9 = FakeSentence([e13])
-    s10 = FakeSentence([e14])
-
-    sents = [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10]
-    return sents
-
-
 @pytest.fixture
 def sents() -> List[Sentence]:
     s1 = Sentence("EU rejects German call to boycott British lamb .")
