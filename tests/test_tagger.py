@@ -1,5 +1,9 @@
+from typing import List
 from unittest.mock import MagicMock
 
+import numpy as np
+import pytest
+from flair.data import Sentence
 from torch import tensor
 
 from seqal.datasets import Corpus
@@ -7,19 +11,41 @@ from seqal.tagger import SequenceTagger
 
 
 class TestSequenceTagger:
-    def test_log_probability(
+    def test_log_probability_return_result_without_error_if_sentences_have_been_predicted(
+        self, predicted_sentences: List[Sentence], trained_tagger: SequenceTagger
+    ) -> None:
+        # Act
+        trained_tagger.log_probability(predicted_sentences)
+
+    def test_log_probability_raise_index_error_if_unlabeled_sentences_have_not_been_predicted(
+        self, unlabeled_sentences: List[Sentence], trained_tagger: SequenceTagger
+    ) -> None:
+
+        # Assert
+        with pytest.raises(IndexError):
+            # Act
+            trained_tagger.log_probability(unlabeled_sentences)
+
+    def test_log_probability_raise_error_if_labeled_sentences_have_not_been_predicted(
         self, corpus: Corpus, trained_tagger: SequenceTagger
     ) -> None:
-        sents = corpus.train.sentences
-        trained_tagger.forward = MagicMock(return_value=None)
-        trained_tagger._calculate_loss = MagicMock(
-            return_value=(tensor([1, 2, 3]), None)
+        # Arrange
+        sents = corpus.train.sentences  # Labeled sentence
+        log_probs_of_labeled_sentences_before_prediction = (
+            trained_tagger.log_probability(sents)
         )
 
-        # Method result
-        log_probs = trained_tagger.log_probability(sents)
+        # Act
+        trained_tagger.predict(sents)
+        log_probs_of_labeled_sentences_after_prediction = (
+            trained_tagger.log_probability(sents)
+        )
 
-        # Expected result
-        expected = [-1, -2, -3]
-
-        assert expected == log_probs.tolist()
+        # Assert
+        assert (
+            np.array_equal(
+                log_probs_of_labeled_sentences_before_prediction,
+                log_probs_of_labeled_sentences_after_prediction,
+            )
+            is False
+        )

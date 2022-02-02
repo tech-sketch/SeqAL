@@ -3,8 +3,8 @@ from typing import List
 
 import numpy as np
 import torch
+from flair.data import Sentence
 
-from seqal.datasets import Sentence
 from seqal.tagger import SequenceTagger
 
 

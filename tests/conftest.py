@@ -1,4 +1,5 @@
 from pathlib import Path
+from random import triangular
 from typing import List
 
 import pytest
@@ -12,7 +13,13 @@ from seqal.tagger import SequenceTagger
 
 
 @pytest.fixture
-def sents() -> List[Sentence]:
+def fixture_path() -> Path:
+    return Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture
+def unlabeled_sentences() -> List[Sentence]:
+    # These sentence are from fixture conll/eng.train
     s1 = Sentence("EU rejects German call to boycott British lamb .")
     s2 = Sentence("Peter Blackburn")
     s3 = Sentence("BRUSSELS 1996-08-22")
@@ -53,8 +60,33 @@ def sents() -> List[Sentence]:
 
 
 @pytest.fixture
-def fixture_path() -> Path:
-    return Path(__file__).parent / "fixtures"
+def trained_tagger(
+    fixture_path: Path, corpus: Corpus, embeddings: StackedEmbeddings
+) -> SequenceTagger:
+    tagger_params = {}
+    tagger_params["tag_type"] = "ner"  # what tag do we want to predict?
+    tagger_params["hidden_size"] = 256
+    tagger_params["embeddings"] = embeddings
+
+    trainer_params = {}
+    trainer_params["max_epochs"] = 1
+    trainer_params["learning_rate"] = 0.1
+    trainer_params["train_with_dev"] = True
+    trainer_params["train_with_test"] = True
+    learner = ActiveLearner(tagger_params, random_sampling, corpus, trainer_params)
+
+    save_path = fixture_path / "output"
+    learner.fit(save_path)
+
+    return learner.trained_tagger
+
+
+@pytest.fixture
+def predicted_sentences(
+    unlabeled_sentences: List[Sentence], trained_tagger: SequenceTagger
+) -> List[Sentence]:
+    trained_tagger.predict(unlabeled_sentences)
+    return unlabeled_sentences
 
 
 @pytest.fixture
@@ -69,6 +101,15 @@ def corpus(fixture_path: Path) -> Corpus:
         dev_file="eng.testa",
     )
     return corpus
+
+
+@pytest.fixture
+def labeled_sentences_after_prediction(
+    corpus: Corpus, trained_tagger: SequenceTagger
+) -> List[Sentence]:
+    label_sents = corpus.train.sentences  # Labeled sentences
+    trained_tagger.predict(label_sents)
+    return label_sents
 
 
 @pytest.fixture
@@ -99,25 +140,3 @@ def learner(corpus: Corpus, embeddings: StackedEmbeddings) -> ActiveLearner:
     learner = ActiveLearner(tagger_params, random_sampling, corpus, trainer_params)
 
     return learner
-
-
-@pytest.fixture
-def trained_tagger(
-    fixture_path: Path, corpus: Corpus, embeddings: StackedEmbeddings
-) -> SequenceTagger:
-    tagger_params = {}
-    tagger_params["tag_type"] = "ner"  # what tag do we want to predict?
-    tagger_params["hidden_size"] = 256
-    tagger_params["embeddings"] = embeddings
-
-    trainer_params = {}
-    trainer_params["max_epochs"] = 1
-    trainer_params["learning_rate"] = 0.1
-    trainer_params["train_with_dev"] = True
-    trainer_params["train_with_test"] = True
-    learner = ActiveLearner(tagger_params, random_sampling, corpus, trainer_params)
-
-    save_path = fixture_path / "output"
-    learner.fit(save_path)
-
-    return learner.trained_tagger
