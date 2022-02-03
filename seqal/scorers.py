@@ -1,9 +1,9 @@
 from typing import List
 
 import numpy as np
+from flair.data import Sentence
 
 from seqal.base_scorer import BaseScorer
-from seqal.datasets import Sentence
 from seqal.tagger import SequenceTagger
 
 

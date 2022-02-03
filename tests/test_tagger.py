@@ -1,10 +1,8 @@
 from typing import List
-from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 from flair.data import Sentence
-from torch import tensor
 
 from seqal.datasets import Corpus
 from seqal.tagger import SequenceTagger

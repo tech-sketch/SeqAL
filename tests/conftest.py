@@ -1,5 +1,4 @@
 from pathlib import Path
-from random import triangular
 from typing import List
 
 import pytest

@@ -21,51 +21,42 @@ def mnlp_scorer(scope="function"):
     return mnlp_scorer
 
 
-@pytest.fixture()
-def mnlp_sents(scope="function"):
-    s1 = MagicMock()
-    s2 = MagicMock()
-    s3 = MagicMock()
-    s4 = MagicMock()
-    s1.__len__ = MagicMock(return_value=1)
-    s2.__len__ = MagicMock(return_value=1)
-    s3.__len__ = MagicMock(return_value=1)
-    s4.__len__ = MagicMock(return_value=1)
-    sents = [s1, s2, s3, s4]
-    return sents
-
-
 class TestLeastConfidenceScorer:
-    def test_score(self, lc_scorer: BaseScorer, sents: List[Sentence]) -> None:
+    def test_score_return_correct_result_if_log_probability_runs_after_prediction(
+        self, lc_scorer: BaseScorer, predicted_sentences: List[Sentence]
+    ) -> None:
+        # Arrange
         tagger = MagicMock()
         tagger.log_probability = MagicMock(
             return_value=np.array([-0.4, -0.3, -0.2, -0.1])
         )
-
-        # Method result
-        scores = lc_scorer.score(sents, tagger=tagger)
-
-        # Expected result
         log_probs = np.array([-0.4, -0.3, -0.2, -0.1])
         expected = 1 - np.exp(log_probs)
 
+        # Act
+        scores = lc_scorer.score(predicted_sentences, tagger=tagger)
+
+        # Assert
         assert np.array_equal(scores, expected) is True
 
-    def test_call(self, lc_scorer: BaseScorer, sents: List[Sentence]):
+    def test_call_return_correct_result_if_sampling_workflow_works_fine(
+        self, lc_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+    ):
+        # Arrange
         tag_type = "ner"
         label_names = ["O", "I-PER", "I-LOC", "I-ORG", "I-MISC"]
-        embeddings = MagicMock()
-        tagger = MagicMock()
-        tagger.predict = MagicMock(return_value=None)
-        tagger.log_probability = MagicMock(
-            return_value=np.array([-0.4, -0.3, -0.2, -0.1])
-        )
         query_number = 4
         token_based = False
+        embeddings = MagicMock()
+        tagger = MagicMock()
+        lc_scorer.predict = MagicMock(return_value=None)
+        lc_scorer.score = MagicMock(
+            return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05])
+        )
 
-        # Test for the final result
+        # Act
         scores = lc_scorer(
-            sents,
+            unlabeled_sentences,
             tag_type,
             query_number,
             token_based,
@@ -73,41 +64,59 @@ class TestLeastConfidenceScorer:
             label_names=label_names,
             embeddings=embeddings,
         )
-        expected = [0, 1, 2, 3]
 
-        assert expected == scores
+        # Assert
+        assert scores == [0, 1, 2, 3]
 
 
 class TestMaxNormLogProbScorer:
-    def test_score(self, mnlp_scorer: BaseScorer, mnlp_sents: List[Sentence]) -> None:
+    def test_score_return_correct_result_if_log_probability_runs_after_prediction(
+        self, mnlp_scorer: BaseScorer, predicted_sentences: List[Sentence]
+    ) -> None:
+        # Arrange
         tagger = MagicMock()
-        tagger.log_probability = MagicMock(
-            return_value=np.array([-0.4, -0.3, -0.2, -0.1])
+        log_probs = np.array(
+            [-0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, -0.05]
         )
-        scores = mnlp_scorer.score(mnlp_sents, tagger=tagger)
-
-        # Expected result
-        log_probs = np.array([-0.4, -0.3, -0.2, -0.1])
-        lengths = np.array([len(sent) for sent in mnlp_sents])
+        tagger.log_probability = MagicMock(return_value=log_probs)
+        lengths = np.array([9, 2, 2, 30, 33, 33, 24, 40, 28, 38])
         expected = log_probs / lengths
 
+        # Act
+        scores = mnlp_scorer.score(predicted_sentences, tagger=tagger)
+
+        # Assert
         assert np.array_equal(scores, expected) is True
 
-    def test_call(self, mnlp_scorer: BaseScorer, mnlp_sents: List[Sentence]):
-        # Because sents do not contains real tokens, mnlp_scorer.query() will be failed.
-        # But the mnlp_scorer.query has been tested in base_scorer.query()
-        # Here we only check the sorted_sent_ids.
+    def test_call_return_correct_result_if_sampling_workflow_works_fine(
+        self, mnlp_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+    ):
+        # Arrange
+        tag_type = "ner"
+        label_names = ["O", "I-PER", "I-LOC", "I-ORG", "I-MISC"]
+        query_number = 4
+        token_based = False
+        embeddings = MagicMock()
         tagger = MagicMock()
-        tagger.log_probability = MagicMock(
-            return_value=np.array([-0.4, -0.3, -0.2, -0.1])
+        mnlp_scorer.predict = MagicMock(return_value=None)
+        returned_norm_log_probs = np.array(
+            [-0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, -0.05]
         )
-        scores = mnlp_scorer.score(mnlp_sents, tagger=tagger)
-        sorted_sent_ids = mnlp_scorer.sort(scores, order="ascend")
+        mnlp_scorer.score = MagicMock(return_value=returned_norm_log_probs)
 
-        # Expected result
-        expected = [0, 1, 2, 3]
+        # Act
+        scores = mnlp_scorer(
+            unlabeled_sentences,
+            tag_type,
+            query_number,
+            token_based,
+            tagger=tagger,
+            label_names=label_names,
+            embeddings=embeddings,
+        )
 
-        assert expected == sorted_sent_ids
+        # Assert
+        assert scores == [0, 1, 2, 3]
 
 
 class TestDistributeSimilarityScorer:
