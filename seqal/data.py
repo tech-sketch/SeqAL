@@ -2,7 +2,6 @@ import functools
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, List
-from pickletools import float8
 
 import torch
 from flair.data import Span
@@ -19,12 +18,15 @@ class Entity:
         """Get entity embeddings"""
         embeddings = [token.embedding for token in self.span.tokens]
         if not any([e.nelement() != 0 for e in embeddings]):
-            raise TypeError("Tokens have no embeddings. Make sure embedding sentence first.")
+            raise TypeError(
+                "Tokens have no embeddings. Make sure embedding sentence first."
+            )
         return torch.mean(torch.stack(embeddings), dim=0)
 
     @property
     def label(self) -> str:
         return self.span.tag
+
 
 class Entities:
     def __init__(self):

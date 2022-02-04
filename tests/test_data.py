@@ -1,17 +1,16 @@
-from unittest.mock import MagicMock
-
-import torch
-
-from typing import List
 from unittest.mock import MagicMock, PropertyMock
 
-import numpy as np
 import pytest
+import torch
 from flair.data import Sentence
 
-from seqal.base_scorer import BaseScorer
-from seqal.scorers import LeastConfidenceScorer, MaxNormLogProbScorer, DistributeSimilarityScorer
 from seqal.data import Entities, Entity
+from seqal.scorers import (
+    DistributeSimilarityScorer,
+    LeastConfidenceScorer,
+    MaxNormLogProbScorer,
+)
+
 
 @pytest.fixture()
 def lc_scorer(scope="function"):
@@ -24,6 +23,7 @@ def mnlp_scorer(scope="function"):
     mnlp_scorer = MaxNormLogProbScorer()
     return mnlp_scorer
 
+
 @pytest.fixture()
 def ds_scorer(scope="function"):
     ds_scorer = DistributeSimilarityScorer()
@@ -32,10 +32,10 @@ def ds_scorer(scope="function"):
 
 @pytest.fixture()
 def entity_list(scope="function"):
-    sentence = Sentence('George Washington went to Washington.')
-    sentence[0].add_tag('ner', 'B-PER')
-    sentence[1].add_tag('ner', 'E-PER')
-    sentence[4].add_tag('ner', 'S-LOC')
+    sentence = Sentence("George Washington went to Washington.")
+    sentence[0].add_tag("ner", "B-PER")
+    sentence[1].add_tag("ner", "E-PER")
+    sentence[4].add_tag("ner", "S-LOC")
     spans = sentence.get_spans("ner")
 
     e0 = Entity(0, 0, spans[0])
@@ -44,9 +44,7 @@ def entity_list(scope="function"):
     return [e0, e1]
 
 
-
 class TestEntity:
-
     def test_vector_return_correct_result_if_embedding_exist(self) -> None:
         # Arrange
         span = MagicMock(
@@ -81,9 +79,7 @@ class TestEntity:
 
     def test_label(self) -> None:
         # Arrage
-        span = MagicMock(
-            tag="PER"
-        )
+        span = MagicMock(tag="PER")
         entity = Entity(0, 0, span)
 
         # Act
@@ -94,19 +90,17 @@ class TestEntity:
 
 
 class TestEntities:
-
     def test_add(self) -> None:
         # Arrange
         span = MagicMock()
         entity = Entity(0, 0, span)
-        
+
         # Act
         entities = Entities()
         entities.add(entity)
 
         # Assert
         assert entities.entities == [entity]
-
 
     def test_group_by_sentence(self) -> None:
         # Arrange
@@ -123,8 +117,6 @@ class TestEntities:
 
         # Assert
         assert expected_entities_per_sentence == entities_per_sentence
-
-    
 
     def test_group_by_label(self) -> None:
         # Arrange
