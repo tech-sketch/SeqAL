@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock
 
 import pytest
 import torch
@@ -120,9 +120,8 @@ class TestEntities:
 
     def test_group_by_label(self) -> None:
         # Arrange
-        e0, e1 = MagicMock(), MagicMock()
-        type(e0).label = PropertyMock(return_value="PER")
-        type(e1).label = PropertyMock(return_value="LOC")
+        e0 = MagicMock(label="PER")
+        e1 = MagicMock(label="LOC")
         expected_entities_per_label = {"PER": [e0], "LOC": [e1]}
         entities = Entities()
         entities.add(e0)
