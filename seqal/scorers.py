@@ -163,14 +163,14 @@ class DistributeSimilarityScorer(BaseScorer):
         queried_sent_ids = self.query(sents, sorted_sent_ids, query_number, token_based)
         return queried_sent_ids
 
-    def score(self, sents: List[Sentence], entities: Entities) -> List[float]:
+    def score(self, sents: List[Sentence], entities: Entities) -> np.ndarray:
         """Calculate score for each sentence"""
         sentence_scores = [0] * len(sents)
         diversities_per_sent = self.sentence_diversities(entities)
         for sent_id, score in diversities_per_sent.items():
             sentence_scores[sent_id] = score
 
-        return sentence_scores
+        return np.array(sentence_scores)
 
     def get_entities(
         self, sents: List[Sentence], embeddings: Embeddings, tag_type: str

@@ -259,4 +259,4 @@ class TestDistributeSimilarityScorer:
         sentence_scores = ds_scorer.score(sents, entities)
 
         # Assert
-        assert sentence_scores == [float(0), float(-0.5)]
+        assert np.array_equal(sentence_scores, np.array([0, -0.5]))
