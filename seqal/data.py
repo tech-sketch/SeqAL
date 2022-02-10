@@ -1,7 +1,7 @@
 import functools
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import torch
 from flair.data import Span
@@ -12,6 +12,7 @@ class Entity:
     id: int  # Entity id in the same sentence
     sent_id: int  # Sentence id
     span: Span  # Entity span
+    cluster: Optional[int] = None  # Cluster number
 
     @property
     def vector(self) -> torch.Tensor:
@@ -48,3 +49,10 @@ class Entities:
         for entity in self.entities:
             entities_per_label[entity.label].append(entity)
         return entities_per_label
+
+    @functools.cached_property
+    def group_by_cluster(self) -> Dict[str, List[Entity]]:
+        entities_per_cluster = defaultdict(list)
+        for entity in self.entities:
+            entities_per_cluster[entity.cluster].append(entity)
+        return entities_per_cluster

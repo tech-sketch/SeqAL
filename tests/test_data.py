@@ -132,3 +132,18 @@ class TestEntities:
 
         # Assert
         assert expected_entities_per_label == entities_per_label
+
+    def test_group_by_cluster(self) -> None:
+        # Arrange
+        e0 = MagicMock(cluster=1)
+        e1 = MagicMock(cluster=0)
+        expected_entities_per_cluster = {1: [e0], 0: [e1]}
+        entities = Entities()
+        entities.add(e0)
+        entities.add(e1)
+
+        # Act
+        entities_per_cluster = entities.group_by_cluster
+
+        # Assert
+        assert expected_entities_per_cluster == entities_per_cluster
