@@ -156,7 +156,7 @@ class DistributeSimilarityScorer(BaseScorer):
         entities = self.get_entities(sentences, embeddings, tag_type)
 
         # If no entities, return random indices
-        if entities.entities == []:
+        if not entities.entities:
             sent_ids = list(range(len(sentences)))
             random.seed(0)
             random_sent_ids = random.sample(sent_ids, len(sent_ids))
@@ -195,7 +195,7 @@ class DistributeSimilarityScorer(BaseScorer):
                 entity = Entity(entity_id, sent_id, span)
                 entities.add(entity)
 
-        if entities.entities == []:
+        if not entities.entities:
             token = sentences[0][0]
             label = token.get_tag(tag_type)
             if label.value == "" and label.score == 1:
@@ -394,7 +394,7 @@ class ClusterSimilarityScorer(BaseScorer):
                 entity = Entity(entity_id, sent_id, span)
                 entities.add(entity)
 
-        if entities.entities == []:
+        if not entities.entities:
             token = sentences[0][0]
             label = token.get_tag(tag_type)
             if label.value == "" and label.score == 1:
