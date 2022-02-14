@@ -23,7 +23,7 @@ class LeastConfidenceScorer(BaseScorer):
 
     def __call__(
         self,
-        sents: List[Sentence],
+        sentences: List[Sentence],
         tag_type: str,
         query_number: int,
         token_based: bool = False,
@@ -32,7 +32,7 @@ class LeastConfidenceScorer(BaseScorer):
         """Least confidence sampling workflow
 
         Args:
-            sents (List[Sentence]): Sentences in data pool.
+            sentences (List[Sentence]): Sentences in data pool.
             tag_type (str): Tag type to predict.
             query_number (int): batch query number.
             token_based (bool, optional): If true, using query number as token number to query data.
@@ -47,14 +47,17 @@ class LeastConfidenceScorer(BaseScorer):
             List[int]: Queried sentence ids.
         """
         tagger = kwargs["tagger"]
-        self.predict(sents, tagger)
-        scores = self.score(sents, tagger)
+        self.predict(sentences, tagger)
+        scores = self.score(sentences, tagger)
         sorted_sent_ids = self.sort(scores, order="descend")
-        queried_sent_ids = self.query(sents, sorted_sent_ids, query_number, token_based)
+        queried_sent_ids = self.query(
+            sentences, sorted_sent_ids, query_number, token_based
+        )
         return queried_sent_ids
 
-    def score(self, sents: List[Sentence], tagger: SequenceTagger) -> np.ndarray:
-        log_probs = tagger.log_probability(sents)
+    def score(self, sentences: List[Sentence], tagger: SequenceTagger) -> np.ndarray:
+        """Calculate score for each sentence"""
+        log_probs = tagger.log_probability(sentences)
         scores = 1 - np.exp(log_probs)
         return scores
 
@@ -70,7 +73,7 @@ class MaxNormLogProbScorer(BaseScorer):
 
     def __call__(
         self,
-        sents: List[Sentence],
+        sentences: List[Sentence],
         tag_type: str,
         query_number: int,
         token_based: bool = False,
@@ -79,7 +82,7 @@ class MaxNormLogProbScorer(BaseScorer):
         """Maximum Normalized Log-Probability sampling workflow
 
         Args:
-            sents (List[Sentence]): Sentences in data pool.
+            sentences (List[Sentence]): Sentences in data pool.
             tag_type (str): Tag type to predict.
             query_number (int): batch query number.
             token_based (bool, optional): If true, using query number as token number to query data.
@@ -94,15 +97,18 @@ class MaxNormLogProbScorer(BaseScorer):
             List[int]: Queried sentence ids.
         """
         tagger = kwargs["tagger"]
-        self.predict(sents, tagger)
-        scores = self.score(sents, tagger)
+        self.predict(sentences, tagger)
+        scores = self.score(sentences, tagger)
         sorted_sent_ids = self.sort(scores, order="ascend")
-        queried_sent_ids = self.query(sents, sorted_sent_ids, query_number, token_based)
+        queried_sent_ids = self.query(
+            sentences, sorted_sent_ids, query_number, token_based
+        )
         return queried_sent_ids
 
-    def score(self, sents: List[Sentence], tagger: SequenceTagger) -> np.ndarray:
-        log_probs = tagger.log_probability(sents)
-        lengths = np.array([len(sent) for sent in sents])
+    def score(self, sentences: List[Sentence], tagger: SequenceTagger) -> np.ndarray:
+        """Calculate score for each sentence"""
+        log_probs = tagger.log_probability(sentences)
+        lengths = np.array([len(sent) for sent in sentences])
         normed_log_probs = log_probs / lengths
         return normed_log_probs
 
@@ -121,7 +127,7 @@ class DistributeSimilarityScorer(BaseScorer):
 
     def __call__(
         self,
-        sents: List[Sentence],
+        sentences: List[Sentence],
         tag_type: str,
         query_number: int,
         token_based: bool = False,
@@ -130,7 +136,7 @@ class DistributeSimilarityScorer(BaseScorer):
         """Distribute similarity sampling workflow
 
         Args:
-            sents (List[Sentence]): Sentences in data pool.
+            sentences (List[Sentence]): Sentences in data pool.
             tag_type (str): Tag type to predict.
             query_number (int): batch query number.
             token_based (bool, optional): If true, using query number as token number to query data.
@@ -146,27 +152,29 @@ class DistributeSimilarityScorer(BaseScorer):
         """
         tagger = kwargs["tagger"]
         embeddings = kwargs["embeddings"]
-        self.predict(sents, tagger)
-        entities = self.get_entities(sents, embeddings, tag_type)
+        self.predict(sentences, tagger)
+        entities = self.get_entities(sentences, embeddings, tag_type)
 
         # If no entities, return random indices
         if entities.entities == []:
-            sent_ids = list(range(len(sents)))
+            sent_ids = list(range(len(sentences)))
             random.seed(0)
             random_sent_ids = random.sample(sent_ids, len(sent_ids))
             queried_sent_ids = self.query(
-                sents, random_sent_ids, query_number, token_based
+                sentences, random_sent_ids, query_number, token_based
             )
             return queried_sent_ids
 
         scores = self.score(entities, tagger)
         sorted_sent_ids = self.sort(scores, order="ascend")
-        queried_sent_ids = self.query(sents, sorted_sent_ids, query_number, token_based)
+        queried_sent_ids = self.query(
+            sentences, sorted_sent_ids, query_number, token_based
+        )
         return queried_sent_ids
 
-    def score(self, sents: List[Sentence], entities: Entities) -> np.ndarray:
+    def score(self, sentences: List[Sentence], entities: Entities) -> np.ndarray:
         """Calculate score for each sentence"""
-        sentence_scores = [0] * len(sents)
+        sentence_scores = [0] * len(sentences)
         diversities_per_sent = self.sentence_diversities(entities)
         for sent_id, score in diversities_per_sent.items():
             sentence_scores[sent_id] = score
@@ -174,11 +182,11 @@ class DistributeSimilarityScorer(BaseScorer):
         return np.array(sentence_scores)
 
     def get_entities(
-        self, sents: List[Sentence], embeddings: Embeddings, tag_type: str
+        self, sentences: List[Sentence], embeddings: Embeddings, tag_type: str
     ) -> Entities:
         """Get entity list of each class"""
         entities = Entities()
-        for sent_id, sent in enumerate(sents):
+        for sent_id, sent in enumerate(sentences):
             labeled_entities = sent.get_spans(tag_type)
             if labeled_entities == []:  # Skip non-entity sentence
                 continue
@@ -188,7 +196,7 @@ class DistributeSimilarityScorer(BaseScorer):
                 entities.add(entity)
 
         if entities.entities == []:
-            token = sents[0][0]
+            token = sentences[0][0]
             label = token.get_tag(tag_type)
             if label.value == "" and label.score == 1:
                 raise TypeError(
@@ -206,18 +214,20 @@ class DistributeSimilarityScorer(BaseScorer):
         }
 
     def calculate_diversity(
-        self, entities: List[Entity], entities_per_label: Dict[str, List[Entity]]
+        self,
+        sentence_entities: List[Entity],
+        entities_per_label: Dict[str, List[Entity]],
     ) -> float:
         """Calculate diversity score for a sentence"""
         scores = []
-        for entity in entities:
+        for entity in sentence_entities:
             vectors = torch.stack(
                 [entity.vector for entity in entities_per_label[entity.label]]
             )
             similarities = self.similarity_matrix(torch.stack([entity.vector]), vectors)
             score = torch.min(similarities)
             scores.append(float(score))
-        return sum(scores) / len(entities)
+        return sum(scores) / len(sentence_entities)
 
 
 class ClusterSimilarityScorer(BaseScorer):
@@ -236,7 +246,7 @@ class ClusterSimilarityScorer(BaseScorer):
 
     def __call__(
         self,
-        sents: List[Sentence],
+        sentences: List[Sentence],
         tag_type: str,
         query_number: int,
         token_based: bool = False,
@@ -245,7 +255,7 @@ class ClusterSimilarityScorer(BaseScorer):
         """Distribute similarity sampling workflow
 
         Args:
-            sents (List[Sentence]): Sentences in data pool.
+            sentences (List[Sentence]): Sentences in data pool.
             tag_type (str): Tag type to predict.
             query_number (int): batch query number.
             token_based (bool, optional): If true, using query number as token number to query data.
@@ -267,29 +277,31 @@ class ClusterSimilarityScorer(BaseScorer):
         tagger = kwargs["tagger"]
         embeddings = kwargs["embeddings"]
         kmeans_params = kwargs["kmeans_params"]
-        self.predict(sents, tagger)
-        entities = self.get_entities(sents, embeddings, tag_type)
+        self.predict(sentences, tagger)
+        entities = self.get_entities(sentences, embeddings, tag_type)
 
         # If no entities, return random indices
         if not entities.entities:
-            sent_ids = list(range(len(sents)))
+            sent_ids = list(range(len(sentences)))
             random.seed(0)
             random_sent_ids = random.sample(sent_ids, len(sent_ids))
             queried_sent_ids = self.query(
-                sents, random_sent_ids, query_number, token_based
+                sentences, random_sent_ids, query_number, token_based
             )
             return queried_sent_ids
 
         scores = self.score(entities, tagger, kmeans_params)
         sorted_sent_ids = self.sort(scores, order="ascend")
-        queried_sent_ids = self.query(sents, sorted_sent_ids, query_number, token_based)
+        queried_sent_ids = self.query(
+            sentences, sorted_sent_ids, query_number, token_based
+        )
         return queried_sent_ids
 
     def score(
-        self, sents: List[Sentence], entities: Entities, kmeans_params: dict
+        self, sentences: List[Sentence], entities: Entities, kmeans_params: dict
     ) -> np.ndarray:
         """Calculate score for each sentence"""
-        sentence_scores = [0] * len(sents)
+        sentence_scores = [0] * len(sentences)
         cluster_centers_matrix, entity_cluster_nums = self.kmeans(
             entities.entities, kmeans_params
         )
@@ -369,11 +381,11 @@ class ClusterSimilarityScorer(BaseScorer):
         return cluster_centers_matrix, entity_cluster_nums
 
     def get_entities(
-        self, sents: List[Sentence], embeddings: Embeddings, tag_type: str
+        self, sentences: List[Sentence], embeddings: Embeddings, tag_type: str
     ) -> Entities:
         """Get entity list of each class"""
         entities = Entities()
-        for sent_id, sent in enumerate(sents):
+        for sent_id, sent in enumerate(sentences):
             labeled_entities = sent.get_spans(tag_type)
             if labeled_entities == []:  # Skip non-entity sentence
                 continue
@@ -383,7 +395,7 @@ class ClusterSimilarityScorer(BaseScorer):
                 entities.add(entity)
 
         if entities.entities == []:
-            token = sents[0][0]
+            token = sentences[0][0]
             label = token.get_tag(tag_type)
             if label.value == "" and label.score == 1:
                 raise TypeError(
