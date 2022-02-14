@@ -2,50 +2,15 @@ from unittest.mock import MagicMock
 
 import pytest
 import torch
-from flair.data import Sentence
 
 from seqal.data import Entities, Entity
-from seqal.scorers import (
-    DistributeSimilarityScorer,
-    LeastConfidenceScorer,
-    MaxNormLogProbScorer,
-)
-
-
-@pytest.fixture()
-def lc_scorer(scope="function"):
-    lc_scorer = LeastConfidenceScorer()
-    return lc_scorer
-
-
-@pytest.fixture()
-def mnlp_scorer(scope="function"):
-    mnlp_scorer = MaxNormLogProbScorer()
-    return mnlp_scorer
-
-
-@pytest.fixture()
-def ds_scorer(scope="function"):
-    ds_scorer = DistributeSimilarityScorer()
-    return ds_scorer
-
-
-@pytest.fixture()
-def entity_list(scope="function"):
-    sentence = Sentence("George Washington went to Washington.")
-    sentence[0].add_tag("ner", "B-PER")
-    sentence[1].add_tag("ner", "E-PER")
-    sentence[4].add_tag("ner", "S-LOC")
-    spans = sentence.get_spans("ner")
-
-    e0 = Entity(0, 0, spans[0])
-    e1 = Entity(1, 0, spans[1])
-
-    return [e0, e1]
 
 
 class TestEntity:
+    """Test Entity class"""
+
     def test_vector_return_correct_result_if_embedding_exist(self) -> None:
+        """Test vector property return correct result if embedding exist"""
         # Arrange
         span = MagicMock(
             tokens=[
@@ -63,6 +28,7 @@ class TestEntity:
         assert torch.equal(embeddings, expected)
 
     def test_vector_raise_error_if_embedding_not_exist(self) -> None:
+        """Test vector property raise error if embedding not exist"""
         # Arrage
         span = MagicMock(
             tokens=[
@@ -78,6 +44,7 @@ class TestEntity:
             _ = entity.vector
 
     def test_label(self) -> None:
+        """Test label property"""
         # Arrage
         span = MagicMock(tag="PER")
         entity = Entity(0, 0, span)
@@ -90,7 +57,10 @@ class TestEntity:
 
 
 class TestEntities:
+    """Test Entities class"""
+
     def test_add(self) -> None:
+        """Test add function"""
         # Arrange
         span = MagicMock()
         entity = Entity(0, 0, span)
@@ -103,6 +73,7 @@ class TestEntities:
         assert entities.entities == [entity]
 
     def test_group_by_sentence(self) -> None:
+        """Test group_by_sentence cached_property"""
         # Arrange
         span0, span1 = MagicMock(), MagicMock()
         e0 = Entity(0, 0, span0)
@@ -119,6 +90,7 @@ class TestEntities:
         assert expected_entities_per_sentence == entities_per_sentence
 
     def test_group_by_label(self) -> None:
+        """Test group_by_label cached_property"""
         # Arrange
         e0 = MagicMock(label="PER")
         e1 = MagicMock(label="LOC")
@@ -134,6 +106,7 @@ class TestEntities:
         assert expected_entities_per_label == entities_per_label
 
     def test_group_by_cluster(self) -> None:
+        """Test group_by_cluster cached_property"""
         # Arrange
         e0 = MagicMock(cluster=1)
         e1 = MagicMock(cluster=0)

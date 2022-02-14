@@ -9,6 +9,8 @@ from flair.data import Span
 
 @dataclass
 class Entity:
+    """Entity with predicted information"""
+
     id: int  # Entity id in the same sentence
     sent_id: int  # Sentence id
     span: Span  # Entity span
@@ -26,18 +28,23 @@ class Entity:
 
     @property
     def label(self) -> str:
+        """Get entity label"""
         return self.span.tag
 
 
 class Entities:
+    """Entity list"""
+
     def __init__(self):
         self.entities = []
 
     def add(self, entity: Entity):
+        """Add entity to list"""
         self.entities.append(entity)
 
     @functools.cached_property
     def group_by_sentence(self) -> Dict[int, List[Entity]]:
+        """Group entities by sentence"""
         entities_per_sentence = defaultdict(list)
         for entity in self.entities:
             entities_per_sentence[entity.sent_id].append(entity)
@@ -45,6 +52,7 @@ class Entities:
 
     @functools.cached_property
     def group_by_label(self) -> Dict[str, List[Entity]]:
+        """Group entities by label"""
         entities_per_label = defaultdict(list)
         for entity in self.entities:
             entities_per_label[entity.label].append(entity)
@@ -52,6 +60,7 @@ class Entities:
 
     @functools.cached_property
     def group_by_cluster(self) -> Dict[str, List[Entity]]:
+        """Group entities by cluster"""
         entities_per_cluster = defaultdict(list)
         for entity in self.entities:
             entities_per_cluster[entity.cluster].append(entity)
