@@ -8,7 +8,7 @@ import torch
 from flair.data import Sentence
 
 from seqal.base_scorer import BaseScorer
-from seqal.data import Entities
+from seqal.data import Entities, Entity
 from seqal.scorers import (
     ClusterSimilarityScorer,
     DistributeSimilarityScorer,
@@ -45,6 +45,45 @@ def cs_scorer(scope="function"):
     return cs_scorer_instance
 
 
+@pytest.fixture()
+def scorer_params(scope="function"):
+    """Common parameters for scorer test"""
+    params = {
+        "tag_type": "ner",
+        "query_number": 4,
+        "label_names": ["O", "PER", "LOC"],
+        "token_based": False,
+        "tagger": MagicMock(),
+        "embeddings": MagicMock(),
+        "kmeans_params": {"n_clusters": 2, "n_init": 10, "random_state": 0},
+    }
+    return params
+
+
+@pytest.fixture()
+def entities4(scope="function"):
+    """4 entities for ds_scorer test"""
+    e0 = MagicMock(label="PER", vector=torch.tensor([-0.1, 0.1]))
+    e1 = MagicMock(label="PER", vector=torch.tensor([0.1, 0.1]))
+    e2 = MagicMock(label="PER", vector=torch.tensor([0.1, -0.1]))
+    e3 = MagicMock(label="LOC", vector=torch.tensor([-0.1, -0.1]))
+
+    return [e0, e1, e2, e3]
+
+
+@pytest.fixture()
+def entities6(scope="function"):
+    """4 entities for ds_scorer test"""
+    e0 = MagicMock(cluster=1, vector=torch.tensor([1, 2]))
+    e1 = MagicMock(cluster=1, vector=torch.tensor([1, 4]))
+    e2 = MagicMock(cluster=1, vector=torch.tensor([1, 0]))
+    e3 = MagicMock(cluster=0, vector=torch.tensor([10, 2]))
+    e4 = MagicMock(cluster=0, vector=torch.tensor([10, 4]))
+    e5 = MagicMock(cluster=0, vector=torch.tensor([10, 0]))
+
+    return [e0, e1, e2, e3, e4, e5]
+
+
 class TestLeastConfidenceScorer:
     """Test LeastConfidenceScorer class"""
 
@@ -67,16 +106,13 @@ class TestLeastConfidenceScorer:
         assert np.array_equal(scores, expected) is True
 
     def test_call_return_correct_result_if_sampling_workflow_works_fine(
-        self, lc_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+        self,
+        lc_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
     ):
         """Test call function return correct result"""
         # Arrange
-        tag_type = "ner"
-        label_names = ["O", "I-PER", "I-LOC", "I-ORG", "I-MISC"]
-        query_number = 4
-        token_based = False
-        embeddings = MagicMock()
-        tagger = MagicMock()
         lc_scorer.predict = MagicMock(return_value=None)
         lc_scorer.score = MagicMock(
             return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05])
@@ -85,12 +121,12 @@ class TestLeastConfidenceScorer:
         # Act
         queried_sent_ids = lc_scorer(
             unlabeled_sentences,
-            tag_type,
-            query_number,
-            token_based,
-            tagger=tagger,
-            label_names=label_names,
-            embeddings=embeddings,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            embeddings=scorer_params["embeddings"],
+            label_names=scorer_params["label_names"]
         )
 
         # Assert
@@ -120,16 +156,13 @@ class TestMaxNormLogProbScorer:
         assert np.array_equal(scores, expected) is True
 
     def test_call_return_correct_result_if_sampling_workflow_works_fine(
-        self, mnlp_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+        self,
+        mnlp_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
     ):
         """Test call function return correct result"""
         # Arrange
-        tag_type = "ner"
-        label_names = ["O", "I-PER", "I-LOC", "I-ORG", "I-MISC"]
-        query_number = 4
-        token_based = False
-        embeddings = MagicMock()
-        tagger = MagicMock()
         mnlp_scorer.predict = MagicMock(return_value=None)
         returned_norm_log_probs = np.array(
             [-0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, -0.05]
@@ -139,12 +172,12 @@ class TestMaxNormLogProbScorer:
         # Act
         queried_sent_ids = mnlp_scorer(
             unlabeled_sentences,
-            tag_type,
-            query_number,
-            token_based,
-            tagger=tagger,
-            label_names=label_names,
-            embeddings=embeddings,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            label_names=scorer_params["label_names"],
+            embeddings=scorer_params["embeddings"],
         )
 
         # Assert
@@ -155,16 +188,13 @@ class TestDistributeSimilarityScorer:
     """Test DistributeSimilarityScorer class"""
 
     def test_call_return_correct_result(
-        self, ds_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+        self,
+        ds_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
     ) -> None:
         """Test call function return correct result"""
         # Arrange
-        tag_type = "ner"
-        label_names = ["O", "I-PER", "I-LOC", "I-ORG", "I-MISC"]
-        query_number = 4
-        token_based = False
-        embeddings = MagicMock()
-        tagger = MagicMock()
         entities = Entities()
         entities.entities = [None]
         ds_scorer.get_entities = MagicMock(return_value=entities)
@@ -175,28 +205,25 @@ class TestDistributeSimilarityScorer:
         # Act
         queried_sent_ids = ds_scorer(
             unlabeled_sentences,
-            tag_type,
-            query_number,
-            token_based,
-            tagger=tagger,
-            label_names=label_names,
-            embeddings=embeddings,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            label_names=scorer_params["label_names"],
+            embeddings=scorer_params["embeddings"],
         )
 
         # Assert
         assert queried_sent_ids == [9, 8, 7, 6]
 
     def test_call_return_random_sent_ids_if_entities_is_empty(
-        self, ds_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+        self,
+        ds_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
     ) -> None:
         """Test call function return random sentence ids if entities is empty"""
         # Arrange
-        tag_type = "ner"
-        label_names = ["O", "I-PER", "I-LOC", "I-ORG", "I-MISC"]
-        query_number = 4
-        token_based = False
-        embeddings = MagicMock()
-        tagger = MagicMock()
         entities = Entities()
         ds_scorer.get_entities = MagicMock(return_value=entities)
 
@@ -207,41 +234,47 @@ class TestDistributeSimilarityScorer:
         # Act
         queried_sent_ids = ds_scorer(
             unlabeled_sentences,
-            tag_type,
-            query_number,
-            token_based,
-            tagger=tagger,
-            label_names=label_names,
-            embeddings=embeddings,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            label_names=scorer_params["label_names"],
+            embeddings=scorer_params["embeddings"],
         )
 
         # Assert
-        assert queried_sent_ids == expected_random_sent_ids[:query_number]
+        assert (
+            queried_sent_ids== expected_random_sent_ids[:scorer_params["query_number"]]
+        )
 
     def test_get_entities_raise_type_error_if_unlabeled_sentences_have_not_been_predicted(
-        self, ds_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+        self,
+        ds_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
     ) -> None:
         """Test get_entities function raise type_error if unlabeled sentences have not been predicted"""
         # Arrange
-        tag_type = "ner"
-        embeddings = MagicMock()
+        embeddings = scorer_params["embeddings"]
         embeddings.embed = MagicMock(return_value=None)
 
         # Assert
         with pytest.raises(TypeError):
             # Act
-            ds_scorer.get_entities(unlabeled_sentences, embeddings, tag_type)
+            ds_scorer.get_entities(
+                unlabeled_sentences, embeddings, scorer_params["tag_type"]
+            )
 
-    def test_calculate_diversity(self, ds_scorer: BaseScorer) -> None:
+    def test_calculate_diversity(
+        self, ds_scorer: BaseScorer, entities4: List[Entity]
+    ) -> None:
         """Test calculate diversity function"""
         # Arrange
-        e0 = MagicMock(label="PER", vector=torch.tensor([-0.1, 0.1]))
-        e1 = MagicMock(label="PER", vector=torch.tensor([0.1, 0.1]))
-        e2 = MagicMock(label="PER", vector=torch.tensor([0.1, -0.1]))
-        e3 = MagicMock(label="LOC", vector=torch.tensor([-0.1, -0.1]))
-
-        entities_per_label = {"PER": [e0, e1, e2], "LOC": [e3]}
-        sentence_entities = [e0, e3]
+        entities_per_label = {
+            "PER": [entities4[0], entities4[1], entities4[2]],
+            "LOC": [entities4[3]],
+        }
+        sentence_entities = [entities4[0], entities4[3]]
 
         # Act
         sentence_score = ds_scorer.calculate_diversity(
@@ -251,15 +284,19 @@ class TestDistributeSimilarityScorer:
         # Assert
         assert sentence_score == 0
 
-    def test_sentence_diversity(self, ds_scorer: BaseScorer) -> None:
+    def test_sentence_diversity(
+        self, ds_scorer: BaseScorer, entities4: List[Entity]
+    ) -> None:
         """Test sentence diversity function"""
         # Arrange
-        e0 = MagicMock(label="PER", vector=torch.tensor([-0.1, 0.1]))
-        e1 = MagicMock(label="PER", vector=torch.tensor([0.1, 0.1]))
-        e2 = MagicMock(label="PER", vector=torch.tensor([0.1, -0.1]))
-        e3 = MagicMock(label="LOC", vector=torch.tensor([-0.1, -0.1]))
-        entities_per_sentence = {0: [e0, e3], 1: [e1, e2]}
-        entities_per_label = {"PER": [e0, e1, e2], "LOC": [e3]}
+        entities_per_sentence = {
+            0: [entities4[0], entities4[3]],
+            1: [entities4[1], entities4[2]],
+        }
+        entities_per_label = {
+            "PER": [entities4[0], entities4[1], entities4[2]],
+            "LOC": [entities4[3]],
+        }
         entities = Entities()
         type(entities).group_by_sentence = PropertyMock(
             return_value=entities_per_sentence
@@ -291,16 +328,13 @@ class TestClusterSimilarityScorer:
     """Test ClusterSimilarityScorer class"""
 
     def test_call_return_correct_result(
-        self, cs_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+        self,
+        cs_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
     ) -> None:
         """Test call function return correct result"""
         # Arrange
-        tag_type = "ner"
-        kmeans_params = {"n_cluster": 8, "n_init": 10, "random_state": 0}
-        query_number = 4
-        token_based = False
-        embeddings = MagicMock()
-        tagger = MagicMock()
         entities = Entities()
         entities.entities = [None]
         cs_scorer.get_entities = MagicMock(return_value=entities)
@@ -311,28 +345,25 @@ class TestClusterSimilarityScorer:
         # Act
         queried_sent_ids = cs_scorer(
             unlabeled_sentences,
-            tag_type,
-            query_number,
-            token_based,
-            tagger=tagger,
-            kmeans_params=kmeans_params,
-            embeddings=embeddings,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            embeddings=scorer_params["embeddings"],
+            kmeans_params=scorer_params["kmeans_params"],
         )
 
         # Assert
         assert queried_sent_ids == [9, 8, 7, 6]
 
     def test_call_return_random_sent_ids_if_entities_is_empty(
-        self, cs_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+        self,
+        cs_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
     ) -> None:
         """Test call function return random sentence ids if entities is empty"""
         # Arrange
-        tag_type = "ner"
-        kmeans_params = {"n_cluster": 8, "n_init": 10, "random_state": 0}
-        query_number = 4
-        token_based = False
-        embeddings = MagicMock()
-        tagger = MagicMock()
         entities = Entities()
         cs_scorer.get_entities = MagicMock(return_value=entities)
 
@@ -343,30 +374,37 @@ class TestClusterSimilarityScorer:
         # Act
         queried_sent_ids = cs_scorer(
             unlabeled_sentences,
-            tag_type,
-            query_number,
-            token_based,
-            tagger=tagger,
-            kmeans_params=kmeans_params,
-            embeddings=embeddings,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            embeddings=scorer_params["embeddings"],
+            kmeans_params=scorer_params["kmeans_params"],
         )
 
         # Assert
-        assert queried_sent_ids == expected_random_sent_ids[:query_number]
+        assert (
+            queried_sent_ids
+            == expected_random_sent_ids[: scorer_params["query_number"]]
+        )
 
     def test_get_entities_raise_type_error_if_unlabeled_sentences_have_not_been_predicted(
-        self, cs_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+        self,
+        cs_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
     ) -> None:
         """Test get_entities function raise type_error if unlabeled sentences have not been predicted"""
         # Arrange
-        tag_type = "ner"
-        embeddings = MagicMock()
+        embeddings = scorer_params["embeddings"]
         embeddings.embed = MagicMock(return_value=None)
 
         # Assert
         with pytest.raises(TypeError):
             # Act
-            cs_scorer.get_entities(unlabeled_sentences, embeddings, tag_type)
+            cs_scorer.get_entities(
+                unlabeled_sentences, embeddings, scorer_params["tag_type"]
+            )
 
     def test_kmeans_raise_key_error_if_n_cluster_param_is_not_found(
         self, cs_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
@@ -381,24 +419,16 @@ class TestClusterSimilarityScorer:
             cs_scorer.kmeans(unlabeled_sentences, kmeans_params)
 
     def test_kmeans_return_correct_result(
-        self, cs_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+        self, cs_scorer: BaseScorer, scorer_params: dict, entities6: List[Entity]
     ) -> None:
         """Test kmeans function return correct result"""
         # Arrange
-        kmeans_params = {"n_clusters": 2, "n_init": 10, "random_state": 0}
-        e0 = MagicMock(label="PER", vector=torch.tensor([1, 2]))
-        e1 = MagicMock(label="PER", vector=torch.tensor([1, 4]))
-        e2 = MagicMock(label="PER", vector=torch.tensor([1, 0]))
-        e3 = MagicMock(label="PER", vector=torch.tensor([10, 2]))
-        e4 = MagicMock(label="PER", vector=torch.tensor([10, 4]))
-        e5 = MagicMock(label="PER", vector=torch.tensor([10, 0]))
-
         entities = Entities()
-        entities.entities = [e0, e1, e2, e3, e4, e5]
+        entities.entities = entities6
 
         # Act
         cluster_centers_matrix, entity_cluster_nums = cs_scorer.kmeans(
-            entities.entities, kmeans_params
+            entities.entities, scorer_params["kmeans_params"]
         )
 
         # Assert
@@ -407,9 +437,7 @@ class TestClusterSimilarityScorer:
         )
         assert np.array_equal(entity_cluster_nums, np.array([1, 1, 1, 0, 0, 0]))
 
-    def test_assign_cluster(
-        self, cs_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
-    ) -> None:
+    def test_assign_cluster(self, cs_scorer: BaseScorer) -> None:
         """Test assign cluster function"""
         # Arrange
         e0 = MagicMock(label="PER", vector=torch.tensor([1, 2]))
@@ -423,17 +451,16 @@ class TestClusterSimilarityScorer:
         # Assert
         assert new_entities.entities[0].cluster == 0
 
-    def test_calculate_diversity(self, cs_scorer: BaseScorer) -> None:
+    def test_calculate_diversity(
+        self, cs_scorer: BaseScorer, entities6: List[Entity]
+    ) -> None:
         """Test calculate diversity function"""
         # Arrange
-        e0 = MagicMock(cluster=1, vector=torch.tensor([1, 2]))
-        e1 = MagicMock(cluster=1, vector=torch.tensor([1, 4]))
-        e2 = MagicMock(cluster=1, vector=torch.tensor([1, 0]))
-        e3 = MagicMock(cluster=0, vector=torch.tensor([10, 2]))
-        e4 = MagicMock(cluster=0, vector=torch.tensor([10, 4]))
-        e5 = MagicMock(cluster=0, vector=torch.tensor([10, 0]))
-        entities_per_cluster = {1: [e0, e1, e2], 0: [e3, e4, e5]}
-        sentence_entities = [e0, e3]
+        entities_per_cluster = {
+            1: [entities6[0], entities6[1], entities6[2]],
+            0: [entities6[3], entities6[4], entities6[5]],
+        }
+        sentence_entities = [entities6[0], entities6[3]]
         cluster_centers_matrix = np.array([[10.0, 2.0], [1.0, 2.0]])
 
         # Act
@@ -444,20 +471,19 @@ class TestClusterSimilarityScorer:
         # Assert
         assert (abs(0.7138 - sentence_score) < 0.001) is True
 
-    def test_sentence_diversity(self, cs_scorer: BaseScorer) -> None:
+    def test_sentence_diversity(
+        self, cs_scorer: BaseScorer, entities6: List[Entity]
+    ) -> None:
         """Test sentence diversity function"""
         # Arrange
-        e0 = MagicMock(cluster=1, vector=torch.tensor([1, 2]))
-        e1 = MagicMock(cluster=1, vector=torch.tensor([1, 4]))
-        e2 = MagicMock(cluster=1, vector=torch.tensor([1, 0]))
-        e3 = MagicMock(cluster=0, vector=torch.tensor([10, 2]))
-        e4 = MagicMock(cluster=0, vector=torch.tensor([10, 4]))
-        e5 = MagicMock(cluster=0, vector=torch.tensor([10, 0]))
-        entities_per_cluster = {1: [e0, e1, e2], 0: [e3, e4, e5]}
+        entities_per_cluster = {
+            1: [entities6[0], entities6[1], entities6[2]],
+            0: [entities6[3], entities6[4], entities6[5]],
+        }
         entities = Entities()
-        entities.entities = [e0, e1, e2, e3, e4, e5]
+        entities.entities = entities6
         cluster_centers_matrix = np.array([[10.0, 2.0], [1.0, 2.0]])
-        entities_per_sentence = {0: [e0, e3]}
+        entities_per_sentence = {0: [entities6[0], entities6[3]]}
         type(entities).group_by_sentence = PropertyMock(
             return_value=entities_per_sentence
         )
@@ -473,7 +499,7 @@ class TestClusterSimilarityScorer:
         # Assert
         assert (abs(0.7138 - sentence_score[0]) < 0.001) is True
 
-    def test_score(self, cs_scorer: BaseScorer) -> None:
+    def test_score(self, cs_scorer: BaseScorer, entities6: List[Entity]) -> None:
         """Test score function"""
         # Arrange
         sents = [0]  # Just one setnence
@@ -485,16 +511,9 @@ class TestClusterSimilarityScorer:
             return_value=(cluster_centers_matrix, entity_cluster_nums)
         )
 
-        e0 = MagicMock(cluster=1, vector=torch.tensor([1, 2]))
-        e1 = MagicMock(cluster=1, vector=torch.tensor([1, 4]))
-        e2 = MagicMock(cluster=1, vector=torch.tensor([1, 0]))
-        e3 = MagicMock(cluster=0, vector=torch.tensor([10, 2]))
-        e4 = MagicMock(cluster=0, vector=torch.tensor([10, 4]))
-        e5 = MagicMock(cluster=0, vector=torch.tensor([10, 0]))
         entities = Entities()
-        entities.entities = [e0, e1, e2, e3, e4, e5]
+        entities.entities = entities6
         cs_scorer.assign_cluster = MagicMock(return_value=entities)
-
         cs_scorer.sentence_diversities = MagicMock(return_value={0: 0.7138})
 
         # Act
