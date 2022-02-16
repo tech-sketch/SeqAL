@@ -11,6 +11,7 @@ from seqal.base_scorer import BaseScorer
 from seqal.data import Entities, Entity
 from seqal.scorers import (
     ClusterSimilarityScorer,
+    CombinedMultipleScorer,
     DistributeSimilarityScorer,
     LeastConfidenceScorer,
     MaxNormLogProbScorer,
@@ -40,9 +41,16 @@ def ds_scorer(scope="function"):
 
 @pytest.fixture()
 def cs_scorer(scope="function"):
-    """MaxNormLogProbScorer instance"""
+    """ClusterSimilarityScorer instance"""
     cs_scorer_instance = ClusterSimilarityScorer()
     return cs_scorer_instance
+
+
+@pytest.fixture()
+def cm_scorer(scope="function"):
+    """CombinedMultipleScorer instance"""
+    cm_scorer_instance = CombinedMultipleScorer()
+    return cm_scorer_instance
 
 
 @pytest.fixture()
@@ -126,7 +134,7 @@ class TestLeastConfidenceScorer:
             scorer_params["token_based"],
             tagger=scorer_params["tagger"],
             embeddings=scorer_params["embeddings"],
-            label_names=scorer_params["label_names"]
+            label_names=scorer_params["label_names"],
         )
 
         # Assert
@@ -244,7 +252,8 @@ class TestDistributeSimilarityScorer:
 
         # Assert
         assert (
-            queried_sent_ids== expected_random_sent_ids[:scorer_params["query_number"]]
+            queried_sent_ids
+            == expected_random_sent_ids[: scorer_params["query_number"]]
         )
 
     def test_get_entities_raise_type_error_if_unlabeled_sentences_have_not_been_predicted(
@@ -521,3 +530,77 @@ class TestClusterSimilarityScorer:
 
         # Assert
         assert np.array_equal(sentence_scores, np.array([0.7138]))
+
+
+class TestCombinedMultipleScorer:
+    """Test CombinedMultipleScorer class"""
+
+    def test_check_scorer_type_return_raise_key_error(
+        self, cm_scorer: BaseScorer
+    ) -> None:
+        # Arrange
+        kwargs = {"label_type": "ner"}
+
+        # Assert
+        with pytest.raises(KeyError):
+            # Act
+            cm_scorer.check_scorer_type(kwargs)
+
+    def test_check_scorer_type_return_raise_name_error(
+        self, cm_scorer: BaseScorer
+    ) -> None:
+        # Arrange
+        kwargs = {"scorer_type": "lcc_ds"}
+
+        # Assert
+        with pytest.raises(NameError):
+            # Act
+            cm_scorer.check_scorer_type(kwargs)
+
+    @pytest.mark.parametrize(
+        "kwargs, expected",
+        [
+            ({"scorer_type": "lc_ds"}, True),
+            ({"scorer_type": "lc_cs"}, True),
+            ({"scorer_type": "mnlp_ds"}, True),
+            ({"scorer_type": "mnlp_cs"}, True),
+        ],
+    )
+    def test_check_scorer_type_return_true(
+        self, cm_scorer: BaseScorer, kwargs: dict, expected: bool
+    ) -> None:
+        assert cm_scorer.check_scorer_type(kwargs) is expected
+
+    def test_check_combined_type_return_raise_key_error(
+        self, cm_scorer: BaseScorer
+    ) -> None:
+        # Arrange
+        kwargs = {"scorer_type": "lc_ds"}
+
+        # Assert
+        with pytest.raises(KeyError):
+            # Act
+            cm_scorer.check_combined_type(kwargs)
+
+    def test_check_combined_type_return_raise_name_error(
+        self, cm_scorer: BaseScorer
+    ) -> None:
+        # Arrange
+        kwargs = {"scorer_type": "lc_ds", "combined_type": "mix"}
+
+        # Assert
+        with pytest.raises(NameError):
+            # Act
+            cm_scorer.check_combined_type(kwargs)
+
+    @pytest.mark.parametrize(
+        "kwargs, expected",
+        [
+            ({"scorer_type": "lc_ds", "combined_type": "series"}, True),
+            ({"scorer_type": "lc_cs", "combined_type": "parallel"}, True),
+        ],
+    )
+    def test_check_combined_type_return_true(
+        self, cm_scorer: BaseScorer, kwargs: dict, expected: bool
+    ) -> None:
+        assert cm_scorer.check_combined_type(kwargs) is expected

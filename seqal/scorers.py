@@ -27,7 +27,7 @@ class LeastConfidenceScorer(BaseScorer):
         tag_type: str,
         query_number: int,
         token_based: bool = False,
-        **kwargs
+        **kwargs,
     ) -> List[int]:
         """Least confidence sampling workflow
 
@@ -77,7 +77,7 @@ class MaxNormLogProbScorer(BaseScorer):
         tag_type: str,
         query_number: int,
         token_based: bool = False,
-        **kwargs
+        **kwargs,
     ) -> List[int]:
         """Maximum Normalized Log-Probability sampling workflow
 
@@ -131,7 +131,7 @@ class DistributeSimilarityScorer(BaseScorer):
         tag_type: str,
         query_number: int,
         token_based: bool = False,
-        **kwargs
+        **kwargs,
     ) -> List[int]:
         """Distribute similarity sampling workflow
 
@@ -250,7 +250,7 @@ class ClusterSimilarityScorer(BaseScorer):
         tag_type: str,
         query_number: int,
         token_based: bool = False,
-        **kwargs
+        **kwargs,
     ) -> List[int]:
         """Distribute similarity sampling workflow
 
@@ -402,3 +402,97 @@ class ClusterSimilarityScorer(BaseScorer):
                     "Entities are empty. Sentences have not been predicted."
                 )
         return entities
+
+
+class CombinedMultipleScorer(BaseScorer):
+    """Multiple similarity scorer
+
+    Uncertainty-based scorers do not take full advantage of entity information.
+    The proposed token-level diversity based scorer can fully utilize the entity information.
+    So we combine diversity scorer and uncertainty-based scorer together to improve the active learning performance.
+
+    Args:
+        BaseScorer: BaseScorer class.
+    """
+
+    @property
+    def available_scorer_types(self):
+        available_scorer_types = ["lc_ds", "lc_cs", "mnlp_ds", "mnlp_cs"]
+        return available_scorer_types
+
+    @property
+    def available_combined_types(self):
+        available_combined_types = ["series", "parallel"]
+        return available_combined_types
+
+    def __call__(
+        self,
+        sentences: List[Sentence],
+        tag_type: str,
+        query_number: int,
+        token_based: bool = False,
+        **kwargs,
+    ) -> List[int]:
+        """Combined multiple scorer sampling workflow
+
+        Args:
+            sentences (List[Sentence]): Sentences in data pool.
+            tag_type (str): Tag type to predict.
+            query_number (int): batch query number.
+            token_based (bool, optional): If true, using query number as token number to query data.
+                                          If false, using query number as sentence number to query data.
+
+        kwargs:
+            scorer_type (str):  Which kind of scorer to use.
+                                Available types are "lc_ds", "lc_cs", "mnlp_ds", "mnlp_cs"
+                                - "lc_ds" means LeastConfidenceScorer and DistributeSimilarityScorer.
+                                - "lc_cs" means LeastConfidenceScorer and ClusterSimilarityScorer.
+                                - "mnlp_ds" means MaxNormLogProbScorer and DistributeSimilarityScorer.
+                                - "mnlp_cs" means MaxNormLogProbScorer and ClusterSimilarityScorer.
+
+            combined_type (str): The combined method of different scorers.
+                                 Available types are "series", "parallel"
+                                 - "series" means run one scorer first and then run the second one.
+                                 - "parallel" means run two scorers together.
+                                 If scorer_type is "lc_ds", it means first run lc and then run ds.
+                                 If reverse parameter is provided, it runs ds first and then lc.
+            reverse (bool): The running order when combined type is "series"
+            tagger: The tagger after training
+            embeddings: The embeddings method
+            kmeans_params (dict): Parameters for clustering, detail on sklearn.cluster.KMeans.
+                                  e.g. {"n_clusters": 8, "n_init": 10, "random_state": 0}
+                                  "n_clusters": The number of cluster (label types except "O")
+                                  "n_init": Number of time the k-means algorithm
+                                            will be run with different centroid seeds.
+                                  "random_state": Determines random number generation for centroid initialization.
+
+        Returns:
+            List[int]: Queried sentence ids.
+        """
+        self.check_scorer_type(kwargs)
+        self.check_combined_type(kwargs)
+        pass
+
+    def check_scorer_type(self, kwargs: dict) -> bool:
+        """Check the scorer type is availabel or not."""
+        if "scorer_type" not in kwargs:
+            raise KeyError("scorer_type is not found.")
+
+        scorer_type = kwargs["scorer_type"]
+        if scorer_type not in self.available_scorer_types:
+            raise NameError(
+                f"scorer_type is not found. scorer_type must be one of {self.available_scorer_types}"
+            )
+        return True
+
+    def check_combined_type(self, kwargs: dict) -> bool:
+        """Check the combined type is availabel or not."""
+        if "combined_type" not in kwargs:
+            raise KeyError("combined_type is not found.")
+
+        combined_type = kwargs["combined_type"]
+        if combined_type not in self.available_combined_types:
+            raise NameError(
+                f"combined_type is not found. scorer_type must be one of {self.available_combined_types}"
+            )
+        return True
