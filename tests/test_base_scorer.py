@@ -12,6 +12,14 @@ def base_scorer(scope="function"):
     return base_scorer
 
 
+@pytest.fixture()
+def matrix_multiple_var(scope="function"):
+    entity_vector = torch.tensor([[3, 4]], dtype=torch.float32)
+    vectors = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)
+    expected = torch.tensor([0.9360, 0.9360, 0.9360], dtype=torch.float32)
+    return {"entity_vector": entity_vector, "vectors": vectors, "expected": expected}
+
+
 class TestBaseScorer:
     def test_query_data_on_token_base_if_query_number_smaller_than_total_token_number(
         self, base_scorer: BaseScorer, corpus: Corpus
@@ -145,61 +153,50 @@ class TestBaseScorer:
             base_scorer.sort(sent_scores, order="order")
 
     def test_similarity_matrix_return_correct_cosine_similarity_of_two_matrix(
-        self, base_scorer: BaseScorer
+        self, base_scorer: BaseScorer, matrix_multiple_var: dict
     ) -> None:
-        # Arrange
-        a = torch.tensor([[3, 4], [3, 4]], dtype=torch.float32)
-        b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)
-        expected = torch.tensor(
-            [[0.9360, 0.9360, 0.9360], [0.9360, 0.9360, 0.9360]], dtype=torch.float32
+        # Act
+        sim_mt = base_scorer.similarity_matrix(
+            matrix_multiple_var["entity_vector"], matrix_multiple_var["vectors"]
         )
 
-        # Act
-        sim_mt = base_scorer.similarity_matrix(a, b)
-
         # Assert
-        assert torch.equal(sim_mt, expected) is True
+        assert torch.equal(sim_mt, matrix_multiple_var["expected"]) is True
 
     def test_similarity_matrix_if_tensor_dtype_is_not_float32(
-        self, base_scorer: BaseScorer
+        self, base_scorer: BaseScorer, matrix_multiple_var: dict
     ) -> None:
         # Arrange
-        a = torch.tensor([[3, 4], [3, 4]], dtype=torch.int32)
-        b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float64)
-        expected = torch.tensor(
-            [[0.9360, 0.9360, 0.9360], [0.9360, 0.9360, 0.9360]], dtype=torch.float32
-        )
+        entity_vector = matrix_multiple_var["entity_vector"].to(dtype=torch.int32)
+        vectors = matrix_multiple_var["vectors"].to(dtype=torch.float64)
 
         # Act
-        sim_mt = base_scorer.similarity_matrix(a, b)
+        sim_mt = base_scorer.similarity_matrix(entity_vector, vectors)
 
         # Assert
-        assert torch.equal(sim_mt, expected) is True
+        assert torch.equal(sim_mt, matrix_multiple_var["expected"]) is True
 
     def test_similarity_matrix_raise_error_if_input_type_is_not_tensor(
-        self, base_scorer: BaseScorer
+        self, base_scorer: BaseScorer, matrix_multiple_var: dict
     ) -> None:
         # Arrange
-        a = np.array([[3, 4], [3, 4]])
-        b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)
+        entity_vector = np.array([[3, 4]])
 
         # Assert
         with pytest.raises(TypeError):
             # Act
-            base_scorer.similarity_matrix(a, b)
+            base_scorer.similarity_matrix(entity_vector, matrix_multiple_var["vectors"])
 
     def test_similarity_matrix_raise_error_if_two_matrix_shape_is_not_compatible(
-        self, base_scorer: BaseScorer
+        self, base_scorer: BaseScorer, matrix_multiple_var: dict
     ) -> None:
         # Arrange
-        a = torch.tensor([[3, 4], [3, 4]], dtype=torch.float32)
-        b = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)
-        b = b.transpose(0, 1)
+        vectors = matrix_multiple_var["vectors"].transpose(0, 1)
 
         # Assert
         with pytest.raises(RuntimeError):
             # Act
-            base_scorer.similarity_matrix(a, b)
+            base_scorer.similarity_matrix(matrix_multiple_var["entity_vector"], vectors)
 
     def test_normalize_score(self):
         # Check input type array

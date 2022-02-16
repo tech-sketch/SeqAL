@@ -4,6 +4,7 @@ from typing import List
 import numpy as np
 import torch
 from flair.data import Sentence
+from torch.nn.functional import cosine_similarity
 
 from seqal.tagger import SequenceTagger
 
@@ -96,7 +97,7 @@ class BaseScorer:
         https://en.wikipedia.org/wiki/Cosine_similarity
 
         Args:
-            a (torch.tensor): Matrix of embedding. shape=(entity_count, embedding_dim)
+            a (torch.tensor): Matrix of embedding. shape=(1, embedding_dim)
             b (torch.tensor): Matrix of embedding. shape=(entity_count, embedding_dim)
             eps (float8, optional): Eps for numerical stability. Defaults to 1e-8.
 
@@ -110,11 +111,7 @@ class BaseScorer:
         if b.dtype != torch.float32:
             b = b.type(torch.float32)
 
-        a_n, b_n = a.norm(dim=1)[:, None], b.norm(dim=1)[:, None]
-        a_norm = a / torch.max(a_n, eps * torch.ones_like(a_n))
-        b_norm = b / torch.max(b_n, eps * torch.ones_like(b_n))
-        sim_mt = torch.mm(a_norm, b_norm.transpose(0, 1))
-
+        sim_mt = cosine_similarity(a, b)
         return sim_mt
 
     def normalize_score(self):
