@@ -1,4 +1,3 @@
-from pickletools import float8
 from typing import List
 
 import numpy as np
@@ -90,28 +89,27 @@ class BaseScorer:
         return queried_sent_id
 
     def similarity_matrix(
-        self, a: torch.Tensor, b: torch.Tensor, eps: float8 = 1e-8
+        self, vector: torch.Tensor, vectors: torch.Tensor
     ) -> torch.Tensor:
         """Calculate similarity bewteen matrix
 
         https://en.wikipedia.org/wiki/Cosine_similarity
 
         Args:
-            a (torch.Tensor): Matrix of embedding. shape=(1, embedding_dim)
-            b (torch.Tensor): Matrix of embedding. shape=(entity_count, embedding_dim)
-            eps (float8, optional): Eps for numerical stability. Defaults to 1e-8.
+            vector (torch.Tensor): One entity embedding vector. shape: (1, embedding_dim)
+            vectors (torch.Tensor): Multiple entity embedding vectors. shape: (entity_count, embedding_dim)
 
         Returns:
-            torch.Tensor: similarity of matrix. shape=(entity_count, entity_count)
+            torch.Tensor: similarity of matrix. shape: (1, entity_count)
         """
-        if torch.is_tensor(a) is False or torch.is_tensor(b) is False:
+        if torch.is_tensor(vector) is False or torch.is_tensor(vectors) is False:
             raise TypeError("Input matrix type is not torch.Tensor")
-        if a.dtype != torch.float32:
-            a = a.type(torch.float32)
-        if b.dtype != torch.float32:
-            b = b.type(torch.float32)
+        if vector.dtype != torch.float32:
+            vector = vector.type(torch.float32)
+        if vectors.dtype != torch.float32:
+            vectors = vectors.type(torch.float32)
 
-        sim_mt = cosine_similarity(a, b)
+        sim_mt = cosine_similarity(vector, vectors)
         return sim_mt
 
     def normalize_score(self):
