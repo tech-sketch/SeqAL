@@ -30,14 +30,14 @@ def test_random_sampling(corpus: Corpus) -> None:
     assert expected_idx == ordered_idx
 
 
-def test_lc_sampling(sents: List[Sentence]) -> None:
+def test_lc_sampling(unlabeled_sentences: List[Sentence]) -> None:
     tag_type = "ner"
 
     tagger = MagicMock()
     tagger.log_probability = MagicMock(return_value=np.array([-0.4, -0.3, -0.2, -0.1]))
 
     # Method result
-    ordered_idx = lc_sampling(sents, tag_type, tagger=tagger)
+    ordered_idx = lc_sampling(unlabeled_sentences, tag_type, tagger=tagger)
 
     # Expected result
     expected = [0, 1, 2, 3]
@@ -71,7 +71,7 @@ def test_mnlp_sampling() -> None:
 
 
 def test_similarity_sampling(
-    sents: List[Sentence], embeddings: StackedEmbeddings
+    unlabeled_sentences: List[Sentence], embeddings: StackedEmbeddings
 ) -> None:
     tag_type = "ner"
     label_names = ["O", "I-PER", "I-LOC", "I-ORG", "I-MISC"]
@@ -81,7 +81,7 @@ def test_similarity_sampling(
 
     # Method result
     ordered_idx = similarity_sampling(
-        sents,
+        unlabeled_sentences,
         tag_type,
         label_names=label_names,
         embeddings=embeddings,
@@ -89,7 +89,9 @@ def test_similarity_sampling(
     assert expected == list(ordered_idx)
 
 
-def test_cluster_sampling(sents: List[Sentence], embeddings: StackedEmbeddings) -> None:
+def test_cluster_sampling(
+    unlabeled_sentences: List[Sentence], embeddings: StackedEmbeddings
+) -> None:
     tag_type = "ner"
     label_names = ["O", "I-PER", "I-LOC", "I-ORG", "I-MISC"]
 
@@ -98,7 +100,7 @@ def test_cluster_sampling(sents: List[Sentence], embeddings: StackedEmbeddings) 
 
     # Method result
     ordered_idx = cluster_sampling(
-        sents, tag_type, label_names=label_names, embeddings=embeddings
+        unlabeled_sentences, tag_type, label_names=label_names, embeddings=embeddings
     )
     assert expected == list(ordered_idx)
 

@@ -35,12 +35,12 @@ class SequenceTagger(FlairSequenceTagger):
         return np.array(scores)
 
     def _calculate_loss(
-        self, features: torch.tensor, sentences: List[Sentence], reduction: str = "sum"
+        self, features: torch.Tensor, sentences: List[Sentence], reduction: str = "sum"
     ) -> Tuple[Union[float, torch.Tensor], int]:
         """Overided FlairSequenceTagger._calculate_loss with reduction parameter
 
         Args:
-            features (torch.tensor): features after forward
+            features (torch.Tensor): features after forward
             sentences (List[Sentence]): sentence after prediction
             reduction (str, optional): reduction method. Defaults to "sum".
 
