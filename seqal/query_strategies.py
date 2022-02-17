@@ -23,16 +23,16 @@ class Entity:
         return torch.mean(torch.stack(embeddings), dim=0)
 
 
-def sim_matrix(a: torch.tensor, b: torch.tensor, eps: float8 = 1e-8) -> torch.tensor:
+def sim_matrix(a: torch.Tensor, b: torch.Tensor, eps: float8 = 1e-8) -> torch.Tensor:
     """Calculate similarity bewteen matrix
 
     Args:
-        a (torch.tensor): Matrix of embedding. shape=(entity_count, embedding_dim)
-        b (torch.tensor): Matrix of embedding. shape=(entity_count, embedding_dim)
+        a (torch.Tensor): Matrix of embedding. shape=(entity_count, embedding_dim)
+        b (torch.Tensor): Matrix of embedding. shape=(entity_count, embedding_dim)
         eps (float8, optional): Eps for numerical stability. Defaults to 1e-8.
 
     Returns:
-        torch.tensor: similarity of matrix. shape=(entity_count, entity_count)
+        torch.Tensor: similarity of matrix. shape=(entity_count, entity_count)
     """
     a_n, b_n = a.norm(dim=1)[:, None], b.norm(dim=1)[:, None]
     a_norm = a / torch.max(a_n, eps * torch.ones_like(a_n))

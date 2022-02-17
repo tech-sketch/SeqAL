@@ -90,22 +90,22 @@ class BaseScorer:
         return queried_sent_id
 
     def similarity_matrix(
-        self, a: torch.tensor, b: torch.tensor, eps: float8 = 1e-8
-    ) -> torch.tensor:
+        self, a: torch.Tensor, b: torch.Tensor, eps: float8 = 1e-8
+    ) -> torch.Tensor:
         """Calculate similarity bewteen matrix
 
         https://en.wikipedia.org/wiki/Cosine_similarity
 
         Args:
-            a (torch.tensor): Matrix of embedding. shape=(1, embedding_dim)
-            b (torch.tensor): Matrix of embedding. shape=(entity_count, embedding_dim)
+            a (torch.Tensor): Matrix of embedding. shape=(1, embedding_dim)
+            b (torch.Tensor): Matrix of embedding. shape=(entity_count, embedding_dim)
             eps (float8, optional): Eps for numerical stability. Defaults to 1e-8.
 
         Returns:
-            torch.tensor: similarity of matrix. shape=(entity_count, entity_count)
+            torch.Tensor: similarity of matrix. shape=(entity_count, entity_count)
         """
         if torch.is_tensor(a) is False or torch.is_tensor(b) is False:
-            raise TypeError("Input matrix type is not torch.tensor")
+            raise TypeError("Input matrix type is not torch.Tensor")
         if a.dtype != torch.float32:
             a = a.type(torch.float32)
         if b.dtype != torch.float32:
