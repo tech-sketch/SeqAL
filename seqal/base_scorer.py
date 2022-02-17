@@ -102,13 +102,11 @@ class BaseScorer:
         Returns:
             torch.Tensor: similarity of matrix. shape: (1, entity_count)
         """
-        if torch.is_tensor(vector) is False or torch.is_tensor(vectors) is False:
-            raise TypeError("Input matrix type is not torch.Tensor")
-        if vector.dtype != torch.float32:
-            vector = vector.type(torch.float32)
-        if vectors.dtype != torch.float32:
-            vectors = vectors.type(torch.float32)
+        if not torch.is_tensor(vector) or not torch.is_tensor(vectors):
+            raise TypeError("Input type is not torch.Tensor")
 
+        vector = vector.float()
+        vectors = vectors.float()
         sim_mt = cosine_similarity(vector, vectors)
         return sim_mt
 
