@@ -313,11 +313,10 @@ class TestDistributeSimilarityScorer:
         type(entities).group_by_label = PropertyMock(return_value=entities_per_label)
 
         # Act
-        sentence_score = ds_scorer.sentence_diversities(entities)
+        sentence_scores = ds_scorer.sentence_diversities(entities)
 
         # Assert
-        assert sentence_score[0] == 0
-        assert (abs(-0.5 - sentence_score[1]) < 0.00001) is True
+        np.testing.assert_allclose([sentence_scores[0], sentence_scores[1]], [0, -0.5], rtol=1e-3)
 
     def test_score(self, ds_scorer: BaseScorer) -> None:
         """Test score function"""
@@ -478,7 +477,7 @@ class TestClusterSimilarityScorer:
         )
 
         # Assert
-        assert (abs(0.7138 - sentence_score) < 0.001) is True
+        np.testing.assert_allclose([sentence_score], [0.7138], rtol=1e-3)
 
     def test_sentence_diversity(
         self, cs_scorer: BaseScorer, entities6: List[Entity]
@@ -506,7 +505,7 @@ class TestClusterSimilarityScorer:
         )
 
         # Assert
-        assert (abs(0.7138 - sentence_score[0]) < 0.001) is True
+        np.testing.assert_allclose([sentence_score[0]], [0.7138], rtol=1e-3)
 
     def test_score(self, cs_scorer: BaseScorer, entities6: List[Entity]) -> None:
         """Test score function"""
