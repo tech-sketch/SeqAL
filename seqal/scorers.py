@@ -165,7 +165,7 @@ class DistributeSimilarityScorer(BaseScorer):
             )
             return queried_sent_ids
 
-        scores = self.score(entities, tagger)
+        scores = self.score(sentences, entities)
         sorted_sent_ids = self.sort(scores, order="ascend")
         queried_sent_ids = self.query(
             sentences, sorted_sent_ids, query_number, token_based
@@ -290,7 +290,7 @@ class ClusterSimilarityScorer(BaseScorer):
             )
             return queried_sent_ids
 
-        scores = self.score(entities, tagger, kmeans_params)
+        scores = self.score(sentences, entities, kmeans_params)
         sorted_sent_ids = self.sort(scores, order="ascend")
         queried_sent_ids = self.query(
             sentences, sorted_sent_ids, query_number, token_based
