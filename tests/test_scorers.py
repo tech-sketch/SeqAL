@@ -316,7 +316,9 @@ class TestDistributeSimilarityScorer:
         sentence_scores = ds_scorer.sentence_diversities(entities)
 
         # Assert
-        np.testing.assert_allclose([sentence_scores[0], sentence_scores[1]], [0, -0.5], rtol=1e-3)
+        np.testing.assert_allclose(
+            [sentence_scores[0], sentence_scores[1]], [0, -0.5], rtol=1e-3
+        )
 
     def test_score(self, ds_scorer: BaseScorer) -> None:
         """Test score function"""
