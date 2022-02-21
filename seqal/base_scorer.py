@@ -1,9 +1,9 @@
 from typing import List
+from pickletools import float8
 
 import numpy as np
 import torch
 from flair.data import Sentence
-from torch.nn.functional import cosine_similarity
 
 from seqal.tagger import SequenceTagger
 
@@ -89,27 +89,34 @@ class BaseScorer:
         return queried_sent_id
 
     def similarity_matrix(
-        self, vector: torch.Tensor, vectors: torch.Tensor
+        self, mat1: torch.Tensor, mat2: torch.Tensor, eps: float8 = 1e-8
     ) -> torch.Tensor:
         """Calculate similarity bewteen matrix
 
         https://en.wikipedia.org/wiki/Cosine_similarity
 
         Args:
-            vector (torch.Tensor): One entity embedding vector. shape: (1, embedding_dim)
-            vectors (torch.Tensor): Multiple entity embedding vectors. shape: (entity_count, embedding_dim)
+            mat1 (torch.Tensor): Multiple entity embedding vectors. shape: (entity_count, embedding_dim)
+            mat2 (torch.Tensor): Multiple entity embedding vectors. shape: (entity_count, embedding_dim)
+            eps (float8, optional): Eps for numerical stability. Defaults to 1e-8.
 
         Returns:
             torch.Tensor: similarity of matrix. shape: (1, entity_count)
         """
-        if not torch.is_tensor(vector) or not torch.is_tensor(vectors):
+        if not torch.is_tensor(mat1) or not torch.is_tensor(mat2):
             raise TypeError("Input type is not torch.Tensor")
 
-        vector = vector.float()
-        vectors = vectors.float()
-        sim_mt = cosine_similarity(vector, vectors)
+        mat1 = mat1.float()
+        mat2 = mat2.float()
+        
+        mat1_n, mat2_n = mat1.norm(dim=1)[:, None], mat2.norm(dim=1)[:, None]
+        mat1_norm = mat1 / torch.max(mat1_n, eps * torch.ones_like(mat1_n))
+        mat2_norm = mat2 / torch.max(mat2_n, eps * torch.ones_like(mat2_n))
+        sim_mt = torch.mm(mat1_norm, mat2_norm.transpose(0, 1))
+
         return sim_mt
 
+    
     def normalize_score(self):
         # TODO: This is used for combined scorer
 
