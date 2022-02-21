@@ -1,5 +1,5 @@
 import random
-from typing import List
+from typing import Dict, List
 from unittest.mock import MagicMock, PropertyMock
 
 import numpy as np
@@ -71,12 +71,61 @@ def scorer_params(scope="function"):
 @pytest.fixture()
 def entities4(scope="function"):
     """4 entities for ds_scorer test"""
-    e0 = MagicMock(label="PER", vector=torch.tensor([-0.1, 0.1]))
-    e1 = MagicMock(label="PER", vector=torch.tensor([0.1, 0.1]))
-    e2 = MagicMock(label="PER", vector=torch.tensor([0.1, -0.1]))
-    e3 = MagicMock(label="LOC", vector=torch.tensor([-0.1, -0.1]))
+    e0 = MagicMock(id=0, sent_id=0, label="PER", vector=torch.tensor([-0.1, 0.1]))
+    e1 = MagicMock(id=0, sent_id=1, label="PER", vector=torch.tensor([0.1, 0.1]))
+    e2 = MagicMock(id=1, sent_id=1, label="PER", vector=torch.tensor([0.1, -0.1]))
+    e3 = MagicMock(id=1, sent_id=0, label="LOC", vector=torch.tensor([-0.1, -0.1]))
 
     return [e0, e1, e2, e3]
+
+
+@pytest.fixture()
+def entities_per_label(entities4: List[Entity]):
+    """Entity list in each label"""
+    entities_per_label = {
+        "PER": [entities4[0], entities4[1], entities4[2]],
+        "LOC": [entities4[3]],
+    }
+    return entities_per_label
+
+
+@pytest.fixture()
+def entities_per_sentence(entities4: List[Entity]):
+    """Entity list in each sentence"""
+    entities_per_sentence = {
+        0: [entities4[0], entities4[3]],
+        1: [entities4[1], entities4[2]],
+    }
+
+    return entities_per_sentence
+
+
+@pytest.fixture()
+def similarity_matrix_per_label(scope="function"):
+    """Similarity matrix for each label"""
+    similarity_matrix_per_label = {
+        "PER": torch.tensor(
+            [
+                [1.0000, 0.0000, -1.0000],
+                [0.0000, 1.0000, 0.0000],
+                [-1.0000, 0.0000, 1.0000],
+            ]
+        ),
+        "LOC": torch.tensor([[1.0000]]),
+    }
+
+    return similarity_matrix_per_label
+
+
+@pytest.fixture()
+def entity_id_map(scope="function"):
+    """Entity list in each sentence"""
+    entity_id_map = {
+        "PER": np.array([[0, 1], [1, 2]]),
+        "LOC": np.array([[1, 0], [1, 1]]),
+    }
+
+    return entity_id_map
 
 
 @pytest.fixture()
@@ -90,6 +139,20 @@ def entities6(scope="function"):
     e5 = MagicMock(cluster=0, vector=torch.tensor([10, 0]))
 
     return [e0, e1, e2, e3, e4, e5]
+
+
+def compare_exact(dict1, dict2):
+    """Return whether two dicts of arrays are exactly equal"""
+    if dict1.keys() != dict2.keys():
+        return False
+    return all(np.array_equal(dict1[key], dict2[key]) for key in dict1)
+
+
+def compare_approximate(dict1, dict2):
+    """Return whether two dicts of arrays are roughly equal"""
+    if dict1.keys() != dict2.keys():
+        return False
+    return all(np.allclose(dict1[key], dict2[key], rtol=1e-3) for key in dict1)
 
 
 class TestLeastConfidenceScorer:
@@ -275,50 +338,73 @@ class TestDistributeSimilarityScorer:
             )
 
     def test_calculate_diversity(
-        self, ds_scorer: BaseScorer, entities4: List[Entity]
+        self,
+        ds_scorer: BaseScorer,
+        entities_per_sentence: dict,
+        entity_id_map: dict,
+        similarity_matrix_per_label: dict,
     ) -> None:
         """Test calculate diversity function"""
         # Arrange
-        entities_per_label = {
-            "PER": [entities4[0], entities4[1], entities4[2]],
-            "LOC": [entities4[3]],
-        }
-        sentence_entities = [entities4[0], entities4[3]]
+        expected = {0: 0, 1: -0.5}
 
         # Act
-        sentence_score = ds_scorer.calculate_diversity(
-            sentence_entities, entities_per_label
+        sentence_scores = ds_scorer.calculate_diversity(
+            entities_per_sentence, entity_id_map, similarity_matrix_per_label
         )
 
         # Assert
-        assert sentence_score == 0
+        assert sentence_scores == expected
 
     def test_sentence_diversity(
         self, ds_scorer: BaseScorer, entities4: List[Entity]
     ) -> None:
-        """Test sentence diversity function"""
+        """Test sentence_diversity function"""
         # Arrange
-        entities_per_sentence = {
-            0: [entities4[0], entities4[3]],
-            1: [entities4[1], entities4[2]],
-        }
-        entities_per_label = {
-            "PER": [entities4[0], entities4[1], entities4[2]],
-            "LOC": [entities4[3]],
-        }
         entities = Entities()
-        type(entities).group_by_sentence = PropertyMock(
-            return_value=entities_per_sentence
-        )
-        type(entities).group_by_label = PropertyMock(return_value=entities_per_label)
+        entities.entities = entities4
+        expected = {0: 0, 1: -0.5}
 
         # Act
         sentence_scores = ds_scorer.sentence_diversities(entities)
 
         # Assert
-        np.testing.assert_allclose(
-            [sentence_scores[0], sentence_scores[1]], [0, -0.5], rtol=1e-3
+        assert compare_approximate(sentence_scores, expected) is True
+
+    def test_similarity_matrix_per_label(
+        self,
+        ds_scorer: BaseScorer,
+        entities_per_label: dict,
+        similarity_matrix_per_label: Dict[str, torch.Tensor],
+    ) -> None:
+        """Test similarity_matrix_per_label function"""
+        # Act
+        sentence_scores = ds_scorer.similarity_matrix_per_label(entities_per_label)
+
+        # Assert
+        assert compare_approximate(sentence_scores, similarity_matrix_per_label) is True
+
+    def test_get_entity_id_map(
+        self,
+        ds_scorer: BaseScorer,
+        entities_per_sentence: dict,
+        entities_per_label: dict,
+        entity_id_map: dict,
+    ) -> None:
+        """Test get_entity_id_map function"""
+        # Arrange
+        sentence_count = max(entities_per_sentence.keys()) + 1
+        max_entity_count = max(
+            [len(entities) for entities in entities_per_sentence.values()]
         )
+
+        # Act
+        entity_id_map_result = ds_scorer.get_entity_id_map(
+            entities_per_label, sentence_count, max_entity_count
+        )
+
+        # Assert
+        assert compare_exact(entity_id_map_result, entity_id_map) is True
 
     def test_score(self, ds_scorer: BaseScorer) -> None:
         """Test score function"""

@@ -206,28 +206,92 @@ class DistributeSimilarityScorer(BaseScorer):
 
     def sentence_diversities(self, entities: Entities) -> Dict[int, float]:
         """Get diversity score of each sentence"""
-        entities_per_sentence = entities.group_by_sentence
         entities_per_label = entities.group_by_label
-        return {
-            sent_id: self.calculate_diversity(entities, entities_per_label)
-            for sent_id, entities in entities_per_sentence.items()
-        }
+        entities_per_sentence = entities.group_by_sentence
+
+        # Calculate similarities of all entities in one label
+        similarities_per_label = self.similarity_matrix_per_label(
+            entities_per_label
+        )  # {"ORG": matrix, "PER": matrix}
+
+        # Create index map
+        # entity_id_map[label][sent_id][entity_id] = entity_id_in_label_entity_list
+        sentence_count = max(entities_per_sentence.keys()) + 1
+        max_entity_count = max(
+            [len(entities) for entities in entities_per_sentence.values()]
+        )
+        entity_id_map = self.get_entity_id_map(
+            entities_per_label, sentence_count, max_entity_count
+        )
+
+        # Calculate diversity for each sentence
+        sentence_scores = self.calculate_diversity(
+            entities_per_sentence, entity_id_map, similarities_per_label
+        )
+
+        return sentence_scores
 
     def calculate_diversity(
         self,
-        sentence_entities: List[Entity],
-        entities_per_label: Dict[str, List[Entity]],
+        entities_per_sentence: Dict[str, List[Entity]],
+        entity_id_map: dict,
+        similarities_per_label: dict,
     ) -> float:
         """Calculate diversity score for a sentence"""
-        scores = []
-        for entity in sentence_entities:
-            vectors = torch.stack(
-                [entity.vector for entity in entities_per_label[entity.label]]
-            )
-            similarities = self.similarity_matrix(torch.stack([entity.vector]), vectors)
-            score = torch.min(similarities)
-            scores.append(float(score))
-        return sum(scores) / len(sentence_entities)
+        sentence_scores = {}
+        for sent_id, sentence_entities in entities_per_sentence.items():
+            scores = []
+            for entity in sentence_entities:
+                entity_id_in_label_list = entity_id_map[entity.label][entity.sent_id][
+                    entity.id
+                ]
+                similarities = similarities_per_label[entity.label][
+                    int(entity_id_in_label_list)
+                ]
+                scores.append(float(similarities.min()))
+            sentence_score = sum(scores) / len(sentence_entities)
+            sentence_scores[sent_id] = sentence_score
+        return sentence_scores
+
+    def get_entity_id_map(
+        self,
+        entities_per_label: Dict[str, List[Entity]],
+        sentence_count: int,
+        max_entity_count: int,
+    ) -> Dict[str, np.ndarray]:
+        """Get index map of entity from sentence id to the id in entity_per_label
+
+        Args:
+            entities_per_label (Dict[str, List[Entity]]): Entity list in each label.
+            sentence_count (int): Sentences count number, used for create matrix.
+            max_entity_count (int): Max entities count in every sentence, used for create matrix.
+
+        Returns:
+            Dict[str, np.ndarray]: An index map convert entity id from sentence id to the id label entities list
+                                   e.g. map[label][sent_id][entity_id] = entity_id_in_label_entities_list
+        """
+        entity_id_map = {}
+        for label, label_entities in entities_per_label.items():
+            if label not in entity_id_map:
+                entity_id_map[label] = np.ones((sentence_count, max_entity_count))
+            for i, entity in enumerate(
+                label_entities
+            ):  # entity id in label entities list
+                print(i, entity, entity.sent_id, entity.id)
+                entity_id_map[label][entity.sent_id][entity.id] = i
+            print(entity_id_map)
+        return entity_id_map
+
+    def similarity_matrix_per_label(
+        self, entities_per_label: Dict[str, List[Entity]]
+    ) -> Dict[str, np.ndarray]:
+        """Calculate similarity matrix of entities in each label"""
+        similarity_matrix_per_label = {}
+        for label, label_entities in entities_per_label.items():
+            vectors = torch.stack([entity.vector for entity in label_entities])
+            similarities = self.similarity_matrix(vectors, vectors)
+            similarity_matrix_per_label[label] = np.array(similarities)
+        return similarity_matrix_per_label
 
 
 class ClusterSimilarityScorer(BaseScorer):
