@@ -1,5 +1,5 @@
-from typing import List
 from pickletools import float8
+from typing import List
 
 import numpy as np
 import torch
@@ -108,7 +108,7 @@ class BaseScorer:
 
         mat1 = mat1.float()
         mat2 = mat2.float()
-        
+
         mat1_n, mat2_n = mat1.norm(dim=1)[:, None], mat2.norm(dim=1)[:, None]
         mat1_norm = mat1 / torch.max(mat1_n, eps * torch.ones_like(mat1_n))
         mat2_norm = mat2 / torch.max(mat2_n, eps * torch.ones_like(mat2_n))
@@ -116,7 +116,6 @@ class BaseScorer:
 
         return sim_mt
 
-    
     def normalize_score(self):
         # TODO: This is used for combined scorer
 

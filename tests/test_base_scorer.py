@@ -17,9 +17,9 @@ def matrix_multiple_var(scope="function"):
     mat1 = torch.tensor([[3, 4], [3, 4]], dtype=torch.float32)
     mat2 = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)
     expected = torch.tensor(
-            [[0.9360, 0.9360, 0.9360], [0.9360, 0.9360, 0.9360]], dtype=torch.float32
-        )
-    
+        [[0.9360, 0.9360, 0.9360], [0.9360, 0.9360, 0.9360]], dtype=torch.float32
+    )
+
     return {"mat1": mat1, "mat2": mat2, "expected": expected}
 
 

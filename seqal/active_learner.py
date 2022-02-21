@@ -199,7 +199,9 @@ class ActiveLearner:
             sents = load_label_info(sents, labels_info)
 
         # Remove queried data from sents and create a new list to store queried data
-        sents_after_remove, queried_samples = remove_query_samples(sents, queried_sent_ids)
+        sents_after_remove, queried_samples = remove_query_samples(
+            sents, queried_sent_ids
+        )
 
         return sents_after_remove, queried_samples
 
