@@ -1,5 +1,10 @@
+from typing import List
+from unittest.mock import MagicMock
+
+from flair.data import Sentence
+
 from seqal.datasets import Corpus
-from seqal.utils import add_tags, assign_id_corpus
+from seqal.utils import add_tags, assign_id_corpus, entity_ratio
 
 
 class TestUtils:
@@ -25,3 +30,31 @@ class TestUtils:
         annotated_sents = add_tags(query_labels)
         assert len(annotated_sents[0].get_spans("ner")) == 1
         assert len(annotated_sents[1].get_spans("ner")) == 0
+
+    def test_entity_ratio_return_0(self, unlabeled_sentences: List[Sentence]):
+        """Test entity_ratio if no entities"""
+        # Act
+        result = entity_ratio(unlabeled_sentences)
+
+        # Assert
+        assert result == 0
+
+    def test_entity_ratio(self, unlabeled_sentences: List[Sentence]):
+        """Test entity_ratio return normal result"""
+        # Arrange
+        sentence1 = MagicMock()
+        sentence1.get_spans = MagicMock(
+            return_value=[MagicMock(text="TIS"), MagicMock(text="TIS")]
+        )
+        sentence2 = MagicMock()
+        sentence2.get_spans = MagicMock(
+            return_value=[MagicMock(text="INTEC"), MagicMock(text="TIS")]
+        )
+
+        sentences = [sentence1, sentence2]
+
+        # Act
+        result = entity_ratio(sentences)
+
+        # Assert
+        assert result == float(2)
