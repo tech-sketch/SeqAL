@@ -31,16 +31,6 @@ def get_label_names(corpus: Corpus, label_type: str) -> List[str]:
     return label_names
 
 
-def predict_data_pool(sents: List[Sentence], tagger: Module) -> None:
-    """Predict on data pool for query.
-
-    Args:
-        sents (List[Sentence]): Sentences in data pool.
-        tagger (Module): Trained model.
-    """
-    tagger.predict(sents, mini_batch_size=32)
-
-
 def remove_query_samples(sents: List[Sentence], query_idx: List[int]) -> None:
     """Remove queried data from data pool.
 
