@@ -4,7 +4,6 @@ from typing import Callable, List, Tuple
 
 from flair.data import Sentence
 from flair.trainers import ModelTrainer
-from torch.nn import Module
 
 from seqal.datasets import Corpus
 from seqal.tagger import SequenceTagger
