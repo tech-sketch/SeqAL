@@ -9,7 +9,25 @@ from seqal.tagger import SequenceTagger
 
 
 class BaseScorer:
+    """BaseScorer class
+
+    This is a base class to inherit for active learning sampling method.
+    Each sampling method class should inherit this class.
+    """
+
     def __call__(self):
+        """Run active learning workflow
+
+        This function in every sampling method should follow a specific workflow:
+        - Predict on dataset
+        - Get entities from dataset
+        - Calculate score for each data
+        - Sort data by scores
+        - Query data id
+
+        Raises:
+            NotImplementedError: This method must be implemented
+        """
         raise NotImplementedError
 
     def predict(self, sents: List[Sentence], tagger: SequenceTagger) -> None:
