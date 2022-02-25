@@ -105,14 +105,14 @@ def entities_per_sentence(entities4: List[Entity]):
 def similarity_matrix_per_label(scope="function"):
     """Similarity matrix for each label"""
     similarity_matrix_per_label = {
-        "PER": torch.tensor(
+        "PER": np.array(
             [
                 [1.0000, 0.0000, -1.0000],
                 [0.0000, 1.0000, 0.0000],
                 [-1.0000, 0.0000, 1.0000],
             ]
         ),
-        "LOC": torch.tensor([[1.0000]]),
+        "LOC": np.array([[1.0000]]),
     }
 
     return similarity_matrix_per_label
