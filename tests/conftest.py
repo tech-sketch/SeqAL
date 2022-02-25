@@ -7,7 +7,7 @@ from flair.embeddings import BytePairEmbeddings, StackedEmbeddings
 
 from seqal.active_learner import ActiveLearner
 from seqal.datasets import ColumnCorpus, Corpus
-from seqal.query_strategies import random_sampling
+from seqal.scorers import RandomScorer
 from seqal.tagger import SequenceTagger
 
 
@@ -72,7 +72,8 @@ def trained_tagger(
     trainer_params["learning_rate"] = 0.1
     trainer_params["train_with_dev"] = True
     trainer_params["train_with_test"] = True
-    learner = ActiveLearner(tagger_params, random_sampling, corpus, trainer_params)
+    random_scorer = RandomScorer()
+    learner = ActiveLearner(tagger_params, random_scorer, corpus, trainer_params)
 
     save_path = fixture_path / "output"
     learner.fit(save_path)
@@ -136,6 +137,7 @@ def learner(corpus: Corpus, embeddings: StackedEmbeddings) -> ActiveLearner:
     trainer_params["learning_rate"] = 0.1
     trainer_params["train_with_dev"] = True
     trainer_params["train_with_test"] = True
-    learner = ActiveLearner(tagger_params, random_sampling, corpus, trainer_params)
+    random_scorer = RandomScorer()
+    learner = ActiveLearner(tagger_params, random_scorer, corpus, trainer_params)
 
     return learner

@@ -12,6 +12,43 @@ from seqal.data import Entities, Entity
 from seqal.tagger import SequenceTagger
 
 
+class RandomScorer(BaseScorer):
+    """Random sampling method"""
+
+    def __call__(
+        self,
+        sentences: List[Sentence],
+        tag_type: str,
+        query_number: int,
+        token_based: bool = False,
+        **kwargs,
+    ) -> List[int]:
+        """Random sampling workflow
+
+        Args:
+            sentences (List[Sentence]): Sentences in data pool.
+            tag_type (str): Tag type to predict.
+            query_number (int): batch query number.
+            token_based (bool, optional): If true, using query number as token number to query data.
+                                        If false, using query number as sentence number to query data.
+
+        kwargs:
+            tagger: The tagger after training
+            label_names (List[str]): Label name of all dataset
+            embeddings: The embeddings method
+
+        Returns:
+            List[int]: Queried sentence ids.
+        """
+        random.seed(0)
+        sent_ids = list(range(len(sentences)))
+        random_sent_ids = random.sample(sent_ids, len(sent_ids))
+        queried_sent_ids = self.query(
+            sentences, random_sent_ids, query_number, token_based
+        )
+        return queried_sent_ids
+
+
 class LeastConfidenceScorer(BaseScorer):
     """Least confidence scorer
 
@@ -157,13 +194,8 @@ class DistributeSimilarityScorer(BaseScorer):
 
         # If no entities, return random indices
         if not entities.entities:
-            sent_ids = list(range(len(sentences)))
-            random.seed(0)
-            random_sent_ids = random.sample(sent_ids, len(sent_ids))
-            queried_sent_ids = self.query(
-                sentences, random_sent_ids, query_number, token_based
-            )
-            return queried_sent_ids
+            random_scorer = RandomScorer()
+            return random_scorer(sentences, tag_type, query_number, token_based)
 
         scores = self.score(sentences, entities)
         sorted_sent_ids = self.sort(scores, order="ascend")
@@ -346,13 +378,8 @@ class ClusterSimilarityScorer(BaseScorer):
 
         # If no entities, return random indices
         if not entities.entities:
-            sent_ids = list(range(len(sentences)))
-            random.seed(0)
-            random_sent_ids = random.sample(sent_ids, len(sent_ids))
-            queried_sent_ids = self.query(
-                sentences, random_sent_ids, query_number, token_based
-            )
-            return queried_sent_ids
+            random_scorer = RandomScorer()
+            return random_scorer(sentences, tag_type, query_number, token_based)
 
         scores = self.score(sentences, entities, kmeans_params)
         sorted_sent_ids = self.sort(scores, order="ascend")

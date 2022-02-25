@@ -15,6 +15,7 @@ from seqal.scorers import (
     DistributeSimilarityScorer,
     LeastConfidenceScorer,
     MaxNormLogProbScorer,
+    RandomScorer,
 )
 
 
@@ -153,6 +154,41 @@ def compare_approximate(dict1, dict2):
     if dict1.keys() != dict2.keys():
         return False
     return all(np.allclose(dict1[key], dict2[key], rtol=1e-3) for key in dict1)
+
+
+class TestRandomScorer:
+    """Test RandomScorer class"""
+
+    def test_call_return_random_sent_ids(
+        self,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
+    ) -> None:
+        """Test call function return random sentence ids if entities is empty"""
+        # Arrange
+        random_scorer = RandomScorer()
+
+        random.seed(0)
+        sent_ids = list(range(len(unlabeled_sentences)))
+        expected_random_sent_ids = random.sample(sent_ids, len(sent_ids))
+
+        # Act
+
+        queried_sent_ids = random_scorer(
+            unlabeled_sentences,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            label_names=scorer_params["label_names"],
+            embeddings=scorer_params["embeddings"],
+        )
+
+        # Assert
+        assert (
+            queried_sent_ids
+            == expected_random_sent_ids[: scorer_params["query_number"]]
+        )
 
 
 class TestLeastConfidenceScorer:
