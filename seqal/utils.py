@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import List
 
 from flair.data import Corpus, Sentence
@@ -70,3 +71,27 @@ def add_tags(query_labels: List[dict]) -> List[Sentence]:
         annotated_sents.append(sentence)
 
     return annotated_sents
+
+
+def entity_ratio(sentences: List[Sentence], tag_type: str = "ner") -> float:
+    """Calculate entity ratio of a dataset
+
+    https://arxiv.org/abs/1701.02877
+
+    Args:
+        sentences (List[Sentence]): Sentence class list
+        tag_type (str, optional): Tag type. Defaults to "ner".
+
+    Returns:
+        float: Entity ratio.
+    """
+    entity_counter = defaultdict(int)
+
+    for sent in sentences:
+        for span in sent.get_spans(tag_type):
+            entity_counter[span.text] += 1
+
+    if not list(entity_counter.keys()):
+        return float(0)
+
+    return float(sum(entity_counter.values()) / len(entity_counter.keys()))

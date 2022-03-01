@@ -1,38 +1,37 @@
 from pathlib import Path
+from typing import List
 
-from seqal.active_learner import ActiveLearner, query_data_by_indices
-from seqal.datasets import Corpus
+from flair.data import Sentence
+
+from seqal.active_learner import ActiveLearner, remove_query_samples
 
 
-def test_query_data_by_indices(corpus: Corpus) -> None:
-    ordered_indices = list(range(10))
+def test_remove_query_samples(unlabeled_sentences: List[Sentence]) -> None:
+    """Test remove_query_samples function"""
+    # Arrange
+    sents = unlabeled_sentences[:5]
+    query_idx = [1, 2, 4]
+    expected_new_sents = [sents[0], sents[3]]
+    expected_query_sents = [sents[1], sents[2], sents[4]]
 
-    # Query single sentence
-    query_idx = query_data_by_indices(
-        corpus.train.sentences, ordered_indices, query_number=0, token_based=False
-    )
-    assert query_idx == [0]
+    # Act
+    new_sents, query_sents = remove_query_samples(sents, query_idx)
 
-    # Query multiple sentences
-    query_idx = query_data_by_indices(
-        corpus.train.sentences, ordered_indices, query_number=2, token_based=False
-    )
-
-    assert query_idx == [0, 1]
-
-    # Batch multiple sentences based on token count
-    token_required = 12
-    query_idx = query_data_by_indices(
-        corpus.train.sentences,
-        ordered_indices,
-        query_number=token_required,
-        token_based=True,
-    )
-    assert query_idx == [0, 1, 2]
+    # Assert
+    assert new_sents == expected_new_sents
+    assert query_sents == expected_query_sents
 
 
 class TestActiveLearner:
-    def test_fit(self, fixture_path: Path, learner: ActiveLearner) -> None:
+    """Test ActiveLearner class"""
+
+    def test_fit_without_error(
+        self, fixture_path: Path, learner: ActiveLearner
+    ) -> None:
+        """Test fit function works no problem"""
+        # Arrange
         save_path = fixture_path / "output"
+
+        # Act
         learner.fit(save_path)
         del learner

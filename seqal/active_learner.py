@@ -4,50 +4,11 @@ from typing import Callable, List, Tuple
 
 from flair.data import Sentence
 from flair.trainers import ModelTrainer
-from torch.nn import Module
 
 from seqal.datasets import Corpus
 from seqal.tagger import SequenceTagger
 
 LabelInfo = namedtuple("LabelInfo", "idx text label")
-
-
-def query_data_by_indices(
-    sents: List[Sentence],
-    ordered_indices: list,
-    query_number: int = 0,
-    token_based: bool = False,
-) -> List[int]:
-    """Query data based on ordered indices.
-
-    Args:
-        sents (List[Sentence]): Sentences in data pool.
-        ordered_indices (list): Ordered indices.
-        query_number (int, optional): Batch query number. Defaults to 0.
-        token_based (bool, optional): If true, using query number as token number to query data.
-                                      If false, using query number as sentence number to query data.
-    Returns:
-        List[int]: The index of queried samples in sents.
-    """
-    if token_based is True:
-        queried_tokens = 0
-        query_idx = []
-        for indx in ordered_indices:
-            sent = sents[indx]
-            if queried_tokens < query_number:
-                queried_tokens += len(sent.tokens)
-                query_idx.append(indx)
-    else:
-        if query_number == 0:
-            query_idx = ordered_indices[0]
-            query_idx = [query_idx]
-        else:
-            if query_number > len(sents):
-                query_idx = ordered_indices
-            else:
-                query_idx = ordered_indices[:query_number]
-
-    return query_idx
 
 
 def get_label_names(corpus: Corpus, label_type: str) -> List[str]:
@@ -67,16 +28,6 @@ def get_label_names(corpus: Corpus, label_type: str) -> List[str]:
     label_names = list(set(label_names))
 
     return label_names
-
-
-def predict_data_pool(sents: List[Sentence], tagger: Module) -> None:
-    """Predict on data pool for query.
-
-    Args:
-        sents (List[Sentence]): Sentences in data pool.
-        tagger (Module): Trained model.
-    """
-    tagger.predict(sents, mini_batch_size=32)
 
 
 def remove_query_samples(sents: List[Sentence], query_idx: List[int]) -> None:
@@ -222,16 +173,14 @@ class ActiveLearner:
             # This is because Flair will assign NER tags to token after prediction
             labels_info = save_label_info(sents)
 
-        predict_data_pool(sents, self.trained_tagger)
-        ordered_indices = self.query_strategy(
+        queried_sent_ids = self.query_strategy(
             sents,
             tag_type,
+            query_number,
+            token_based,
             tagger=self.trained_tagger,
             label_names=self.label_names,
             embeddings=embeddings,
-        )
-        query_idx = query_data_by_indices(
-            sents, ordered_indices, query_number, token_based
         )
 
         if simulation_mode is True:
@@ -239,7 +188,9 @@ class ActiveLearner:
             sents = load_label_info(sents, labels_info)
 
         # Remove queried data from sents and create a new list to store queried data
-        sents_after_remove, queried_samples = remove_query_samples(sents, query_idx)
+        sents_after_remove, queried_samples = remove_query_samples(
+            sents, queried_sent_ids
+        )
 
         return sents_after_remove, queried_samples
 

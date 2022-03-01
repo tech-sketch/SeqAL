@@ -7,18 +7,22 @@ from flair.embeddings import BytePairEmbeddings, StackedEmbeddings
 
 from seqal.active_learner import ActiveLearner
 from seqal.datasets import ColumnCorpus, Corpus
-from seqal.query_strategies import random_sampling
+from seqal.scorers import RandomScorer
 from seqal.tagger import SequenceTagger
 
 
 @pytest.fixture
 def fixture_path() -> Path:
+    """Path to save file"""
     return Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture
 def unlabeled_sentences() -> List[Sentence]:
-    # These sentence are from fixture conll/eng.train
+    """Unlabeled sentences for test
+
+    These sentence are from fixture conll/eng.train
+    """
     s1 = Sentence("EU rejects German call to boycott British lamb .")
     s2 = Sentence("Peter Blackburn")
     s3 = Sentence("BRUSSELS 1996-08-22")
@@ -62,6 +66,7 @@ def unlabeled_sentences() -> List[Sentence]:
 def trained_tagger(
     fixture_path: Path, corpus: Corpus, embeddings: StackedEmbeddings
 ) -> SequenceTagger:
+    """A trained tagger used for test"""
     tagger_params = {}
     tagger_params["tag_type"] = "ner"  # what tag do we want to predict?
     tagger_params["hidden_size"] = 256
@@ -72,7 +77,8 @@ def trained_tagger(
     trainer_params["learning_rate"] = 0.1
     trainer_params["train_with_dev"] = True
     trainer_params["train_with_test"] = True
-    learner = ActiveLearner(tagger_params, random_sampling, corpus, trainer_params)
+    random_scorer = RandomScorer()
+    learner = ActiveLearner(tagger_params, random_scorer, corpus, trainer_params)
 
     save_path = fixture_path / "output"
     learner.fit(save_path)
@@ -84,12 +90,14 @@ def trained_tagger(
 def predicted_sentences(
     unlabeled_sentences: List[Sentence], trained_tagger: SequenceTagger
 ) -> List[Sentence]:
+    """Sentences after prediction for test"""
     trained_tagger.predict(unlabeled_sentences)
     return unlabeled_sentences
 
 
 @pytest.fixture
 def corpus(fixture_path: Path) -> Corpus:
+    """A corpus used for test"""
     columns = {0: "text", 1: "pos", 3: "ner"}
     data_folder = fixture_path / "conll"
     corpus = ColumnCorpus(
@@ -106,6 +114,10 @@ def corpus(fixture_path: Path) -> Corpus:
 def labeled_sentences_after_prediction(
     corpus: Corpus, trained_tagger: SequenceTagger
 ) -> List[Sentence]:
+    """Labeled sentences after being predicted
+
+    The labels in sentences should be updated
+    """
     label_sents = corpus.train.sentences  # Labeled sentences
     trained_tagger.predict(label_sents)
     return label_sents
@@ -113,6 +125,7 @@ def labeled_sentences_after_prediction(
 
 @pytest.fixture
 def embeddings(fixture_path: Path) -> StackedEmbeddings:
+    """Embeddings used for test"""
     model_file_path = fixture_path / "embeddings/en.wiki.bpe.vs100000.model"
     embedding_file_path = fixture_path / "embeddings/en.wiki.bpe.vs100000.d50.w2v.bin"
     byte_embedding = BytePairEmbeddings(
@@ -126,6 +139,7 @@ def embeddings(fixture_path: Path) -> StackedEmbeddings:
 
 @pytest.fixture
 def learner(corpus: Corpus, embeddings: StackedEmbeddings) -> ActiveLearner:
+    """A not trained learner for test"""
     tagger_params = {}
     tagger_params["tag_type"] = "ner"  # what tag do we want to predict?
     tagger_params["hidden_size"] = 256
@@ -136,6 +150,7 @@ def learner(corpus: Corpus, embeddings: StackedEmbeddings) -> ActiveLearner:
     trainer_params["learning_rate"] = 0.1
     trainer_params["train_with_dev"] = True
     trainer_params["train_with_test"] = True
-    learner = ActiveLearner(tagger_params, random_sampling, corpus, trainer_params)
+    random_scorer = RandomScorer()
+    learner = ActiveLearner(tagger_params, random_scorer, corpus, trainer_params)
 
     return learner
