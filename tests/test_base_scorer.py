@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import torch
+from torch.nn.functional import cosine_similarity
 
 from seqal.base_scorer import BaseScorer
 from seqal.datasets import Corpus
@@ -179,6 +180,27 @@ class TestBaseScorer:
 
         # Assert
         assert torch.equal(sim_mt, matrix_multiple_var["expected"]) is True
+
+    def test_similarity_matrix_comparing_with_cosine_similarity(
+        self, base_scorer: BaseScorer
+    ) -> None:
+        """Test similarity_matrix function return correct result"""
+        # Arrange
+        v0 = torch.tensor([-0.1, 0.1], dtype=torch.float64)
+        v1 = torch.tensor([0.1, 0.1], dtype=torch.float64)
+        v2 = torch.tensor([0.1, -0.1], dtype=torch.float64)
+        vectors = torch.stack([v0, v1, v2])
+        excepted0 = cosine_similarity(torch.stack([v0]), vectors)
+        excepted1 = cosine_similarity(torch.stack([v1]), vectors)
+        excepted2 = cosine_similarity(torch.stack([v2]), vectors)
+
+        # Act
+        sim_mt = base_scorer.similarity_matrix(vectors, vectors)
+
+        # Assert
+        assert torch.allclose(sim_mt[0], excepted0) is True
+        assert torch.allclose(sim_mt[1], excepted1) is True
+        assert torch.allclose(sim_mt[2], excepted2) is True
 
     def test_similarity_matrix_raise_error_if_input_type_is_not_tensor(
         self, base_scorer: BaseScorer, matrix_multiple_var: dict
