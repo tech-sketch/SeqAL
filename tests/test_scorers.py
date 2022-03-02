@@ -153,7 +153,9 @@ def compare_approximate(dict1, dict2):
     """Return whether two dicts of arrays are roughly equal"""
     if dict1.keys() != dict2.keys():
         return False
-    return all(np.allclose(dict1[key], dict2[key], rtol=1e-05, atol=1e-08) for key in dict1)
+    return all(
+        np.allclose(dict1[key], dict2[key], rtol=1e-05, atol=1e-08) for key in dict1
+    )
 
 
 class TestRandomScorer:
