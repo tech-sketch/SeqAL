@@ -180,20 +180,6 @@ class TestBaseScorer:
         # Assert
         assert torch.equal(sim_mt, matrix_multiple_var["expected"]) is True
 
-    def test_similarity_matrix_if_tensor_dtype_is_not_float32(
-        self, base_scorer: BaseScorer, matrix_multiple_var: dict
-    ) -> None:
-        """Test similarity_matrix function return correct result if input data type is not tensor.float32"""
-        # Arrange
-        mat1 = matrix_multiple_var["mat1"].to(dtype=torch.int32)
-        mat2 = matrix_multiple_var["mat2"].to(dtype=torch.float64)
-
-        # Act
-        sim_mt = base_scorer.similarity_matrix(mat1, mat2)
-
-        # Assert
-        assert torch.equal(sim_mt, matrix_multiple_var["expected"]) is True
-
     def test_similarity_matrix_raise_error_if_input_type_is_not_tensor(
         self, base_scorer: BaseScorer, matrix_multiple_var: dict
     ) -> None:
