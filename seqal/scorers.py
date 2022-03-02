@@ -322,7 +322,9 @@ class DistributeSimilarityScorer(BaseScorer):
         for label, label_entities in entities_per_label.items():
             vectors = torch.stack([entity.vector for entity in label_entities])
             similarities = self.similarity_matrix(vectors, vectors)
-            similarity_matrix_per_label[label] = np.array(similarities)
+            similarity_matrix_per_label[label] = (
+                similarities.cpu().detach().numpy().copy()
+            )
         return similarity_matrix_per_label
 
 

@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import torch
+from torch.nn.functional import cosine_similarity
 
 from seqal.base_scorer import BaseScorer
 from seqal.datasets import Corpus
@@ -16,10 +17,10 @@ def base_scorer(scope="function"):
 @pytest.fixture()
 def matrix_multiple_var(scope="function"):
     """Embedding matrix for test"""
-    mat1 = torch.tensor([[3, 4], [3, 4]], dtype=torch.float32)
-    mat2 = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float32)
+    mat1 = torch.tensor([[3, 4], [3, 4]], dtype=torch.float64)
+    mat2 = torch.tensor([[7, 24], [7, 24], [7, 24]], dtype=torch.float64)
     expected = torch.tensor(
-        [[0.9360, 0.9360, 0.9360], [0.9360, 0.9360, 0.9360]], dtype=torch.float32
+        [[0.9360, 0.9360, 0.9360], [0.9360, 0.9360, 0.9360]], dtype=torch.float64
     )
 
     return {"mat1": mat1, "mat2": mat2, "expected": expected}
@@ -180,19 +181,26 @@ class TestBaseScorer:
         # Assert
         assert torch.equal(sim_mt, matrix_multiple_var["expected"]) is True
 
-    def test_similarity_matrix_if_tensor_dtype_is_not_float32(
-        self, base_scorer: BaseScorer, matrix_multiple_var: dict
+    def test_similarity_matrix_comparing_with_cosine_similarity(
+        self, base_scorer: BaseScorer
     ) -> None:
-        """Test similarity_matrix function return correct result if input data type is not tensor.float32"""
+        """Test similarity_matrix function return correct result"""
         # Arrange
-        mat1 = matrix_multiple_var["mat1"].to(dtype=torch.int32)
-        mat2 = matrix_multiple_var["mat2"].to(dtype=torch.float64)
+        v0 = torch.tensor([-0.1, 0.1], dtype=torch.float64)
+        v1 = torch.tensor([0.1, 0.1], dtype=torch.float64)
+        v2 = torch.tensor([0.1, -0.1], dtype=torch.float64)
+        vectors = torch.stack([v0, v1, v2])
+        excepted0 = cosine_similarity(torch.stack([v0]), vectors)
+        excepted1 = cosine_similarity(torch.stack([v1]), vectors)
+        excepted2 = cosine_similarity(torch.stack([v2]), vectors)
 
         # Act
-        sim_mt = base_scorer.similarity_matrix(mat1, mat2)
+        sim_mt = base_scorer.similarity_matrix(vectors, vectors)
 
         # Assert
-        assert torch.equal(sim_mt, matrix_multiple_var["expected"]) is True
+        assert torch.allclose(sim_mt[0], excepted0) is True
+        assert torch.allclose(sim_mt[1], excepted1) is True
+        assert torch.allclose(sim_mt[2], excepted2) is True
 
     def test_similarity_matrix_raise_error_if_input_type_is_not_tensor(
         self, base_scorer: BaseScorer, matrix_multiple_var: dict
