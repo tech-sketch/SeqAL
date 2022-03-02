@@ -124,8 +124,8 @@ class BaseScorer:
         if not torch.is_tensor(mat1) or not torch.is_tensor(mat2):
             raise TypeError("Input type is not torch.Tensor")
 
-        mat1 = mat1.float()
-        mat2 = mat2.float()
+        mat1 = mat1.double()
+        mat2 = mat2.double()
 
         mat1_n, mat2_n = mat1.norm(dim=1)[:, None], mat2.norm(dim=1)[:, None]
         mat1_norm = mat1 / torch.max(mat1_n, eps * torch.ones_like(mat1_n))
