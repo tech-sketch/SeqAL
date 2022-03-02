@@ -127,10 +127,14 @@ class BaseScorer:
         mat1 = mat1.double()
         mat2 = mat2.double()
 
-        mat1_n, mat2_n = mat1.norm(dim=1)[:, None], mat2.norm(dim=1)[:, None]
-        mat1_norm = mat1 / torch.max(mat1_n, eps * torch.ones_like(mat1_n))
-        mat2_norm = mat2 / torch.max(mat2_n, eps * torch.ones_like(mat2_n))
-        sim_mt = torch.mm(mat1_norm, mat2_norm.transpose(0, 1))
+        numerator = torch.mm(mat1, mat2.transpose(0, 1))
+        mat1_n, mat2_n = (
+            torch.linalg.norm(mat1, dim=1, keepdims=True),
+            torch.linalg.norm(mat2, dim=1, keepdims=True),
+        )
+        norm_mul = torch.mm(mat1_n, mat2_n.transpose(0, 1))
+        denominator = torch.max(norm_mul, torch.full_like(norm_mul, eps))
+        sim_mt = numerator / denominator
 
         return sim_mt
 
