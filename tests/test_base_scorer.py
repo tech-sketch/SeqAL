@@ -198,9 +198,9 @@ class TestBaseScorer:
         sim_mt = base_scorer.similarity_matrix(vectors, vectors)
 
         # Assert
-        assert torch.equal(sim_mt[0], excepted0) is True
-        assert torch.equal(sim_mt[1], excepted1) is True
-        assert torch.equal(sim_mt[2], excepted2) is True
+        assert torch.allclose(sim_mt[0], excepted0) is True
+        assert torch.allclose(sim_mt[1], excepted1) is True
+        assert torch.allclose(sim_mt[2], excepted2) is True
 
     def test_similarity_matrix_if_tensor_dtype_is_not_float32(
         self, base_scorer: BaseScorer, matrix_multiple_var: dict
