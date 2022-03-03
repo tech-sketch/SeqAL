@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
 import torch
@@ -24,6 +26,25 @@ def matrix_multiple_var(scope="function"):
     )
 
     return {"mat1": mat1, "mat2": mat2, "expected": expected}
+
+
+@pytest.fixture
+def word_embeddings(fixture_path: Path) -> dict:
+    """Word embeddings"""
+
+    def load_embeddings(File):
+        """Load emebddings from file"""
+        embeddings = {}
+        with open(File, "r") as f:
+            for line in f:
+                split_line = line.split()
+                word = split_line[0]
+                embedding = np.array(split_line[1:], dtype=np.float64)
+                embeddings[word] = embedding
+        return embeddings
+
+    file_path = fixture_path / "embeddings/word_embeddings.txt"
+    return load_embeddings(file_path)
 
 
 class TestBaseScorer:
@@ -182,13 +203,13 @@ class TestBaseScorer:
         assert torch.equal(sim_mt, matrix_multiple_var["expected"]) is True
 
     def test_similarity_matrix_comparing_with_cosine_similarity(
-        self, base_scorer: BaseScorer
+        self, base_scorer: BaseScorer, word_embeddings: dict
     ) -> None:
         """Test similarity_matrix function return correct result"""
         # Arrange
-        v0 = torch.tensor([-0.1, 0.1], dtype=torch.float64)
-        v1 = torch.tensor([0.1, 0.1], dtype=torch.float64)
-        v2 = torch.tensor([0.1, -0.1], dtype=torch.float64)
+        v0 = torch.tensor(word_embeddings["Jonh"], dtype=torch.float64)
+        v1 = torch.tensor(word_embeddings["with"], dtype=torch.float64)
+        v2 = torch.tensor(word_embeddings["Peter"], dtype=torch.float64)
         vectors = torch.stack([v0, v1, v2])
         excepted0 = cosine_similarity(torch.stack([v0]), vectors)
         excepted1 = cosine_similarity(torch.stack([v1]), vectors)
