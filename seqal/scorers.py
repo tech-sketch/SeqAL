@@ -6,6 +6,7 @@ import torch
 from flair.data import Sentence
 from flair.embeddings import Embeddings
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import MinMaxScaler
 
 from seqal.base_scorer import BaseScorer
 from seqal.data import Entities, Entity
@@ -86,7 +87,7 @@ class LeastConfidenceScorer(BaseScorer):
         tagger = kwargs["tagger"]
         self.predict(sentences, tagger)
         scores = self.score(sentences, tagger)
-        sorted_sent_ids = self.sort(scores, order="descend")
+        sorted_sent_ids = self.sort(-scores, order="ascend")
         queried_sent_ids = self.query(
             sentences, sorted_sent_ids, query_number, token_based
         )
@@ -564,7 +565,103 @@ class CombinedMultipleScorer(BaseScorer):
         """
         self.check_scorer_type(kwargs)
         self.check_combined_type(kwargs)
-        pass
+        scorer_type = kwargs["scorer_type"]
+        combined_type = kwargs["combined_type"]
+
+        # Get scorers
+        uncertainty_scorer, diversity_scorer = self.get_scorers(scorer_type)
+
+        # Combine scores
+        if combined_type == "series":
+            uncertainty_scorer_queried_sent_ids = uncertainty_scorer(
+                sentences, tag_type, 2 * query_number, token_based, **kwargs
+            )
+            uncertainty_scorer_queried_sents = [
+                sentences[i] for i in uncertainty_scorer_queried_sent_ids
+            ]
+            queried_sent_ids = diversity_scorer(
+                uncertainty_scorer_queried_sents,
+                tag_type,
+                query_number,
+                token_based,
+                **kwargs,
+            )
+            return queried_sent_ids
+
+        # The combine_type == "parallel"
+        tagger = kwargs["tagger"]
+        embeddings = kwargs["embeddings"]
+        if "kmeans_params" in kwargs:
+            kmeans_params = kwargs["kmeans_params"]
+
+        self.predict(sentences, tagger)
+        entities = self.get_entities(sentences, embeddings, tag_type)
+
+        # If no entities, return random indices
+        if not entities.entities:
+            random_scorer = RandomScorer()
+            return random_scorer(sentences, tag_type, query_number, token_based)
+
+        # Calculate scores
+        uncertainty_scores = uncertainty_scorer.score(sentences, tagger)
+        if "kmeans_params" in kwargs:
+            diversity_scores = diversity_scorer.score(
+                sentences, entities, kmeans_params
+            )
+        diversity_scores = diversity_scorer.score(sentences, entities)
+
+        # Normalize scores
+        if "lc" in scorer_type:  # reverse lc order for ascend setup below
+            scores = self.normalize_scores(-uncertainty_scores, diversity_scores)
+        scores = self.normalize_scores(uncertainty_scores, diversity_scores)
+
+        sorted_sent_ids = self.sort(scores, order="ascend")
+        queried_sent_ids = self.query(
+            sentences, sorted_sent_ids, query_number, token_based
+        )
+        return queried_sent_ids
+
+    def normalize_scores(
+        self, uncertainty_scores: np.ndarray, diversity_scores: np.ndarray
+    ) -> np.ndarray:
+        """Normalize two kinds of scores
+
+        Args:
+            uncertainty_scores (np.ndarray): Scores calculated by uncertainty_scorer
+            diversity_scores (np.ndarray): Scores calculated by diversity_scorer
+
+        Returns:
+            np.ndarray: Normalized score
+        """
+        scaler = MinMaxScaler()
+        concatenate_scores = np.stack([uncertainty_scores, diversity_scores])
+        normalized_scores = scaler.fit_transform(np.transpose(concatenate_scores))
+        return normalized_scores.sum(axis=1)
+
+    def get_scorers(self, scorer_type: str) -> Tuple[BaseScorer, BaseScorer]:
+        """Get specific scorers"""
+        if scorer_type == "lc_ds":
+            uncertainty_scorer, diversity_scorer = (
+                LeastConfidenceScorer(),
+                DistributeSimilarityScorer(),
+            )
+        elif scorer_type == "lc_cs":
+            uncertainty_scorer, diversity_scorer = (
+                LeastConfidenceScorer(),
+                ClusterSimilarityScorer(),
+            )
+        elif scorer_type == "mnlp_ds":
+            uncertainty_scorer, diversity_scorer = (
+                MaxNormLogProbScorer(),
+                DistributeSimilarityScorer(),
+            )
+        elif scorer_type == "mnlp_cs":
+            uncertainty_scorer, diversity_scorer = (
+                MaxNormLogProbScorer(),
+                ClusterSimilarityScorer(),
+            )
+
+        return uncertainty_scorer, diversity_scorer
 
     def check_scorer_type(self, kwargs: dict) -> bool:
         """Check the scorer type is availabel or not."""
@@ -589,3 +686,26 @@ class CombinedMultipleScorer(BaseScorer):
                 f"combined_type is not found. scorer_type must be one of {self.available_combined_types}"
             )
         return True
+
+    def get_entities(
+        self, sentences: List[Sentence], embeddings: Embeddings, tag_type: str
+    ) -> Entities:
+        """Get entity list of each class"""
+        entities = Entities()
+        for sent_id, sent in enumerate(sentences):
+            labeled_entities = sent.get_spans(tag_type)
+            if labeled_entities == []:  # Skip non-entity sentence
+                continue
+            _ = embeddings.embed(sent)  # Add embeddings internal
+            for entity_id, span in enumerate(labeled_entities):
+                entity = Entity(entity_id, sent_id, span)
+                entities.add(entity)
+
+        if not entities.entities:
+            token = sentences[0][0]
+            label = token.get_tag(tag_type)
+            if label.value == "" and label.score == 1:
+                raise TypeError(
+                    "Entities are empty. Sentences have not been predicted."
+                )
+        return entities

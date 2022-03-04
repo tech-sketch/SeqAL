@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import torch
 from flair.data import Sentence
+from sklearn.preprocessing import MinMaxScaler
 
 from seqal.base_scorer import BaseScorer
 from seqal.data import Entities, Entity
@@ -22,36 +23,36 @@ from seqal.scorers import (
 @pytest.fixture()
 def lc_scorer(scope="function"):
     """LeastConfidenceScorer instance"""
-    lc_scorer_instance = LeastConfidenceScorer()
-    return lc_scorer_instance
+    lc_scorer = LeastConfidenceScorer()
+    return lc_scorer
 
 
 @pytest.fixture()
 def mnlp_scorer(scope="function"):
     """MaxNormLogProbScorer instance"""
-    mnlp_scorer_instance = MaxNormLogProbScorer()
-    return mnlp_scorer_instance
+    mnlp_scorer = MaxNormLogProbScorer()
+    return mnlp_scorer
 
 
 @pytest.fixture()
 def ds_scorer(scope="function"):
     """DistributeSimilarityScorer instance"""
-    ds_scorer_instance = DistributeSimilarityScorer()
-    return ds_scorer_instance
+    ds_scorer = DistributeSimilarityScorer()
+    return ds_scorer
 
 
 @pytest.fixture()
 def cs_scorer(scope="function"):
     """ClusterSimilarityScorer instance"""
-    cs_scorer_instance = ClusterSimilarityScorer()
-    return cs_scorer_instance
+    cs_scorer = ClusterSimilarityScorer()
+    return cs_scorer
 
 
 @pytest.fixture()
 def cm_scorer(scope="function"):
     """CombinedMultipleScorer instance"""
-    cm_scorer_instance = CombinedMultipleScorer()
-    return cm_scorer_instance
+    cm_scorer = CombinedMultipleScorer()
+    return cm_scorer
 
 
 @pytest.fixture()
@@ -729,3 +730,299 @@ class TestCombinedMultipleScorer:
         self, cm_scorer: BaseScorer, kwargs: dict, expected: bool
     ) -> None:
         assert cm_scorer.check_combined_type(kwargs) is expected
+
+    def test_get_scorers_with_lc_ds(self, cm_scorer: BaseScorer) -> None:
+        # Arrange
+        scorer_type = "lc_ds"
+
+        # Act
+        uncertainty_scorer, diversity_scorer = cm_scorer.get_scorers(scorer_type)
+
+        # Assert
+        assert isinstance(uncertainty_scorer, LeastConfidenceScorer)
+        assert isinstance(diversity_scorer, DistributeSimilarityScorer)
+
+    def test_get_scorers_with_lc_cs(self, cm_scorer: BaseScorer) -> None:
+        # Arrange
+        scorer_type = "lc_cs"
+
+        # Act
+        uncertainty_scorer, diversity_scorer = cm_scorer.get_scorers(scorer_type)
+
+        # Assert
+        assert isinstance(uncertainty_scorer, LeastConfidenceScorer)
+        assert isinstance(diversity_scorer, ClusterSimilarityScorer)
+
+    def test_get_scorers_with_mnlp_ds(self, cm_scorer: BaseScorer) -> None:
+        # Arrange
+        scorer_type = "mnlp_ds"
+
+        # Act
+        uncertainty_scorer, diversity_scorer = cm_scorer.get_scorers(scorer_type)
+
+        # Assert
+        assert isinstance(uncertainty_scorer, MaxNormLogProbScorer)
+        assert isinstance(diversity_scorer, DistributeSimilarityScorer)
+
+    def test_get_scorers_with_mnlp_cs(self, cm_scorer: BaseScorer) -> None:
+        # Arrange
+        scorer_type = "mnlp_cs"
+
+        # Act
+        uncertainty_scorer, diversity_scorer = cm_scorer.get_scorers(scorer_type)
+
+        # Assert
+        assert isinstance(uncertainty_scorer, MaxNormLogProbScorer)
+        assert isinstance(diversity_scorer, ClusterSimilarityScorer)
+
+    def test_normalize_scorers_by_min_max_scaler(self, cm_scorer: BaseScorer) -> None:
+        # Arrange
+        scaler = MinMaxScaler()
+        uncertainty_scores = np.array([-0.09, -0.07, -0.05, -0.03, -0.01])
+        diversity_scores = np.array([0.2, 0.4, 0.6, 0.8, 1])
+        concatenate_scores = np.stack([uncertainty_scores, diversity_scores])
+        normalized_scores = scaler.fit_transform(np.transpose(concatenate_scores))
+        expected_scores = normalized_scores.sum(axis=1)
+
+        # Act
+        scores = cm_scorer.normalize_scores(uncertainty_scores, diversity_scores)
+
+        # Assert
+        assert np.allclose(scores, expected_scores) is True
+
+    def test_call_return_correct_result_with_series_lc_ds(
+        self,
+        cm_scorer: BaseScorer,
+        lc_scorer: BaseScorer,
+        ds_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
+    ) -> None:
+        # Arrange
+        lc_scorer.predict = MagicMock(return_value=None)
+        lc_scorer.score = MagicMock(
+            return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05])
+        )
+
+        entities = Entities()
+        entities.entities = [None]
+        ds_scorer.get_entities = MagicMock(return_value=entities)
+        ds_scorer.score = MagicMock(
+            return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2])
+        )
+
+        scorer_type = "lc_ds"
+        combined_type = "series"
+        cm_scorer.get_scorers = MagicMock(return_value=(lc_scorer, ds_scorer))
+
+        # Act
+        queried_sent_ids = cm_scorer(
+            unlabeled_sentences,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            label_names=scorer_params["label_names"],
+            embeddings=scorer_params["embeddings"],
+            scorer_type=scorer_type,
+            combined_type=combined_type,
+        )
+
+        # Assert
+        assert queried_sent_ids == [7, 6, 5, 4]
+
+    def test_call_return_random_sent_ids_if_entities_is_empty(
+        self,
+        cm_scorer: BaseScorer,
+        lc_scorer: BaseScorer,
+        ds_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
+    ) -> None:
+        """Test call function return random sentence ids if entities is empty"""
+        # Arrange
+        scorer_type = "lc_ds"
+        combined_type = "parallel"
+        entities = Entities()
+        cm_scorer.predict = MagicMock(return_value=None)
+        cm_scorer.get_entities = MagicMock(return_value=entities)
+
+        random.seed(0)
+        sent_ids = list(range(len(unlabeled_sentences)))
+        expected_random_sent_ids = random.sample(sent_ids, len(sent_ids))
+
+        # Act
+        queried_sent_ids = cm_scorer(
+            unlabeled_sentences,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            embeddings=scorer_params["embeddings"],
+            kmeans_params=scorer_params["kmeans_params"],
+            scorer_type=scorer_type,
+            combined_type=combined_type,
+        )
+
+        # Assert
+        assert (
+            queried_sent_ids
+            == expected_random_sent_ids[: scorer_params["query_number"]]
+        )
+
+    def test_call_return_correct_result_with_parallel_lc_ds(
+        self,
+        cm_scorer: BaseScorer,
+        lc_scorer: BaseScorer,
+        ds_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
+    ) -> None:
+        # Arrange
+        scorer_type = "lc_ds"
+        combined_type = "parallel"
+        cm_scorer.predict = MagicMock(return_value=[None])
+        entities = Entities()
+        entities.entities = [None]
+        cm_scorer.get_entities = MagicMock(return_value=entities)
+
+        lc_scorer.score = MagicMock(
+            return_value=np.array([0.09, 0.07, 0.05, 0.03, 0.01])
+        )
+        ds_scorer.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
+        cm_scorer.get_scorers = MagicMock(return_value=(lc_scorer, ds_scorer))
+        # normalized_scores = array([2. , 1.5, 1. , 0.5, 0. ])
+
+        # Act
+        queried_sent_ids = cm_scorer(
+            unlabeled_sentences,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            label_names=scorer_params["label_names"],
+            embeddings=scorer_params["embeddings"],
+            scorer_type=scorer_type,
+            combined_type=combined_type,
+        )
+
+        # Assert
+        assert queried_sent_ids == [0, 1, 2, 3]
+
+    def test_call_return_correct_result_with_parallel_lc_cs(
+        self,
+        cm_scorer: BaseScorer,
+        lc_scorer: BaseScorer,
+        cs_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
+    ) -> None:
+        # Arrange
+        scorer_type = "lc_ds"
+        combined_type = "parallel"
+        cm_scorer.predict = MagicMock(return_value=[None])
+        entities = Entities()
+        entities.entities = [None]
+        cm_scorer.get_entities = MagicMock(return_value=entities)
+
+        lc_scorer.score = MagicMock(
+            return_value=np.array([0.09, 0.07, 0.05, 0.03, 0.01])
+        )
+        cs_scorer.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
+        cm_scorer.get_scorers = MagicMock(return_value=(lc_scorer, cs_scorer))
+        # normalized_scores = array([2. , 1.5, 1. , 0.5, 0. ])
+
+        # Act
+        queried_sent_ids = cm_scorer(
+            unlabeled_sentences,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            label_names=scorer_params["label_names"],
+            embeddings=scorer_params["embeddings"],
+            kmeans_params=scorer_params["kmeans_params"],
+            scorer_type=scorer_type,
+            combined_type=combined_type,
+        )
+
+        # Assert
+        assert queried_sent_ids == [0, 1, 2, 3]
+
+    def test_call_return_correct_result_with_parallel_mnlp_ds(
+        self,
+        cm_scorer: BaseScorer,
+        mnlp_scorer: BaseScorer,
+        ds_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
+    ) -> None:
+        # Arrange
+        scorer_type = "lc_ds"
+        combined_type = "parallel"
+        cm_scorer.predict = MagicMock(return_value=[None])
+        entities = Entities()
+        entities.entities = [None]
+        cm_scorer.get_entities = MagicMock(return_value=entities)
+
+        mnlp_scorer.score = MagicMock(
+            return_value=np.array([-0.09, -0.07, -0.05, -0.03, -0.01])
+        )
+        ds_scorer.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
+        cm_scorer.get_scorers = MagicMock(return_value=(mnlp_scorer, ds_scorer))
+        # normalized_scores = array([2. , 1.5, 1. , 0.5, 0. ])
+
+        # Act
+        queried_sent_ids = cm_scorer(
+            unlabeled_sentences,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            label_names=scorer_params["label_names"],
+            embeddings=scorer_params["embeddings"],
+            scorer_type=scorer_type,
+            combined_type=combined_type,
+        )
+
+        # Assert
+        assert queried_sent_ids == [0, 1, 2, 3]
+
+    def test_call_return_correct_result_with_parallel_mnlp_cs(
+        self,
+        cm_scorer: BaseScorer,
+        mnlp_scorer: BaseScorer,
+        cs_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
+    ) -> None:
+        # Arrange
+        scorer_type = "lc_ds"
+        combined_type = "parallel"
+        cm_scorer.predict = MagicMock(return_value=[None])
+        entities = Entities()
+        entities.entities = [None]
+        cm_scorer.get_entities = MagicMock(return_value=entities)
+
+        mnlp_scorer.score = MagicMock(
+            return_value=np.array([-0.09, -0.07, -0.05, -0.03, -0.01])
+        )
+        cs_scorer.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
+        cm_scorer.get_scorers = MagicMock(return_value=(mnlp_scorer, cs_scorer))
+        # normalized_scores = array([2. , 1.5, 1. , 0.5, 0. ])
+
+        # Act
+        queried_sent_ids = cm_scorer(
+            unlabeled_sentences,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            label_names=scorer_params["label_names"],
+            embeddings=scorer_params["embeddings"],
+            scorer_type=scorer_type,
+            combined_type=combined_type,
+        )
+
+        # Assert
+        assert queried_sent_ids == [0, 1, 2, 3]
