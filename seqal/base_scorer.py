@@ -137,8 +137,3 @@ class BaseScorer:
         sim_mt = numerator / denominator
 
         return sim_mt
-
-    def normalize_score(self):
-        # TODO: This is used for combined scorer
-
-        pass

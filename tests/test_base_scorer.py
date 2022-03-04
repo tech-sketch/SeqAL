@@ -246,10 +246,3 @@ class TestBaseScorer:
         with pytest.raises(RuntimeError):
             # Act
             base_scorer.similarity_matrix(matrix_multiple_var["mat1"], mat2)
-
-    def test_normalize_score(self):
-        # Check input type array
-
-        # Expected output
-
-        pass
