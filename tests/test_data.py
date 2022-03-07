@@ -55,6 +55,18 @@ class TestEntity:
         # Assert
         assert label == "PER"
 
+    def test_text(self) -> None:
+        """Test text property"""
+        # Arrage
+        span = MagicMock(text="Peter")
+        entity = Entity(0, 0, span)
+
+        # Act
+        text = entity.text
+
+        # Assert
+        assert text == "Peter"
+
 
 class TestEntities:
     """Test Entities class"""

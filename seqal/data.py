@@ -31,6 +31,11 @@ class Entity:
         """Get entity label"""
         return self.span.tag
 
+    @property
+    def text(self) -> str:
+        """Get entity text"""
+        return self.span.text
+
 
 class Entities:
     """Entity list"""
