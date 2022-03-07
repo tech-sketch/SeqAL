@@ -464,11 +464,13 @@ class CombinedMultipleScorer(BaseScorer):
 
     @property
     def available_scorer_types(self):
+        """Available scorers"""
         available_scorer_types = ["lc_ds", "lc_cs", "mnlp_ds", "mnlp_cs"]
         return available_scorer_types
 
     @property
     def available_combined_types(self):
+        """Available combined type"""
         available_combined_types = ["series", "parallel"]
         return available_combined_types
 
@@ -516,10 +518,8 @@ class CombinedMultipleScorer(BaseScorer):
         Returns:
             List[int]: Queried sentence ids.
         """
-        self.check_scorer_type(kwargs)
-        self.check_combined_type(kwargs)
-        scorer_type = kwargs["scorer_type"]
-        combined_type = kwargs["combined_type"]
+        scorer_type = self.get_scorer_type(kwargs)
+        combined_type = self.get_combined_type(kwargs)
 
         # Get scorers
         uncertainty_scorer, diversity_scorer = self.get_scorers(scorer_type)
@@ -613,29 +613,38 @@ class CombinedMultipleScorer(BaseScorer):
                 MaxNormLogProbScorer(),
                 ClusterSimilarityScorer(),
             )
+        else:
+            uncertainty_scorer, diversity_scorer = (
+                LeastConfidenceScorer(),
+                DistributeSimilarityScorer(),
+            )
 
         return uncertainty_scorer, diversity_scorer
 
-    def check_scorer_type(self, kwargs: dict) -> bool:
+    def get_scorer_type(self, kwargs: dict) -> bool:
         """Check the scorer type is availabel or not."""
         if "scorer_type" not in kwargs:
-            raise KeyError("scorer_type is not found.")
+            scorer_type = "lc_ds"
+            print("scorer_type is not found. Default use 'lc_ds' scorer type")
+            return scorer_type
 
         scorer_type = kwargs["scorer_type"]
         if scorer_type not in self.available_scorer_types:
             raise NameError(
                 f"scorer_type is not found. scorer_type must be one of {self.available_scorer_types}"
             )
-        return True
+        return scorer_type
 
-    def check_combined_type(self, kwargs: dict) -> bool:
+    def get_combined_type(self, kwargs: dict) -> bool:
         """Check the combined type is availabel or not."""
         if "combined_type" not in kwargs:
-            raise KeyError("combined_type is not found.")
+            combined_type = "parallel"
+            print("combined_type is not found. Default use 'parallel' combined type")
+            return combined_type
 
         combined_type = kwargs["combined_type"]
         if combined_type not in self.available_combined_types:
             raise NameError(
-                f"combined_type is not found. scorer_type must be one of {self.available_combined_types}"
+                f"combined_type is not found. combined_type must be one of {self.available_combined_types}"
             )
-        return True
+        return combined_type

@@ -625,18 +625,27 @@ class TestClusterSimilarityScorer:
 class TestCombinedMultipleScorer:
     """Test CombinedMultipleScorer class"""
 
-    def test_check_scorer_type_return_raise_key_error(
-        self, cm_scorer: BaseScorer
-    ) -> None:
+    def test_get_scorer_type_return_default_value(self, cm_scorer: BaseScorer) -> None:
         # Arrange
-        kwargs = {"label_type": "ner"}
+        kwargs = {}
+
+        # Act
+        scorer_type = cm_scorer.get_scorer_type(kwargs)
 
         # Assert
-        with pytest.raises(KeyError):
-            # Act
-            cm_scorer.check_scorer_type(kwargs)
+        assert scorer_type == "lc_ds"
 
-    def test_check_scorer_type_return_raise_name_error(
+    def test_get_scorer_type_return_normal_value(self, cm_scorer: BaseScorer) -> None:
+        # Arrange
+        kwargs = {"scorer_type": "mnlp_ds"}
+
+        # Act
+        scorer_type = cm_scorer.get_scorer_type(kwargs)
+
+        # Assert
+        assert scorer_type == "mnlp_ds"
+
+    def test_get_scorer_type_return_raise_name_error(
         self, cm_scorer: BaseScorer
     ) -> None:
         # Arrange
@@ -645,32 +654,29 @@ class TestCombinedMultipleScorer:
         # Assert
         with pytest.raises(NameError):
             # Act
-            cm_scorer.check_scorer_type(kwargs)
+            cm_scorer.get_scorer_type(kwargs)
 
-    @pytest.mark.parametrize(
-        "kwargs, expected",
-        [
-            ({"scorer_type": "lc_ds"}, True),
-            ({"scorer_type": "lc_cs"}, True),
-            ({"scorer_type": "mnlp_ds"}, True),
-            ({"scorer_type": "mnlp_cs"}, True),
-        ],
-    )
-    def test_check_scorer_type_return_true(
-        self, cm_scorer: BaseScorer, kwargs: dict, expected: bool
-    ) -> None:
-        assert cm_scorer.check_scorer_type(kwargs) is expected
-
-    def test_check_combined_type_return_raise_key_error(
+    def test_get_combined_type_return_default_value(
         self, cm_scorer: BaseScorer
     ) -> None:
         # Arrange
-        kwargs = {"scorer_type": "lc_ds"}
+        kwargs = {}
+
+        # Act
+        combined_type = cm_scorer.get_combined_type(kwargs)
 
         # Assert
-        with pytest.raises(KeyError):
-            # Act
-            cm_scorer.check_combined_type(kwargs)
+        assert combined_type == "parallel"
+
+    def test_get_combined_type_return_normal_value(self, cm_scorer: BaseScorer) -> None:
+        # Arrange
+        kwargs = {"combined_type": "series"}
+
+        # Act
+        combined_type = cm_scorer.get_combined_type(kwargs)
+
+        # Assert
+        assert combined_type == "series"
 
     def test_check_combined_type_return_raise_name_error(
         self, cm_scorer: BaseScorer
@@ -681,19 +687,7 @@ class TestCombinedMultipleScorer:
         # Assert
         with pytest.raises(NameError):
             # Act
-            cm_scorer.check_combined_type(kwargs)
-
-    @pytest.mark.parametrize(
-        "kwargs, expected",
-        [
-            ({"scorer_type": "lc_ds", "combined_type": "series"}, True),
-            ({"scorer_type": "lc_cs", "combined_type": "parallel"}, True),
-        ],
-    )
-    def test_check_combined_type_return_true(
-        self, cm_scorer: BaseScorer, kwargs: dict, expected: bool
-    ) -> None:
-        assert cm_scorer.check_combined_type(kwargs) is expected
+            cm_scorer.get_combined_type(kwargs)
 
     def test_get_scorers_with_lc_ds(self, cm_scorer: BaseScorer) -> None:
         # Arrange
