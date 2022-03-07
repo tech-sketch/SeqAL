@@ -358,24 +358,6 @@ class TestDistributeSimilarityScorer:
             == expected_random_sent_ids[: scorer_params["query_number"]]
         )
 
-    def test_get_entities_raise_type_error_if_unlabeled_sentences_have_not_been_predicted(
-        self,
-        ds_scorer: BaseScorer,
-        unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
-    ) -> None:
-        """Test get_entities function raise type_error if unlabeled sentences have not been predicted"""
-        # Arrange
-        embeddings = scorer_params["embeddings"]
-        embeddings.embed = MagicMock(return_value=None)
-
-        # Assert
-        with pytest.raises(TypeError):
-            # Act
-            ds_scorer.get_entities(
-                unlabeled_sentences, embeddings, scorer_params["tag_type"]
-            )
-
     def test_calculate_diversity(
         self,
         ds_scorer: BaseScorer,
@@ -522,24 +504,6 @@ class TestClusterSimilarityScorer:
             queried_sent_ids
             == expected_random_sent_ids[: scorer_params["query_number"]]
         )
-
-    def test_get_entities_raise_type_error_if_unlabeled_sentences_have_not_been_predicted(
-        self,
-        cs_scorer: BaseScorer,
-        unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
-    ) -> None:
-        """Test get_entities function raise type_error if unlabeled sentences have not been predicted"""
-        # Arrange
-        embeddings = scorer_params["embeddings"]
-        embeddings.embed = MagicMock(return_value=None)
-
-        # Assert
-        with pytest.raises(TypeError):
-            # Act
-            cs_scorer.get_entities(
-                unlabeled_sentences, embeddings, scorer_params["tag_type"]
-            )
 
     def test_kmeans_raise_key_error_if_n_cluster_param_is_not_found(
         self, cs_scorer: BaseScorer, unlabeled_sentences: List[Sentence]

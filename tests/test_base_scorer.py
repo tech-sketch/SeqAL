@@ -1,8 +1,11 @@
 from pathlib import Path
+from typing import List
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 import torch
+from flair.data import Sentence
 from torch.nn.functional import cosine_similarity
 
 from seqal.base_scorer import BaseScorer
@@ -246,3 +249,38 @@ class TestBaseScorer:
         with pytest.raises(RuntimeError):
             # Act
             base_scorer.similarity_matrix(matrix_multiple_var["mat1"], mat2)
+
+    def test_get_entities_raise_type_error_if_unlabeled_sentences_have_not_been_predicted(
+        self,
+        base_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+    ) -> None:
+        """Test get_entities function raise type_error if unlabeled sentences have not been predicted"""
+        # Arrange
+        tag_type = "ner"
+        embeddings = MagicMock()
+        embeddings.embed = MagicMock(return_value=None)
+
+        # Assert
+        with pytest.raises(TypeError):
+            # Act
+            base_scorer.get_entities(unlabeled_sentences, embeddings, tag_type)
+
+    def test_get_entity_return_correct_result(self, base_scorer: BaseScorer) -> None:
+        """Test get_entities function return correct result if sentence contains entities"""
+        # Arrange
+        tag_type = "ner"
+        sentence = Sentence("Peter is working")
+        sentence[0].add_tag(tag_type, "PER")
+        sentences = [sentence]
+        embeddings = MagicMock()
+        embeddings.embed = MagicMock(return_value=None)
+
+        # Act
+        entities = base_scorer.get_entities(sentences, embeddings, tag_type)
+
+        # Assert
+        assert entities.entities[0].id == 0
+        assert entities.entities[0].sent_id == 0
+        assert entities.entities[0].span.text == "Peter"
+        assert entities.entities[0].label == "PER"

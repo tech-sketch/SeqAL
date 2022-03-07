@@ -4,7 +4,6 @@ from typing import Dict, List, Tuple
 import numpy as np
 import torch
 from flair.data import Sentence
-from flair.embeddings import Embeddings
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import MinMaxScaler
 
@@ -213,29 +212,6 @@ class DistributeSimilarityScorer(BaseScorer):
             sentence_scores[sent_id] = score
 
         return np.array(sentence_scores)
-
-    def get_entities(
-        self, sentences: List[Sentence], embeddings: Embeddings, tag_type: str
-    ) -> Entities:
-        """Get entity list of each class"""
-        entities = Entities()
-        for sent_id, sent in enumerate(sentences):
-            labeled_entities = sent.get_spans(tag_type)
-            if labeled_entities == []:  # Skip non-entity sentence
-                continue
-            _ = embeddings.embed(sent)  # Add embeddings internal
-            for entity_id, span in enumerate(labeled_entities):
-                entity = Entity(entity_id, sent_id, span)
-                entities.add(entity)
-
-        if not entities.entities:
-            token = sentences[0][0]
-            label = token.get_tag(tag_type)
-            if label.value == "" and label.score == 1:
-                raise TypeError(
-                    "Entities are empty. Sentences have not been predicted."
-                )
-        return entities
 
     def sentence_diversities(self, entities: Entities) -> Dict[int, float]:
         """Get diversity score of each sentence"""
@@ -474,29 +450,6 @@ class ClusterSimilarityScorer(BaseScorer):
 
         return cluster_centers_matrix, entity_cluster_nums
 
-    def get_entities(
-        self, sentences: List[Sentence], embeddings: Embeddings, tag_type: str
-    ) -> Entities:
-        """Get entity list of each class"""
-        entities = Entities()
-        for sent_id, sent in enumerate(sentences):
-            labeled_entities = sent.get_spans(tag_type)
-            if labeled_entities == []:  # Skip non-entity sentence
-                continue
-            _ = embeddings.embed(sent)  # Add embeddings internal
-            for entity_id, span in enumerate(labeled_entities):
-                entity = Entity(entity_id, sent_id, span)
-                entities.add(entity)
-
-        if not entities.entities:
-            token = sentences[0][0]
-            label = token.get_tag(tag_type)
-            if label.value == "" and label.score == 1:
-                raise TypeError(
-                    "Entities are empty. Sentences have not been predicted."
-                )
-        return entities
-
 
 class CombinedMultipleScorer(BaseScorer):
     """Multiple similarity scorer
@@ -686,26 +639,3 @@ class CombinedMultipleScorer(BaseScorer):
                 f"combined_type is not found. scorer_type must be one of {self.available_combined_types}"
             )
         return True
-
-    def get_entities(
-        self, sentences: List[Sentence], embeddings: Embeddings, tag_type: str
-    ) -> Entities:
-        """Get entity list of each class"""
-        entities = Entities()
-        for sent_id, sent in enumerate(sentences):
-            labeled_entities = sent.get_spans(tag_type)
-            if labeled_entities == []:  # Skip non-entity sentence
-                continue
-            _ = embeddings.embed(sent)  # Add embeddings internal
-            for entity_id, span in enumerate(labeled_entities):
-                entity = Entity(entity_id, sent_id, span)
-                entities.add(entity)
-
-        if not entities.entities:
-            token = sentences[0][0]
-            label = token.get_tag(tag_type)
-            if label.value == "" and label.score == 1:
-                raise TypeError(
-                    "Entities are empty. Sentences have not been predicted."
-                )
-        return entities
