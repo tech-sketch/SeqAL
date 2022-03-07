@@ -4,7 +4,9 @@ from typing import List
 import numpy as np
 import torch
 from flair.data import Sentence
+from flair.embeddings import Embeddings
 
+from seqal.data import Entities, Entity
 from seqal.tagger import SequenceTagger
 
 
@@ -138,7 +140,25 @@ class BaseScorer:
 
         return sim_mt
 
-    def normalize_score(self):
-        # TODO: This is used for combined scorer
+    def get_entities(
+        self, sentences: List[Sentence], embeddings: Embeddings, tag_type: str
+    ) -> Entities:
+        """Get entity list of each class"""
+        entities = Entities()
+        for sent_id, sent in enumerate(sentences):
+            labeled_entities = sent.get_spans(tag_type)
+            if labeled_entities == []:  # Skip non-entity sentence
+                continue
+            _ = embeddings.embed(sent)  # Add embeddings internal
+            for entity_id, span in enumerate(labeled_entities):
+                entity = Entity(entity_id, sent_id, span)
+                entities.add(entity)
 
-        pass
+        if not entities.entities:
+            token = sentences[0][0]
+            label = token.get_tag(tag_type)
+            if label.value == "" and label.score == 1:
+                raise TypeError(
+                    "Entities are empty. Sentences have not been predicted."
+                )
+        return entities
