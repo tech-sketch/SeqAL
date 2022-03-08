@@ -1,6 +1,6 @@
 import math
 import random
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -93,7 +93,12 @@ class LeastConfidenceScorer(BaseScorer):
         )
         return queried_sent_ids
 
-    def score(self, sentences: List[Sentence], tagger: SequenceTagger) -> np.ndarray:
+    def score(
+        self,
+        sentences: List[Sentence],
+        tagger: SequenceTagger,
+        kwargs: Optional[dict] = None,
+    ) -> np.ndarray:
         """Calculate score for each sentence"""
         log_probs = tagger.log_probability(sentences)
         scores = 1 - np.exp(log_probs)
@@ -143,7 +148,12 @@ class MaxNormLogProbScorer(BaseScorer):
         )
         return queried_sent_ids
 
-    def score(self, sentences: List[Sentence], tagger: SequenceTagger) -> np.ndarray:
+    def score(
+        self,
+        sentences: List[Sentence],
+        tagger: SequenceTagger,
+        kwargs: Optional[dict] = None,
+    ) -> np.ndarray:
         """Calculate score for each sentence"""
         log_probs = tagger.log_probability(sentences)
         lengths = np.array([len(sent) for sent in sentences])
@@ -202,7 +212,12 @@ class StringNGramScorer(BaseScorer):
         )
         return queried_sent_ids
 
-    def score(self, sentences: List[Sentence], entities: Entities) -> np.ndarray:
+    def score(
+        self,
+        sentences: List[Sentence],
+        entities: Entities,
+        kwargs: Optional[dict] = None,
+    ) -> np.ndarray:
         """Calculate score for each sentence"""
         sentence_scores = [0] * len(sentences)
         diversities_per_sent = self.sentence_diversities(entities)
@@ -379,7 +394,12 @@ class DistributeSimilarityScorer(BaseScorer):
         )
         return queried_sent_ids
 
-    def score(self, sentences: List[Sentence], entities: Entities) -> np.ndarray:
+    def score(
+        self,
+        sentences: List[Sentence],
+        entities: Entities,
+        kwargs: Optional[dict] = None,
+    ) -> np.ndarray:
         """Calculate score for each sentence"""
         sentence_scores = [0] * len(sentences)
         diversities_per_sent = self.sentence_diversities(entities)
@@ -526,7 +546,6 @@ class ClusterSimilarityScorer(BaseScorer):
         """
         tagger = kwargs["tagger"]
         embeddings = kwargs["embeddings"]
-        kmeans_params = kwargs["kmeans_params"]
         self.predict(sentences, tagger)
         entities = self.get_entities(sentences, embeddings, tag_type)
 
@@ -535,7 +554,7 @@ class ClusterSimilarityScorer(BaseScorer):
             random_scorer = RandomScorer()
             return random_scorer(sentences, tag_type, query_number, token_based)
 
-        scores = self.score(sentences, entities, kmeans_params)
+        scores = self.score(sentences, entities, kwargs)
         sorted_sent_ids = self.sort(scores, order="ascend")
         queried_sent_ids = self.query(
             sentences, sorted_sent_ids, query_number, token_based
@@ -543,9 +562,14 @@ class ClusterSimilarityScorer(BaseScorer):
         return queried_sent_ids
 
     def score(
-        self, sentences: List[Sentence], entities: Entities, kmeans_params: dict
+        self,
+        sentences: List[Sentence],
+        entities: Entities,
+        kwargs: Optional[dict] = None,
     ) -> np.ndarray:
         """Calculate score for each sentence"""
+        kmeans_params = self.get_kmeans_params(kwargs)
+
         sentence_scores = [0] * len(sentences)
         cluster_centers_matrix, entity_cluster_nums = self.kmeans(
             entities.entities, kmeans_params
@@ -558,6 +582,19 @@ class ClusterSimilarityScorer(BaseScorer):
             sentence_scores[sent_id] = score
 
         return np.array(sentence_scores)
+
+    def get_kmeans_params(self, kwargs: dict) -> bool:
+        """Check the scorer type is availabel or not."""
+        if "kmeans_params" not in kwargs or "n_clusters" not in kwargs["kmeans_params"]:
+            output = (
+                "You have to provide 'kmeans_params' parameter to use ClusterSimilarityScorer."
+                " 'kmeans_params' must contain 'n_clusters', which means number of label types in dataset except 'O'."
+                " For example, kmeans_params={'n_clusters': 8, 'n_init': 10, 'random_state': 0}}"
+            )
+            raise NameError(output)
+
+        kmeans_params = kwargs["kmeans_params"]
+        return kmeans_params
 
     def sentence_diversities(
         self, entities: Entities, cluster_centers_matrix: np.ndarray
@@ -719,8 +756,6 @@ class CombinedMultipleScorer(BaseScorer):
         # The combine_type == "parallel"
         tagger = kwargs["tagger"]
         embeddings = kwargs["embeddings"]
-        if "kmeans_params" in kwargs:
-            kmeans_params = kwargs["kmeans_params"]
 
         self.predict(sentences, tagger)
         entities = self.get_entities(sentences, embeddings, tag_type)
@@ -732,11 +767,7 @@ class CombinedMultipleScorer(BaseScorer):
 
         # Calculate scores
         uncertainty_scores = uncertainty_scorer.score(sentences, tagger)
-        if "kmeans_params" in kwargs:
-            diversity_scores = diversity_scorer.score(
-                sentences, entities, kmeans_params
-            )
-        diversity_scores = diversity_scorer.score(sentences, entities)
+        diversity_scores = diversity_scorer.score(sentences, entities, kwargs)
 
         # Normalize scores
         if "lc" in scorer_type:  # reverse lc order for ascend setup below
