@@ -44,25 +44,49 @@ Install this via pip (or your favourite package manager):
 
 ## Usage
 
-To understand how the code runs the active learning cycle, we introduce the active learning cycle first.
+To understand what SeqAL can do, we first introduce the pool-based active learning cycle.
 
 ![al_cycle](docs/source/_static/al_cycle.png)
 
-- Step 0: Create a small number of training data (seed data)
+- Step 0: Prepare seed data (a small number of labeled data used for training)
 - Step 1: Train the model with seed data
   - Step 2: Predict unlabeled data with the trained model
   - Step 3: Query informative samples based on predictions
   - Step 4: Annotator (Oracle) annotate the selected samples
-  - Step 5: Input the new labeled samples to training data
+  - Step 5: Input the new labeled samples to labeled dataset
   - Step 6: Retrain model
-- Repeat step2~step6 until the f1 score of the model beyond the threshold or annotation budget is no left. 
+- Repeat step2~step6 until the f1 score of the model beyond the threshold or annotation budget is no left
+
+SeqAL can cover all steps except step 0 and step 4. Below is a simple script to demonstrate how to use SeqAL to implement the work flow. Besides, you can see [notebooks](examples) for more detail.
 
 ```python
 from seqal.active_learner import ActiveLearner
 from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import add_tags
+from seqal.datasets import ColumnCorpus, ColumnDataset
 from xxxx import annotate_by_human  # User need to prepare this method
 
+
+# Step 0: Preparation
+## Prepare Seed data, valid data, and test data
+columns = {0: "text", 1: "pos", 2: "syntactic_chunk", 3: "ner"}
+data_folder = "./datasets/conll"
+corpus = ColumnCorpus(
+    data_folder,
+    columns,
+    train_file="train_seed.txt",
+    dev_file="valid.txt",
+    test_file="test.txt",
+)
+## Labeled dataset
+labeled_dataset = [s for s in corpus.train.sentences]
+## Unlabeled data pool
+pool_file = data_folder + "/train_data_pool.txt"
+data_pool = ColumnDataset(pool_file, pool_columns)
+unlabeled_sentences = data_pool.sentences
+
+
+## Initilize ActiveLearner
 learner = ActiveLearner(
   tagger_params=tagger_params,   # Model parameters (hidden size, embedding, etc.)
   query_strategy=LeastConfidenceSampler(),  # Query algorithm
@@ -99,7 +123,7 @@ new_labels = annotate_by_human(query_samples)
 #   }
 # ]
 
-# Step 4: Convert data to Sentence class
+## Convert data to Sentence class
 new_labeled_samples = add_tags(new_labels)
 
 # Step 5&6: Add new labeled samples to training and retrain model
