@@ -9,64 +9,64 @@ import torch
 from flair.data import Sentence
 from sklearn.preprocessing import MinMaxScaler
 
-from seqal.base_scorer import BaseScorer
+from seqal.base_sampler import BaseSampler
 from seqal.data import Entities, Entity
-from seqal.scorers import (
-    ClusterSimilarityScorer,
-    CombinedMultipleScorer,
-    DistributeSimilarityScorer,
-    LeastConfidenceScorer,
-    MaxNormLogProbScorer,
-    RandomScorer,
-    StringNGramScorer,
+from seqal.samplers import (
+    ClusterSimilaritySampler,
+    CombinedMultipleSampler,
+    DistributeSimilaritySampler,
+    LeastConfidenceSampler,
+    MaxNormLogProbSampler,
+    RandomSampler,
+    StringNGramSampler,
 )
 
 
 @pytest.fixture()
-def lc_scorer(scope="function"):
-    """LeastConfidenceScorer instance"""
-    lc_scorer = LeastConfidenceScorer()
-    return lc_scorer
+def lc_sampler(scope="function"):
+    """LeastConfidenceSampler instance"""
+    lc_sampler = LeastConfidenceSampler()
+    return lc_sampler
 
 
 @pytest.fixture()
-def mnlp_scorer(scope="function"):
-    """MaxNormLogProbScorer instance"""
-    mnlp_scorer = MaxNormLogProbScorer()
-    return mnlp_scorer
+def mnlp_sampler(scope="function"):
+    """MaxNormLogProbSampler instance"""
+    mnlp_sampler = MaxNormLogProbSampler()
+    return mnlp_sampler
 
 
 @pytest.fixture()
-def sn_scorer(scope="function"):
-    """StringNGramScorer instance"""
-    sn_scorer = StringNGramScorer()
-    return sn_scorer
+def sn_sampler(scope="function"):
+    """StringNGramSampler instance"""
+    sn_sampler = StringNGramSampler()
+    return sn_sampler
 
 
 @pytest.fixture()
-def ds_scorer(scope="function"):
-    """DistributeSimilarityScorer instance"""
-    ds_scorer = DistributeSimilarityScorer()
-    return ds_scorer
+def ds_sampler(scope="function"):
+    """DistributeSimilaritySampler instance"""
+    ds_sampler = DistributeSimilaritySampler()
+    return ds_sampler
 
 
 @pytest.fixture()
-def cs_scorer(scope="function"):
-    """ClusterSimilarityScorer instance"""
-    cs_scorer = ClusterSimilarityScorer()
-    return cs_scorer
+def cs_sampler(scope="function"):
+    """ClusterSimilaritySampler instance"""
+    cs_sampler = ClusterSimilaritySampler()
+    return cs_sampler
 
 
 @pytest.fixture()
-def cm_scorer(scope="function"):
-    """CombinedMultipleScorer instance"""
-    cm_scorer = CombinedMultipleScorer()
-    return cm_scorer
+def cm_sampler(scope="function"):
+    """CombinedMultipleSampler instance"""
+    cm_sampler = CombinedMultipleSampler()
+    return cm_sampler
 
 
 @pytest.fixture()
-def scorer_params(scope="function"):
-    """Common parameters for scorer test"""
+def sampler_params(scope="function"):
+    """Common parameters for sampler test"""
     params = {
         "tag_type": "ner",
         "query_number": 4,
@@ -81,7 +81,7 @@ def scorer_params(scope="function"):
 
 @pytest.fixture()
 def entities4(scope="function"):
-    """4 entities for ds_scorer test"""
+    """4 entities for ds_sampler test"""
     e0 = MagicMock(
         id=0, sent_id=0, label="PER", text="Peter", vector=torch.tensor([-0.1, 0.1])
     )
@@ -96,6 +96,29 @@ def entities4(scope="function"):
     )
 
     return [e0, e1, e2, e3]
+
+
+@pytest.fixture()
+def trigram_examples(scope="function"):
+    """Trigram examples for test"""
+    trigram_examples = {
+        "Peter": ["$$P1", "$Pe1", "Pet1", "ete1", "ter1", "er$1", "r$$1"],
+        "prepress": [
+            "$$p1",
+            "$pr1",
+            "pre1",
+            "rep1",
+            "epr1",
+            "pre2",
+            "res1",
+            "ess1",
+            "ss$1",
+            "s$$1",
+        ],
+        "Lester": ["$$L1", "$Le1", "Les1", "est1", "ste1", "ter1", "er$1", "r$$1"],
+    }
+
+    return trigram_examples
 
 
 @pytest.fixture()
@@ -137,9 +160,9 @@ def similarity_matrix_per_label(scope="function"):
 
 
 @pytest.fixture()
-def similarity_matrix_per_label_cosine_n_gram(scope="function"):
+def similarity_matrix_per_label_cosine_trigram(scope="function"):
     """Similarity matrix for each label"""
-    similarity_matrix_per_label_cosine_n_gram = {
+    similarity_matrix_per_label_cosine_trigram = {
         "PER": np.array(
             [
                 [1.0, 0.400891862869, 0.0000],
@@ -150,7 +173,7 @@ def similarity_matrix_per_label_cosine_n_gram(scope="function"):
         "LOC": np.array([[1]]),
     }
 
-    return similarity_matrix_per_label_cosine_n_gram
+    return similarity_matrix_per_label_cosine_trigram
 
 
 @pytest.fixture()
@@ -166,7 +189,7 @@ def entity_id_map(scope="function"):
 
 @pytest.fixture()
 def entities6(scope="function"):
-    """4 entities for ds_scorer test"""
+    """4 entities for ds_sampler test"""
     e0 = MagicMock(cluster=1, vector=torch.tensor([1, 2]))
     e1 = MagicMock(cluster=1, vector=torch.tensor([1, 4]))
     e2 = MagicMock(cluster=1, vector=torch.tensor([1, 0]))
@@ -193,17 +216,17 @@ def compare_approximate(dict1, dict2):
     )
 
 
-class TestRandomScorer:
-    """Test RandomScorer class"""
+class TestRandomSampler:
+    """Test RandomSampler class"""
 
     def test_call_return_random_sent_ids(
         self,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         """Test call function return random sentence ids if entities is empty"""
         # Arrange
-        random_scorer = RandomScorer()
+        random_sampler = RandomSampler()
 
         random.seed(0)
         sent_ids = list(range(len(unlabeled_sentences)))
@@ -211,28 +234,28 @@ class TestRandomScorer:
 
         # Act
 
-        queried_sent_ids = random_scorer(
+        queried_sent_ids = random_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            label_names=scorer_params["label_names"],
-            embeddings=scorer_params["embeddings"],
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            label_names=sampler_params["label_names"],
+            embeddings=sampler_params["embeddings"],
         )
 
         # Assert
         assert (
             queried_sent_ids
-            == expected_random_sent_ids[: scorer_params["query_number"]]
+            == expected_random_sent_ids[: sampler_params["query_number"]]
         )
 
 
-class TestLeastConfidenceScorer:
-    """Test LeastConfidenceScorer class"""
+class TestLeastConfidenceSampler:
+    """Test LeastConfidenceSampler class"""
 
     def test_score_return_correct_result_if_log_probability_runs_after_prediction(
-        self, lc_scorer: BaseScorer, predicted_sentences: List[Sentence]
+        self, lc_sampler: BaseSampler, predicted_sentences: List[Sentence]
     ) -> None:
         """Test score function return correct result if log_probability runs after prediction"""
         # Arrange
@@ -244,44 +267,44 @@ class TestLeastConfidenceScorer:
         expected = 1 - np.exp(log_probs)
 
         # Act
-        scores = lc_scorer.score(predicted_sentences, tagger=tagger)
+        scores = lc_sampler.score(predicted_sentences, tagger=tagger)
 
         # Assert
         assert np.array_equal(scores, expected) is True
 
     def test_call_return_correct_result_if_sampling_workflow_works_fine(
         self,
-        lc_scorer: BaseScorer,
+        lc_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ):
         """Test call function return correct result"""
         # Arrange
-        lc_scorer.predict = MagicMock(return_value=None)
-        lc_scorer.score = MagicMock(
+        lc_sampler.predict = MagicMock(return_value=None)
+        lc_sampler.score = MagicMock(
             return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05])
         )
 
         # Act
-        queried_sent_ids = lc_scorer(
+        queried_sent_ids = lc_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            embeddings=scorer_params["embeddings"],
-            label_names=scorer_params["label_names"],
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            embeddings=sampler_params["embeddings"],
+            label_names=sampler_params["label_names"],
         )
 
         # Assert
         assert queried_sent_ids == [0, 1, 2, 3]
 
 
-class TestMaxNormLogProbScorer:
-    """Test MaxNormLogProbScorer class"""
+class TestMaxNormLogProbSampler:
+    """Test MaxNormLogProbSampler class"""
 
     def test_score_return_correct_result_if_log_probability_runs_after_prediction(
-        self, mnlp_scorer: BaseScorer, predicted_sentences: List[Sentence]
+        self, mnlp_sampler: BaseSampler, predicted_sentences: List[Sentence]
     ) -> None:
         """Test score function return correct result if log_probability runs after prediction"""
         # Arrange
@@ -294,67 +317,67 @@ class TestMaxNormLogProbScorer:
         expected = log_probs / lengths
 
         # Act
-        scores = mnlp_scorer.score(predicted_sentences, tagger=tagger)
+        scores = mnlp_sampler.score(predicted_sentences, tagger=tagger)
 
         # Assert
         assert np.array_equal(scores, expected) is True
 
     def test_call_return_correct_result_if_sampling_workflow_works_fine(
         self,
-        mnlp_scorer: BaseScorer,
+        mnlp_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ):
         """Test call function return correct result"""
         # Arrange
-        mnlp_scorer.predict = MagicMock(return_value=None)
+        mnlp_sampler.predict = MagicMock(return_value=None)
         returned_norm_log_probs = np.array(
             [-0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, -0.05]
         )
-        mnlp_scorer.score = MagicMock(return_value=returned_norm_log_probs)
+        mnlp_sampler.score = MagicMock(return_value=returned_norm_log_probs)
 
         # Act
-        queried_sent_ids = mnlp_scorer(
+        queried_sent_ids = mnlp_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            label_names=scorer_params["label_names"],
-            embeddings=scorer_params["embeddings"],
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            label_names=sampler_params["label_names"],
+            embeddings=sampler_params["embeddings"],
         )
 
         # Assert
         assert queried_sent_ids == [0, 1, 2, 3]
 
 
-class TestStringNGramScorer:
-    """Test StringNGramScorer class"""
+class TestStringNGramSampler:
+    """Test StringNGramSampler class"""
 
     def test_call_return_correct_result(
         self,
-        sn_scorer: BaseScorer,
+        sn_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         """Test call function return correct result"""
         # Arrange
         entities = Entities()
         entities.entities = [None]
-        sn_scorer.get_entities = MagicMock(return_value=entities)
-        sn_scorer.score = MagicMock(
+        sn_sampler.get_entities = MagicMock(return_value=entities)
+        sn_sampler.score = MagicMock(
             return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05])
         )
 
         # Act
-        queried_sent_ids = sn_scorer(
+        queried_sent_ids = sn_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            label_names=scorer_params["label_names"],
-            embeddings=scorer_params["embeddings"],
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            label_names=sampler_params["label_names"],
+            embeddings=sampler_params["embeddings"],
         )
 
         # Assert
@@ -362,62 +385,69 @@ class TestStringNGramScorer:
 
     def test_call_return_random_sent_ids_if_entities_is_empty(
         self,
-        sn_scorer: BaseScorer,
+        sn_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         """Test call function return random sentence ids if entities is empty"""
         # Arrange
         entities = Entities()
-        sn_scorer.get_entities = MagicMock(return_value=entities)
+        sn_sampler.get_entities = MagicMock(return_value=entities)
 
         random.seed(0)
         sent_ids = list(range(len(unlabeled_sentences)))
         expected_random_sent_ids = random.sample(sent_ids, len(sent_ids))
 
         # Act
-        queried_sent_ids = sn_scorer(
+        queried_sent_ids = sn_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            label_names=scorer_params["label_names"],
-            embeddings=scorer_params["embeddings"],
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            label_names=sampler_params["label_names"],
+            embeddings=sampler_params["embeddings"],
         )
 
         # Assert
         assert (
             queried_sent_ids
-            == expected_random_sent_ids[: scorer_params["query_number"]]
+            == expected_random_sent_ids[: sampler_params["query_number"]]
         )
 
-    def test_n_gram(self, sn_scorer: BaseScorer, entities4: List[Entity]) -> None:
-        """Test n_gram function"""
+    def test_trigram(self, sn_sampler: BaseSampler, trigram_examples: dict) -> None:
+        """Test trigram function"""
+        # Arrange
+        entity = MagicMock(text="prepress")
+
         # Act
-        n_grams = sn_scorer.n_gram(entities4[0])
+        trigrams = sn_sampler.trigram(entity)
 
         # Assert
-        assert n_grams == ["$$P", "$Pe", "Pet", "ete", "ter", "er$", "r$$"]
+        assert trigrams == trigram_examples["prepress"]
 
-    def n_gram_cosine_similarity(self, sn_scorer: BaseScorer) -> None:
-        """Test n_gram_cosine_similarity function"""
+    def trigram_cosine_similarity(
+        self, sn_sampler: BaseSampler, trigram_examples: dict
+    ) -> None:
+        """Test trigram_cosine_similarity function"""
         # Arrange
-        entity_n_gram1 = ["$$P", "$Pe", "Pet", "ete", "ter", "er$", "r$$"]
-        entity_n_gram2 = ["$$L", "$Le", "Les", "est", "ste", "ter", "er$", "r$$"]
-        expected = len(set(entity_n_gram1) & set(entity_n_gram2)) / math.sqrt(
-            len(entity_n_gram1) * len(entity_n_gram2)
+        entity_trigram1 = trigram_examples["Peter"]
+        entity_trigram2 = trigram_examples["Lester"]
+        expected = len(set(entity_trigram1) & set(entity_trigram2)) / math.sqrt(
+            len(entity_trigram1) * len(entity_trigram2)
         )
 
         # Act
-        similarity = sn_scorer.n_gram_cosine_similarity(entity_n_gram1, entity_n_gram2)
+        similarity = sn_sampler.trigram_cosine_similarity(
+            entity_trigram1, entity_trigram2
+        )
 
         # Assert
         assert expected == similarity
 
     def test_calculate_diversity(
         self,
-        sn_scorer: BaseScorer,
+        sn_sampler: BaseSampler,
         entities_per_sentence: dict,
         entity_id_map: dict,
         similarity_matrix_per_label: dict,
@@ -427,7 +457,7 @@ class TestStringNGramScorer:
         expected = {0: 0, 1: -0.5}
 
         # Act
-        sentence_scores = sn_scorer.calculate_diversity(
+        sentence_scores = sn_sampler.calculate_diversity(
             entities_per_sentence, entity_id_map, similarity_matrix_per_label
         )
 
@@ -435,7 +465,7 @@ class TestStringNGramScorer:
         assert sentence_scores == expected
 
     def test_sentence_diversity(
-        self, sn_scorer: BaseScorer, entities4: List[Entity]
+        self, sn_sampler: BaseSampler, entities4: List[Entity]
     ) -> None:
         """Test sentence_diversity function"""
         # Arrange
@@ -444,32 +474,32 @@ class TestStringNGramScorer:
         expected = {0: 0.5, 1: 0}
 
         # Act
-        sentence_scores = sn_scorer.sentence_diversities(entities)
+        sentence_scores = sn_sampler.sentence_diversities(entities)
 
         # Assert
         assert compare_approximate(sentence_scores, expected) is True
 
     def test_similarity_matrix_per_label(
         self,
-        sn_scorer: BaseScorer,
+        sn_sampler: BaseSampler,
         entities_per_label: dict,
-        similarity_matrix_per_label_cosine_n_gram: Dict[str, torch.Tensor],
+        similarity_matrix_per_label_cosine_trigram: Dict[str, torch.Tensor],
     ) -> None:
         """Test similarity_matrix_per_label function"""
         # Act
-        sentence_scores = sn_scorer.similarity_matrix_per_label(entities_per_label)
+        sentence_scores = sn_sampler.similarity_matrix_per_label(entities_per_label)
 
         # Assert
         assert (
             compare_approximate(
-                sentence_scores, similarity_matrix_per_label_cosine_n_gram
+                sentence_scores, similarity_matrix_per_label_cosine_trigram
             )
             is True
         )
 
     def test_get_entity_id_map(
         self,
-        sn_scorer: BaseScorer,
+        sn_sampler: BaseSampler,
         entities_per_sentence: dict,
         entities_per_label: dict,
         entity_id_map: dict,
@@ -482,54 +512,54 @@ class TestStringNGramScorer:
         )
 
         # Act
-        entity_id_map_result = sn_scorer.get_entity_id_map(
+        entity_id_map_result = sn_sampler.get_entity_id_map(
             entities_per_label, sentence_count, max_entity_count
         )
 
         # Assert
         assert compare_exact(entity_id_map_result, entity_id_map) is True
 
-    def test_score(self, sn_scorer: BaseScorer) -> None:
+    def test_score(self, sn_sampler: BaseSampler) -> None:
         """Test score function"""
         # Arrange
         sents = [0, 1]
         entities = Entities()
-        sn_scorer.sentence_diversities = MagicMock(return_value={0: 0, 1: -0.5})
+        sn_sampler.sentence_diversities = MagicMock(return_value={0: 0, 1: -0.5})
 
         # Act
-        sentence_scores = sn_scorer.score(sents, entities)
+        sentence_scores = sn_sampler.score(sents, entities)
 
         # Assert
         assert np.array_equal(sentence_scores, np.array([0, -0.5]))
 
 
-class TestDistributeSimilarityScorer:
-    """Test DistributeSimilarityScorer class"""
+class TestDistributeSimilaritySampler:
+    """Test DistributeSimilaritySampler class"""
 
     def test_call_return_correct_result(
         self,
-        ds_scorer: BaseScorer,
+        ds_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         """Test call function return correct result"""
         # Arrange
         entities = Entities()
         entities.entities = [None]
-        ds_scorer.get_entities = MagicMock(return_value=entities)
-        ds_scorer.score = MagicMock(
+        ds_sampler.get_entities = MagicMock(return_value=entities)
+        ds_sampler.score = MagicMock(
             return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05])
         )
 
         # Act
-        queried_sent_ids = ds_scorer(
+        queried_sent_ids = ds_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            label_names=scorer_params["label_names"],
-            embeddings=scorer_params["embeddings"],
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            label_names=sampler_params["label_names"],
+            embeddings=sampler_params["embeddings"],
         )
 
         # Assert
@@ -537,39 +567,39 @@ class TestDistributeSimilarityScorer:
 
     def test_call_return_random_sent_ids_if_entities_is_empty(
         self,
-        ds_scorer: BaseScorer,
+        ds_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         """Test call function return random sentence ids if entities is empty"""
         # Arrange
         entities = Entities()
-        ds_scorer.get_entities = MagicMock(return_value=entities)
+        ds_sampler.get_entities = MagicMock(return_value=entities)
 
         random.seed(0)
         sent_ids = list(range(len(unlabeled_sentences)))
         expected_random_sent_ids = random.sample(sent_ids, len(sent_ids))
 
         # Act
-        queried_sent_ids = ds_scorer(
+        queried_sent_ids = ds_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            label_names=scorer_params["label_names"],
-            embeddings=scorer_params["embeddings"],
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            label_names=sampler_params["label_names"],
+            embeddings=sampler_params["embeddings"],
         )
 
         # Assert
         assert (
             queried_sent_ids
-            == expected_random_sent_ids[: scorer_params["query_number"]]
+            == expected_random_sent_ids[: sampler_params["query_number"]]
         )
 
     def test_calculate_diversity(
         self,
-        ds_scorer: BaseScorer,
+        ds_sampler: BaseSampler,
         entities_per_sentence: dict,
         entity_id_map: dict,
         similarity_matrix_per_label: dict,
@@ -579,7 +609,7 @@ class TestDistributeSimilarityScorer:
         expected = {0: 0, 1: -0.5}
 
         # Act
-        sentence_scores = ds_scorer.calculate_diversity(
+        sentence_scores = ds_sampler.calculate_diversity(
             entities_per_sentence, entity_id_map, similarity_matrix_per_label
         )
 
@@ -587,7 +617,7 @@ class TestDistributeSimilarityScorer:
         assert sentence_scores == expected
 
     def test_sentence_diversity(
-        self, ds_scorer: BaseScorer, entities4: List[Entity]
+        self, ds_sampler: BaseSampler, entities4: List[Entity]
     ) -> None:
         """Test sentence_diversity function"""
         # Arrange
@@ -596,27 +626,27 @@ class TestDistributeSimilarityScorer:
         expected = {0: 0, 1: -0.5}
 
         # Act
-        sentence_scores = ds_scorer.sentence_diversities(entities)
+        sentence_scores = ds_sampler.sentence_diversities(entities)
 
         # Assert
         assert compare_approximate(sentence_scores, expected) is True
 
     def test_similarity_matrix_per_label(
         self,
-        ds_scorer: BaseScorer,
+        ds_sampler: BaseSampler,
         entities_per_label: dict,
         similarity_matrix_per_label: Dict[str, torch.Tensor],
     ) -> None:
         """Test similarity_matrix_per_label function"""
         # Act
-        sentence_scores = ds_scorer.similarity_matrix_per_label(entities_per_label)
+        sentence_scores = ds_sampler.similarity_matrix_per_label(entities_per_label)
 
         # Assert
         assert compare_approximate(sentence_scores, similarity_matrix_per_label) is True
 
     def test_get_entity_id_map(
         self,
-        ds_scorer: BaseScorer,
+        ds_sampler: BaseSampler,
         entities_per_sentence: dict,
         entities_per_label: dict,
         entity_id_map: dict,
@@ -629,54 +659,54 @@ class TestDistributeSimilarityScorer:
         )
 
         # Act
-        entity_id_map_result = ds_scorer.get_entity_id_map(
+        entity_id_map_result = ds_sampler.get_entity_id_map(
             entities_per_label, sentence_count, max_entity_count
         )
 
         # Assert
         assert compare_exact(entity_id_map_result, entity_id_map) is True
 
-    def test_score(self, ds_scorer: BaseScorer) -> None:
+    def test_score(self, ds_sampler: BaseSampler) -> None:
         """Test score function"""
         # Arrange
         sents = [0, 1]
         entities = Entities()
-        ds_scorer.sentence_diversities = MagicMock(return_value={0: 0, 1: -0.5})
+        ds_sampler.sentence_diversities = MagicMock(return_value={0: 0, 1: -0.5})
 
         # Act
-        sentence_scores = ds_scorer.score(sents, entities)
+        sentence_scores = ds_sampler.score(sents, entities)
 
         # Assert
         assert np.array_equal(sentence_scores, np.array([0, -0.5]))
 
 
-class TestClusterSimilarityScorer:
-    """Test ClusterSimilarityScorer class"""
+class TestClusterSimilaritySampler:
+    """Test ClusterSimilaritySampler class"""
 
     def test_call_return_correct_result(
         self,
-        cs_scorer: BaseScorer,
+        cs_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         """Test call function return correct result"""
         # Arrange
         entities = Entities()
         entities.entities = [None]
-        cs_scorer.get_entities = MagicMock(return_value=entities)
-        cs_scorer.score = MagicMock(
+        cs_sampler.get_entities = MagicMock(return_value=entities)
+        cs_sampler.score = MagicMock(
             return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05])
         )
 
         # Act
-        queried_sent_ids = cs_scorer(
+        queried_sent_ids = cs_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            embeddings=scorer_params["embeddings"],
-            kmeans_params=scorer_params["kmeans_params"],
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            embeddings=sampler_params["embeddings"],
+            kmeans_params=sampler_params["kmeans_params"],
         )
 
         # Assert
@@ -684,38 +714,38 @@ class TestClusterSimilarityScorer:
 
     def test_call_return_random_sent_ids_if_entities_is_empty(
         self,
-        cs_scorer: BaseScorer,
+        cs_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         """Test call function return random sentence ids if entities is empty"""
         # Arrange
         entities = Entities()
-        cs_scorer.get_entities = MagicMock(return_value=entities)
+        cs_sampler.get_entities = MagicMock(return_value=entities)
 
         random.seed(0)
         sent_ids = list(range(len(unlabeled_sentences)))
         expected_random_sent_ids = random.sample(sent_ids, len(sent_ids))
 
         # Act
-        queried_sent_ids = cs_scorer(
+        queried_sent_ids = cs_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            embeddings=scorer_params["embeddings"],
-            kmeans_params=scorer_params["kmeans_params"],
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            embeddings=sampler_params["embeddings"],
+            kmeans_params=sampler_params["kmeans_params"],
         )
 
         # Assert
         assert (
             queried_sent_ids
-            == expected_random_sent_ids[: scorer_params["query_number"]]
+            == expected_random_sent_ids[: sampler_params["query_number"]]
         )
 
     def test_kmeans_raise_key_error_if_n_cluster_param_is_not_found(
-        self, cs_scorer: BaseScorer, unlabeled_sentences: List[Sentence]
+        self, cs_sampler: BaseSampler, unlabeled_sentences: List[Sentence]
     ) -> None:
         """Test kmeans function raise key_error if n_cluster parameter is not found"""
         # Arrange
@@ -724,10 +754,10 @@ class TestClusterSimilarityScorer:
         # Assert
         with pytest.raises(KeyError):
             # Act
-            cs_scorer.kmeans(unlabeled_sentences, kmeans_params)
+            cs_sampler.kmeans(unlabeled_sentences, kmeans_params)
 
     def test_kmeans_return_correct_result(
-        self, cs_scorer: BaseScorer, scorer_params: dict, entities6: List[Entity]
+        self, cs_sampler: BaseSampler, sampler_params: dict, entities6: List[Entity]
     ) -> None:
         """Test kmeans function return correct result"""
         # Arrange
@@ -735,8 +765,8 @@ class TestClusterSimilarityScorer:
         entities.entities = entities6
 
         # Act
-        cluster_centers_matrix, entity_cluster_nums = cs_scorer.kmeans(
-            entities.entities, scorer_params["kmeans_params"]
+        cluster_centers_matrix, entity_cluster_nums = cs_sampler.kmeans(
+            entities.entities, sampler_params["kmeans_params"]
         )
 
         # Assert
@@ -745,7 +775,7 @@ class TestClusterSimilarityScorer:
         )
         assert np.array_equal(entity_cluster_nums, np.array([1, 1, 1, 0, 0, 0]))
 
-    def test_assign_cluster(self, cs_scorer: BaseScorer) -> None:
+    def test_assign_cluster(self, cs_sampler: BaseSampler) -> None:
         """Test assign cluster function"""
         # Arrange
         e0 = MagicMock(label="PER", vector=torch.tensor([1, 2]))
@@ -754,13 +784,13 @@ class TestClusterSimilarityScorer:
         entity_cluster_nums = np.array([0])
 
         # Act
-        new_entities = cs_scorer.assign_cluster(entities, entity_cluster_nums)
+        new_entities = cs_sampler.assign_cluster(entities, entity_cluster_nums)
 
         # Assert
         assert new_entities.entities[0].cluster == 0
 
     def test_calculate_diversity(
-        self, cs_scorer: BaseScorer, entities6: List[Entity]
+        self, cs_sampler: BaseSampler, entities6: List[Entity]
     ) -> None:
         """Test calculate diversity function"""
         # Arrange
@@ -772,7 +802,7 @@ class TestClusterSimilarityScorer:
         cluster_centers_matrix = np.array([[10.0, 2.0], [1.0, 2.0]])
 
         # Act
-        sentence_score = cs_scorer.calculate_diversity(
+        sentence_score = cs_sampler.calculate_diversity(
             sentence_entities, entities_per_cluster, cluster_centers_matrix
         )
 
@@ -780,7 +810,7 @@ class TestClusterSimilarityScorer:
         np.testing.assert_allclose([sentence_score], [0.7138], rtol=1e-3)
 
     def test_sentence_diversity(
-        self, cs_scorer: BaseScorer, entities6: List[Entity]
+        self, cs_sampler: BaseSampler, entities6: List[Entity]
     ) -> None:
         """Test sentence diversity function"""
         # Arrange
@@ -800,14 +830,14 @@ class TestClusterSimilarityScorer:
         )
 
         # Act
-        sentence_score = cs_scorer.sentence_diversities(
+        sentence_score = cs_sampler.sentence_diversities(
             entities, cluster_centers_matrix
         )
 
         # Assert
         np.testing.assert_allclose([sentence_score[0]], [0.7138], rtol=1e-3)
 
-    def test_score(self, cs_scorer: BaseScorer, entities6: List[Entity]) -> None:
+    def test_score(self, cs_sampler: BaseSampler, entities6: List[Entity]) -> None:
         """Test score function"""
         # Arrange
         sents = [0]  # Just one setnence
@@ -815,33 +845,35 @@ class TestClusterSimilarityScorer:
 
         cluster_centers_matrix = np.array([[10.0, 2.0], [1.0, 2.0]])
         entity_cluster_nums = np.array([1, 1, 1, 0, 0, 0])
-        cs_scorer.kmeans = MagicMock(
+        cs_sampler.kmeans = MagicMock(
             return_value=(cluster_centers_matrix, entity_cluster_nums)
         )
 
         entities = Entities()
         entities.entities = entities6
-        cs_scorer.assign_cluster = MagicMock(return_value=entities)
-        cs_scorer.sentence_diversities = MagicMock(return_value={0: 0.7138})
+        cs_sampler.assign_cluster = MagicMock(return_value=entities)
+        cs_sampler.sentence_diversities = MagicMock(return_value={0: 0.7138})
 
         # Act
-        sentence_scores = cs_scorer.score(sents, entities, kwargs)
+        sentence_scores = cs_sampler.score(sents, entities, kwargs)
 
         # Assert
         assert np.array_equal(sentence_scores, np.array([0.7138]))
 
-    def test_get_kmeans_params_return_normal_value(self, cs_scorer: BaseScorer) -> None:
+    def test_get_kmeans_params_return_normal_value(
+        self, cs_sampler: BaseSampler
+    ) -> None:
         # Arrange
         kwargs = {"kmeans_params": {"n_clusters": 8, "n_init": 10, "random_state": 0}}
 
         # Act
-        kmeans_params = cs_scorer.get_kmeans_params(kwargs)
+        kmeans_params = cs_sampler.get_kmeans_params(kwargs)
 
         # Assert
         assert kmeans_params == kwargs["kmeans_params"]
 
     def test_get_kmeans_params_return_raise_name_error(
-        self, cs_scorer: BaseScorer
+        self, cs_sampler: BaseSampler
     ) -> None:
         # Arrange
         kwargs = {}
@@ -849,121 +881,129 @@ class TestClusterSimilarityScorer:
         # Assert
         with pytest.raises(NameError):
             # Act
-            cs_scorer.get_kmeans_params(kwargs)
+            cs_sampler.get_kmeans_params(kwargs)
 
 
-class TestCombinedMultipleScorer:
-    """Test CombinedMultipleScorer class"""
+class TestCombinedMultipleSampler:
+    """Test CombinedMultipleSampler class"""
 
-    def test_get_scorer_type_return_default_value(self, cm_scorer: BaseScorer) -> None:
+    def test_get_sampler_type_return_default_value(
+        self, cm_sampler: BaseSampler
+    ) -> None:
         # Arrange
         kwargs = {}
 
         # Act
-        scorer_type = cm_scorer.get_scorer_type(kwargs)
+        sampler_type = cm_sampler.get_sampler_type(kwargs)
 
         # Assert
-        assert scorer_type == "lc_ds"
+        assert sampler_type == "lc_ds"
 
-    def test_get_scorer_type_return_normal_value(self, cm_scorer: BaseScorer) -> None:
-        # Arrange
-        kwargs = {"scorer_type": "mnlp_ds"}
-
-        # Act
-        scorer_type = cm_scorer.get_scorer_type(kwargs)
-
-        # Assert
-        assert scorer_type == "mnlp_ds"
-
-    def test_get_scorer_type_return_raise_name_error(
-        self, cm_scorer: BaseScorer
+    def test_get_sampler_type_return_normal_value(
+        self, cm_sampler: BaseSampler
     ) -> None:
         # Arrange
-        kwargs = {"scorer_type": "lcc_ds"}
+        kwargs = {"sampler_type": "mnlp_ds"}
+
+        # Act
+        sampler_type = cm_sampler.get_sampler_type(kwargs)
+
+        # Assert
+        assert sampler_type == "mnlp_ds"
+
+    def test_get_sampler_type_return_raise_name_error(
+        self, cm_sampler: BaseSampler
+    ) -> None:
+        # Arrange
+        kwargs = {"sampler_type": "lcc_ds"}
 
         # Assert
         with pytest.raises(NameError):
             # Act
-            cm_scorer.get_scorer_type(kwargs)
+            cm_sampler.get_sampler_type(kwargs)
 
     def test_get_combined_type_return_default_value(
-        self, cm_scorer: BaseScorer
+        self, cm_sampler: BaseSampler
     ) -> None:
         # Arrange
         kwargs = {}
 
         # Act
-        combined_type = cm_scorer.get_combined_type(kwargs)
+        combined_type = cm_sampler.get_combined_type(kwargs)
 
         # Assert
         assert combined_type == "parallel"
 
-    def test_get_combined_type_return_normal_value(self, cm_scorer: BaseScorer) -> None:
+    def test_get_combined_type_return_normal_value(
+        self, cm_sampler: BaseSampler
+    ) -> None:
         # Arrange
         kwargs = {"combined_type": "series"}
 
         # Act
-        combined_type = cm_scorer.get_combined_type(kwargs)
+        combined_type = cm_sampler.get_combined_type(kwargs)
 
         # Assert
         assert combined_type == "series"
 
     def test_check_combined_type_return_raise_name_error(
-        self, cm_scorer: BaseScorer
+        self, cm_sampler: BaseSampler
     ) -> None:
         # Arrange
-        kwargs = {"scorer_type": "lc_ds", "combined_type": "mix"}
+        kwargs = {"sampler_type": "lc_ds", "combined_type": "mix"}
 
         # Assert
         with pytest.raises(NameError):
             # Act
-            cm_scorer.get_combined_type(kwargs)
+            cm_sampler.get_combined_type(kwargs)
 
-    def test_get_scorers_with_lc_ds(self, cm_scorer: BaseScorer) -> None:
+    def test_get_samplers_with_lc_ds(self, cm_sampler: BaseSampler) -> None:
         # Arrange
-        scorer_type = "lc_ds"
+        sampler_type = "lc_ds"
 
         # Act
-        uncertainty_scorer, diversity_scorer = cm_scorer.get_scorers(scorer_type)
+        uncertainty_sampler, diversity_sampler = cm_sampler.get_samplers(sampler_type)
 
         # Assert
-        assert isinstance(uncertainty_scorer, LeastConfidenceScorer)
-        assert isinstance(diversity_scorer, DistributeSimilarityScorer)
+        assert isinstance(uncertainty_sampler, LeastConfidenceSampler)
+        assert isinstance(diversity_sampler, DistributeSimilaritySampler)
 
-    def test_get_scorers_with_lc_cs(self, cm_scorer: BaseScorer) -> None:
+    def test_get_samplers_with_lc_cs(self, cm_sampler: BaseSampler) -> None:
         # Arrange
-        scorer_type = "lc_cs"
+        sampler_type = "lc_cs"
 
         # Act
-        uncertainty_scorer, diversity_scorer = cm_scorer.get_scorers(scorer_type)
+        uncertainty_sampler, diversity_sampler = cm_sampler.get_samplers(sampler_type)
 
         # Assert
-        assert isinstance(uncertainty_scorer, LeastConfidenceScorer)
-        assert isinstance(diversity_scorer, ClusterSimilarityScorer)
+        assert isinstance(uncertainty_sampler, LeastConfidenceSampler)
+        assert isinstance(diversity_sampler, ClusterSimilaritySampler)
 
-    def test_get_scorers_with_mnlp_ds(self, cm_scorer: BaseScorer) -> None:
+    def test_get_samplers_with_mnlp_ds(self, cm_sampler: BaseSampler) -> None:
         # Arrange
-        scorer_type = "mnlp_ds"
+        sampler_type = "mnlp_ds"
 
         # Act
-        uncertainty_scorer, diversity_scorer = cm_scorer.get_scorers(scorer_type)
+        uncertainty_sampler, diversity_sampler = cm_sampler.get_samplers(sampler_type)
 
         # Assert
-        assert isinstance(uncertainty_scorer, MaxNormLogProbScorer)
-        assert isinstance(diversity_scorer, DistributeSimilarityScorer)
+        assert isinstance(uncertainty_sampler, MaxNormLogProbSampler)
+        assert isinstance(diversity_sampler, DistributeSimilaritySampler)
 
-    def test_get_scorers_with_mnlp_cs(self, cm_scorer: BaseScorer) -> None:
+    def test_get_samplers_with_mnlp_cs(self, cm_sampler: BaseSampler) -> None:
         # Arrange
-        scorer_type = "mnlp_cs"
+        sampler_type = "mnlp_cs"
 
         # Act
-        uncertainty_scorer, diversity_scorer = cm_scorer.get_scorers(scorer_type)
+        uncertainty_sampler, diversity_sampler = cm_sampler.get_samplers(sampler_type)
 
         # Assert
-        assert isinstance(uncertainty_scorer, MaxNormLogProbScorer)
-        assert isinstance(diversity_scorer, ClusterSimilarityScorer)
+        assert isinstance(uncertainty_sampler, MaxNormLogProbSampler)
+        assert isinstance(diversity_sampler, ClusterSimilaritySampler)
 
-    def test_normalize_scorers_by_min_max_scaler(self, cm_scorer: BaseScorer) -> None:
+    def test_normalize_samplers_by_min_max_scaler(
+        self, cm_sampler: BaseSampler
+    ) -> None:
         # Arrange
         scaler = MinMaxScaler()
         uncertainty_scores = np.array([-0.09, -0.07, -0.05, -0.03, -0.01])
@@ -973,46 +1013,46 @@ class TestCombinedMultipleScorer:
         expected_scores = normalized_scores.sum(axis=1)
 
         # Act
-        scores = cm_scorer.normalize_scores(uncertainty_scores, diversity_scores)
+        scores = cm_sampler.normalize_scores(uncertainty_scores, diversity_scores)
 
         # Assert
         assert np.allclose(scores, expected_scores) is True
 
     def test_call_return_correct_result_with_series_lc_ds(
         self,
-        cm_scorer: BaseScorer,
-        lc_scorer: BaseScorer,
-        ds_scorer: BaseScorer,
+        cm_sampler: BaseSampler,
+        lc_sampler: BaseSampler,
+        ds_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         # Arrange
-        lc_scorer.predict = MagicMock(return_value=None)
-        lc_scorer.score = MagicMock(
+        lc_sampler.predict = MagicMock(return_value=None)
+        lc_sampler.score = MagicMock(
             return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05])
         )
 
         entities = Entities()
         entities.entities = [None]
-        ds_scorer.get_entities = MagicMock(return_value=entities)
-        ds_scorer.score = MagicMock(
+        ds_sampler.get_entities = MagicMock(return_value=entities)
+        ds_sampler.score = MagicMock(
             return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2])
         )
 
-        scorer_type = "lc_ds"
+        sampler_type = "lc_ds"
         combined_type = "series"
-        cm_scorer.get_scorers = MagicMock(return_value=(lc_scorer, ds_scorer))
+        cm_sampler.get_samplers = MagicMock(return_value=(lc_sampler, ds_sampler))
 
         # Act
-        queried_sent_ids = cm_scorer(
+        queried_sent_ids = cm_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            label_names=scorer_params["label_names"],
-            embeddings=scorer_params["embeddings"],
-            scorer_type=scorer_type,
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            label_names=sampler_params["label_names"],
+            embeddings=sampler_params["embeddings"],
+            sampler_type=sampler_type,
             combined_type=combined_type,
         )
 
@@ -1021,76 +1061,76 @@ class TestCombinedMultipleScorer:
 
     def test_call_return_random_sent_ids_if_entities_is_empty(
         self,
-        cm_scorer: BaseScorer,
-        lc_scorer: BaseScorer,
-        ds_scorer: BaseScorer,
+        cm_sampler: BaseSampler,
+        lc_sampler: BaseSampler,
+        ds_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         """Test call function return random sentence ids if entities is empty"""
         # Arrange
-        scorer_type = "lc_ds"
+        sampler_type = "lc_ds"
         combined_type = "parallel"
         entities = Entities()
-        cm_scorer.predict = MagicMock(return_value=None)
-        cm_scorer.get_entities = MagicMock(return_value=entities)
+        cm_sampler.predict = MagicMock(return_value=None)
+        cm_sampler.get_entities = MagicMock(return_value=entities)
 
         random.seed(0)
         sent_ids = list(range(len(unlabeled_sentences)))
         expected_random_sent_ids = random.sample(sent_ids, len(sent_ids))
 
         # Act
-        queried_sent_ids = cm_scorer(
+        queried_sent_ids = cm_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            embeddings=scorer_params["embeddings"],
-            kmeans_params=scorer_params["kmeans_params"],
-            scorer_type=scorer_type,
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            embeddings=sampler_params["embeddings"],
+            kmeans_params=sampler_params["kmeans_params"],
+            sampler_type=sampler_type,
             combined_type=combined_type,
         )
 
         # Assert
         assert (
             queried_sent_ids
-            == expected_random_sent_ids[: scorer_params["query_number"]]
+            == expected_random_sent_ids[: sampler_params["query_number"]]
         )
 
     def test_call_return_correct_result_with_parallel_lc_ds(
         self,
-        cm_scorer: BaseScorer,
-        lc_scorer: BaseScorer,
-        ds_scorer: BaseScorer,
+        cm_sampler: BaseSampler,
+        lc_sampler: BaseSampler,
+        ds_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         # Arrange
-        scorer_type = "lc_ds"
+        sampler_type = "lc_ds"
         combined_type = "parallel"
-        cm_scorer.predict = MagicMock(return_value=[None])
+        cm_sampler.predict = MagicMock(return_value=[None])
         entities = Entities()
         entities.entities = [None]
-        cm_scorer.get_entities = MagicMock(return_value=entities)
+        cm_sampler.get_entities = MagicMock(return_value=entities)
 
-        lc_scorer.score = MagicMock(
+        lc_sampler.score = MagicMock(
             return_value=np.array([0.09, 0.07, 0.05, 0.03, 0.01])
         )
-        ds_scorer.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
-        cm_scorer.get_scorers = MagicMock(return_value=(lc_scorer, ds_scorer))
+        ds_sampler.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
+        cm_sampler.get_samplers = MagicMock(return_value=(lc_sampler, ds_sampler))
         # normalized_scores = array([2. , 1.5, 1. , 0.5, 0. ])
 
         # Act
-        queried_sent_ids = cm_scorer(
+        queried_sent_ids = cm_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            label_names=scorer_params["label_names"],
-            embeddings=scorer_params["embeddings"],
-            scorer_type=scorer_type,
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            label_names=sampler_params["label_names"],
+            embeddings=sampler_params["embeddings"],
+            sampler_type=sampler_type,
             combined_type=combined_type,
         )
 
@@ -1099,38 +1139,38 @@ class TestCombinedMultipleScorer:
 
     def test_call_return_correct_result_with_parallel_lc_cs(
         self,
-        cm_scorer: BaseScorer,
-        lc_scorer: BaseScorer,
-        cs_scorer: BaseScorer,
+        cm_sampler: BaseSampler,
+        lc_sampler: BaseSampler,
+        cs_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         # Arrange
-        scorer_type = "lc_ds"
+        sampler_type = "lc_ds"
         combined_type = "parallel"
-        cm_scorer.predict = MagicMock(return_value=[None])
+        cm_sampler.predict = MagicMock(return_value=[None])
         entities = Entities()
         entities.entities = [None]
-        cm_scorer.get_entities = MagicMock(return_value=entities)
+        cm_sampler.get_entities = MagicMock(return_value=entities)
 
-        lc_scorer.score = MagicMock(
+        lc_sampler.score = MagicMock(
             return_value=np.array([0.09, 0.07, 0.05, 0.03, 0.01])
         )
-        cs_scorer.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
-        cm_scorer.get_scorers = MagicMock(return_value=(lc_scorer, cs_scorer))
+        cs_sampler.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
+        cm_sampler.get_samplers = MagicMock(return_value=(lc_sampler, cs_sampler))
         # normalized_scores = array([2. , 1.5, 1. , 0.5, 0. ])
 
         # Act
-        queried_sent_ids = cm_scorer(
+        queried_sent_ids = cm_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            label_names=scorer_params["label_names"],
-            embeddings=scorer_params["embeddings"],
-            kmeans_params=scorer_params["kmeans_params"],
-            scorer_type=scorer_type,
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            label_names=sampler_params["label_names"],
+            embeddings=sampler_params["embeddings"],
+            kmeans_params=sampler_params["kmeans_params"],
+            sampler_type=sampler_type,
             combined_type=combined_type,
         )
 
@@ -1139,37 +1179,37 @@ class TestCombinedMultipleScorer:
 
     def test_call_return_correct_result_with_parallel_mnlp_ds(
         self,
-        cm_scorer: BaseScorer,
-        mnlp_scorer: BaseScorer,
-        ds_scorer: BaseScorer,
+        cm_sampler: BaseSampler,
+        mnlp_sampler: BaseSampler,
+        ds_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         # Arrange
-        scorer_type = "lc_ds"
+        sampler_type = "lc_ds"
         combined_type = "parallel"
-        cm_scorer.predict = MagicMock(return_value=[None])
+        cm_sampler.predict = MagicMock(return_value=[None])
         entities = Entities()
         entities.entities = [None]
-        cm_scorer.get_entities = MagicMock(return_value=entities)
+        cm_sampler.get_entities = MagicMock(return_value=entities)
 
-        mnlp_scorer.score = MagicMock(
+        mnlp_sampler.score = MagicMock(
             return_value=np.array([-0.09, -0.07, -0.05, -0.03, -0.01])
         )
-        ds_scorer.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
-        cm_scorer.get_scorers = MagicMock(return_value=(mnlp_scorer, ds_scorer))
+        ds_sampler.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
+        cm_sampler.get_samplers = MagicMock(return_value=(mnlp_sampler, ds_sampler))
         # normalized_scores = array([2. , 1.5, 1. , 0.5, 0. ])
 
         # Act
-        queried_sent_ids = cm_scorer(
+        queried_sent_ids = cm_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            label_names=scorer_params["label_names"],
-            embeddings=scorer_params["embeddings"],
-            scorer_type=scorer_type,
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            label_names=sampler_params["label_names"],
+            embeddings=sampler_params["embeddings"],
+            sampler_type=sampler_type,
             combined_type=combined_type,
         )
 
@@ -1178,37 +1218,37 @@ class TestCombinedMultipleScorer:
 
     def test_call_return_correct_result_with_parallel_mnlp_cs(
         self,
-        cm_scorer: BaseScorer,
-        mnlp_scorer: BaseScorer,
-        cs_scorer: BaseScorer,
+        cm_sampler: BaseSampler,
+        mnlp_sampler: BaseSampler,
+        cs_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
-        scorer_params: dict,
+        sampler_params: dict,
     ) -> None:
         # Arrange
-        scorer_type = "lc_ds"
+        sampler_type = "lc_ds"
         combined_type = "parallel"
-        cm_scorer.predict = MagicMock(return_value=[None])
+        cm_sampler.predict = MagicMock(return_value=[None])
         entities = Entities()
         entities.entities = [None]
-        cm_scorer.get_entities = MagicMock(return_value=entities)
+        cm_sampler.get_entities = MagicMock(return_value=entities)
 
-        mnlp_scorer.score = MagicMock(
+        mnlp_sampler.score = MagicMock(
             return_value=np.array([-0.09, -0.07, -0.05, -0.03, -0.01])
         )
-        cs_scorer.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
-        cm_scorer.get_scorers = MagicMock(return_value=(mnlp_scorer, cs_scorer))
+        cs_sampler.score = MagicMock(return_value=np.array([0.2, 0.4, 0.6, 0.8, 1]))
+        cm_sampler.get_samplers = MagicMock(return_value=(mnlp_sampler, cs_sampler))
         # normalized_scores = array([2. , 1.5, 1. , 0.5, 0. ])
 
         # Act
-        queried_sent_ids = cm_scorer(
+        queried_sent_ids = cm_sampler(
             unlabeled_sentences,
-            scorer_params["tag_type"],
-            scorer_params["query_number"],
-            scorer_params["token_based"],
-            tagger=scorer_params["tagger"],
-            label_names=scorer_params["label_names"],
-            embeddings=scorer_params["embeddings"],
-            scorer_type=scorer_type,
+            sampler_params["tag_type"],
+            sampler_params["query_number"],
+            sampler_params["token_based"],
+            tagger=sampler_params["tagger"],
+            label_names=sampler_params["label_names"],
+            embeddings=sampler_params["embeddings"],
+            sampler_type=sampler_type,
             combined_type=combined_type,
         )
 
