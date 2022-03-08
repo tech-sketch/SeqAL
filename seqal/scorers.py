@@ -303,17 +303,26 @@ class StringNGramScorer(BaseScorer):
         """Calculate similarity matrix of entities in each label"""
         similarity_matrix_per_label = {}
         for label, label_entities in entities_per_label.items():
-            entities_ngrams = [self.n_gram(e) for e in label_entities]
+            entities_n_grams = [self.n_gram(e) for e in label_entities]
             similarity_matrix = []
             for i, entity in enumerate(label_entities):
+                entity_n_grams = self.n_gram(entity)
                 similarities = [
-                    len(set(self.n_gram(entity)) & set(entities_ngrams[i]))
-                    / math.sqrt(len(entity.text) * len(label_entities[i].text))
+                    self.n_gram_cosine_similarity(entity_n_grams, entities_n_grams[i])
                     for i in range(len(label_entities))
                 ]
                 similarity_matrix.append(similarities)
             similarity_matrix_per_label[label] = np.array(similarity_matrix)
         return similarity_matrix_per_label
+
+    def n_gram_cosine_similarity(
+        self, entity_n_gram1: List[str], entity_n_gram2: List[str]
+    ) -> float:
+        """Calculate n_gram consine similarity"""
+        similarity = len(set(entity_n_gram1) & set(entity_n_gram2)) / math.sqrt(
+            len(entity_n_gram1) * len(entity_n_gram2)
+        )
+        return similarity
 
 
 class DistributeSimilarityScorer(BaseScorer):

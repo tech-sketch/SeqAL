@@ -1,3 +1,4 @@
+import math
 import random
 from typing import Dict, List
 from unittest.mock import MagicMock, PropertyMock
@@ -141,12 +142,12 @@ def similarity_matrix_per_label_cosine_n_gram(scope="function"):
     similarity_matrix_per_label_cosine_n_gram = {
         "PER": np.array(
             [
-                [1.4000, 0.547722557505, 0.0000],
-                [0.547722557505, 1.333333333333, 0.0000],
-                [0.0000, 0.0000, 1.4000],
+                [1.0, 0.400891862869, 0.0000],
+                [0.400891862869, 1.0, 0.0000],
+                [0.0000, 0.0000, 1.0],
             ]
         ),
-        "LOC": np.array([[1.666666666667]]),
+        "LOC": np.array([[1]]),
     }
 
     return similarity_matrix_per_label_cosine_n_gram
@@ -399,6 +400,21 @@ class TestStringNGramScorer:
         # Assert
         assert n_grams == ["$$P", "$Pe", "Pet", "ete", "ter", "er$", "r$$"]
 
+    def n_gram_cosine_similarity(self, sn_scorer: BaseScorer) -> None:
+        """Test n_gram_cosine_similarity function"""
+        # Arrange
+        entity_n_gram1 = ["$$P", "$Pe", "Pet", "ete", "ter", "er$", "r$$"]
+        entity_n_gram2 = ["$$L", "$Le", "Les", "est", "ste", "ter", "er$", "r$$"]
+        expected = len(set(entity_n_gram1) & set(entity_n_gram2)) / math.sqrt(
+            len(entity_n_gram1) * len(entity_n_gram2)
+        )
+
+        # Act
+        similarity = sn_scorer.n_gram_cosine_similarity(entity_n_gram1, entity_n_gram2)
+
+        # Assert
+        assert expected == similarity
+
     def test_calculate_diversity(
         self,
         sn_scorer: BaseScorer,
@@ -425,7 +441,7 @@ class TestStringNGramScorer:
         # Arrange
         entities = Entities()
         entities.entities = entities4
-        expected = {0: 0.833333333333, 1: 0}
+        expected = {0: 0.5, 1: 0}
 
         # Act
         sentence_scores = sn_scorer.sentence_diversities(entities)
