@@ -1,3 +1,4 @@
+import math
 import random
 from typing import Dict, List, Tuple
 
@@ -148,6 +149,180 @@ class MaxNormLogProbScorer(BaseScorer):
         lengths = np.array([len(sent) for sent in sentences])
         normed_log_probs = log_probs / lengths
         return normed_log_probs
+
+
+class StringNGramScorer(BaseScorer):
+    """The StringNGramScorer class
+
+    https://aclanthology.org/C10-1096.pdf
+
+    Args:
+        BaseScorer: BaseScorer class.
+    """
+
+    def __call__(
+        self,
+        sentences: List[Sentence],
+        tag_type: str,
+        query_number: int,
+        token_based: bool = False,
+        **kwargs,
+    ) -> List[int]:
+        """StringNGram similarity sampling workflow
+
+        Args:
+            sentences (List[Sentence]): Sentences in data pool.
+            tag_type (str): Tag type to predict.
+            query_number (int): batch query number.
+            token_based (bool, optional): If true, using query number as token number to query data.
+                                          If false, using query number as sentence number to query data.
+
+        kwargs:
+            tagger: The tagger after training
+            label_names (List[str]): Label name of all dataset
+            embeddings: The embeddings method
+
+        Returns:
+            List[int]: Queried sentence ids.
+        """
+        tagger = kwargs["tagger"]
+        embeddings = kwargs["embeddings"]
+        self.predict(sentences, tagger)
+        entities = self.get_entities(sentences, embeddings, tag_type)
+
+        # If no entities, return random indices
+        if not entities.entities:
+            random_scorer = RandomScorer()
+            return random_scorer(sentences, tag_type, query_number, token_based)
+
+        scores = self.score(sentences, entities)
+        sorted_sent_ids = self.sort(scores, order="ascend")
+        queried_sent_ids = self.query(
+            sentences, sorted_sent_ids, query_number, token_based
+        )
+        return queried_sent_ids
+
+    def score(self, sentences: List[Sentence], entities: Entities) -> np.ndarray:
+        """Calculate score for each sentence"""
+        sentence_scores = [0] * len(sentences)
+        diversities_per_sent = self.sentence_diversities(entities)
+        for sent_id, score in diversities_per_sent.items():
+            sentence_scores[sent_id] = score
+
+        return np.array(sentence_scores)
+
+    def n_gram(self, entity: Entity, n: int = 3) -> List[str]:
+        """Get n_gram of a entity
+
+        Args:
+            entity (Entity): Entity contains text
+            n (int, optional): Number of gram. Defaults to 3.
+
+        Returns:
+            List[str]: n-gram of entity.
+                       e.g. "Peter" will return ['$$P', '$Pe', 'Pet', 'ete', 'ter', 'er$', 'r$$']
+        """
+        entity = "$$" + entity.text + "$$"
+        entity = entity.replace(" ", "_")
+        n_grams = []
+        for i in range(len(entity) - n + 1):
+            n_grams.append(entity[i : i + n])  # noqa: E203
+        return n_grams
+
+    def sentence_diversities(self, entities: Entities) -> Dict[int, float]:
+        """Get diversity score of each sentence"""
+        entities_per_label = entities.group_by_label
+        entities_per_sentence = entities.group_by_sentence
+
+        # Calculate similarities of all entities in one label
+        similarities_per_label = self.similarity_matrix_per_label(
+            entities_per_label
+        )  # {"ORG": matrix, "PER": matrix}
+
+        # Create index map
+        # entity_id_map[label][sent_id][entity_id] = entity_id_in_label_entity_list
+        sentence_count = max(entities_per_sentence.keys()) + 1
+        max_entity_count = max(
+            [len(entities) for entities in entities_per_sentence.values()]
+        )
+        entity_id_map = self.get_entity_id_map(
+            entities_per_label, sentence_count, max_entity_count
+        )
+
+        # Calculate diversity for each sentence
+        sentence_scores = self.calculate_diversity(
+            entities_per_sentence, entity_id_map, similarities_per_label
+        )
+
+        return sentence_scores
+
+    def calculate_diversity(
+        self,
+        entities_per_sentence: Dict[str, List[Entity]],
+        entity_id_map: dict,
+        similarities_per_label: dict,
+    ) -> float:
+        """Calculate diversity score for a sentence"""
+        sentence_scores = {}
+        for sent_id, sentence_entities in entities_per_sentence.items():
+            scores = []
+            for entity in sentence_entities:
+                entity_id_in_label_list = entity_id_map[entity.label][entity.sent_id][
+                    entity.id
+                ]
+                similarities = similarities_per_label[entity.label][
+                    int(entity_id_in_label_list)
+                ]
+                scores.append(float(similarities.min()))
+            sentence_score = sum(scores) / len(sentence_entities)
+            sentence_scores[sent_id] = sentence_score
+        return sentence_scores
+
+    def get_entity_id_map(
+        self,
+        entities_per_label: Dict[str, List[Entity]],
+        sentence_count: int,
+        max_entity_count: int,
+    ) -> Dict[str, np.ndarray]:
+        """Get index map of entity from sentence id to the id in entity_per_label"""
+        entity_id_map = {}
+        for label, label_entities in entities_per_label.items():
+            if label not in entity_id_map:
+                entity_id_map[label] = np.ones((sentence_count, max_entity_count))
+            for i, entity in enumerate(
+                label_entities
+            ):  # entity id in label entities list
+                print(i, entity, entity.sent_id, entity.id)
+                entity_id_map[label][entity.sent_id][entity.id] = i
+            print(entity_id_map)
+        return entity_id_map
+
+    def similarity_matrix_per_label(
+        self, entities_per_label: Dict[str, List[Entity]]
+    ) -> Dict[str, np.ndarray]:
+        """Calculate similarity matrix of entities in each label"""
+        similarity_matrix_per_label = {}
+        for label, label_entities in entities_per_label.items():
+            entities_n_grams = [self.n_gram(e) for e in label_entities]
+            similarity_matrix = []
+            for i, entity in enumerate(label_entities):
+                entity_n_grams = self.n_gram(entity)
+                similarities = [
+                    self.n_gram_cosine_similarity(entity_n_grams, entities_n_grams[i])
+                    for i in range(len(label_entities))
+                ]
+                similarity_matrix.append(similarities)
+            similarity_matrix_per_label[label] = np.array(similarity_matrix)
+        return similarity_matrix_per_label
+
+    def n_gram_cosine_similarity(
+        self, entity_n_gram1: List[str], entity_n_gram2: List[str]
+    ) -> float:
+        """Calculate n_gram consine similarity"""
+        similarity = len(set(entity_n_gram1) & set(entity_n_gram2)) / math.sqrt(
+            len(entity_n_gram1) * len(entity_n_gram2)
+        )
+        return similarity
 
 
 class DistributeSimilarityScorer(BaseScorer):
