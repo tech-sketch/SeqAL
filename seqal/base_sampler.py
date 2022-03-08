@@ -10,8 +10,8 @@ from seqal.data import Entities, Entity
 from seqal.tagger import SequenceTagger
 
 
-class BaseScorer:
-    """BaseScorer class
+class BaseSampler:
+    """BaseSampler class
 
     This is a base class to inherit for active learning sampling method.
     Each sampling method class should inherit this class.

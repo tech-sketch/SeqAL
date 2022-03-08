@@ -59,14 +59,13 @@ To understand how the code runs the active learning cycle, we introduce the acti
 
 ```python
 from seqal.active_learner import ActiveLearner
-from seqal.query_strategies import mnlp_sampling
+from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import add_tags
 from xxxx import annotate_by_human  # User need to prepare this method
 
-# Active learner initialization
 learner = ActiveLearner(
   tagger_params=tagger_params,   # Model parameters (hidden size, embedding, etc.)
-  query_strategy=mnlp_sampling,  # Query algorithm
+  query_strategy=LeastConfidenceSampler(),  # Query algorithm
   corpus=corpus,                 # Corpus contains training, validation, test data
   trainer_params=trainer_params  # Trainer parameters (epoch, batch size, etc.)
 )

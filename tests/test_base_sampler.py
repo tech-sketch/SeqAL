@@ -8,15 +8,15 @@ import torch
 from flair.data import Sentence
 from torch.nn.functional import cosine_similarity
 
-from seqal.base_scorer import BaseScorer
+from seqal.base_sampler import BaseSampler
 from seqal.datasets import Corpus
 
 
 @pytest.fixture()
-def base_scorer(scope="function"):
-    """A BaseScorer instance"""
-    base_scorer = BaseScorer()
-    return base_scorer
+def base_sampler(scope="function"):
+    """A BaseSampler instance"""
+    base_sampler = BaseSampler()
+    return base_sampler
 
 
 @pytest.fixture()
@@ -50,11 +50,11 @@ def word_embeddings(fixture_path: Path) -> dict:
     return load_embeddings(file_path)
 
 
-class TestBaseScorer:
-    """Test BaseScorer class"""
+class TestBaseSampler:
+    """Test BaseSampler class"""
 
     def test_query_data_on_token_base_if_query_number_smaller_than_total_token_number(
-        self, base_scorer: BaseScorer, corpus: Corpus
+        self, base_sampler: BaseSampler, corpus: Corpus
     ) -> None:
         """Test query data on token base on condition of query_number is smaller than total token number"""
         # Arrange
@@ -62,7 +62,7 @@ class TestBaseScorer:
         token_required = 12
 
         # Act
-        query_idx = base_scorer.query(
+        query_idx = base_sampler.query(
             corpus.train.sentences,
             ordered_indices,
             query_number=token_required,
@@ -73,7 +73,7 @@ class TestBaseScorer:
         assert query_idx == [0, 1, 2]
 
     def test_query_data_on_token_base_if_query_number_bigger_than_total_token_number(
-        self, base_scorer: BaseScorer, corpus: Corpus
+        self, base_sampler: BaseSampler, corpus: Corpus
     ) -> None:
         """Test query data on token base on condition of query_number is bigger than total token number"""
         # Arrange
@@ -81,7 +81,7 @@ class TestBaseScorer:
         token_required = 10000
 
         # Act
-        query_idx = base_scorer.query(
+        query_idx = base_sampler.query(
             corpus.train.sentences,
             ordered_indices,
             query_number=token_required,
@@ -92,7 +92,7 @@ class TestBaseScorer:
         assert query_idx == ordered_indices
 
     def test_query_data_on_sentence_base_if_query_number_smaller_than_total_token_number(
-        self, base_scorer: BaseScorer, corpus: Corpus
+        self, base_sampler: BaseSampler, corpus: Corpus
     ) -> None:
         """Test query data on sentence base on condition of query_number is smaller than total token number"""
         # Arrange
@@ -100,7 +100,7 @@ class TestBaseScorer:
         sentence_required = 2
 
         # Act
-        query_idx = base_scorer.query(
+        query_idx = base_sampler.query(
             corpus.train.sentences,
             ordered_indices,
             query_number=sentence_required,
@@ -111,7 +111,7 @@ class TestBaseScorer:
         assert query_idx == [0, 1]
 
     def test_query_data_on_sentence_base_if_query_number_bigger_than_total_token_number(
-        self, base_scorer: BaseScorer, corpus: Corpus
+        self, base_sampler: BaseSampler, corpus: Corpus
     ) -> None:
         """Test query data on sentence base on condition of query_number is bigger than total token number"""
         # Arrange
@@ -119,7 +119,7 @@ class TestBaseScorer:
         sentence_required = 11
 
         # Act
-        query_idx = base_scorer.query(
+        query_idx = base_sampler.query(
             corpus.train.sentences,
             ordered_indices,
             query_number=sentence_required,
@@ -130,7 +130,7 @@ class TestBaseScorer:
         assert query_idx == ordered_indices
 
     def test_query_raise_error_if_queried_number_smaller_than_zero(
-        self, base_scorer: BaseScorer, corpus: Corpus
+        self, base_sampler: BaseSampler, corpus: Corpus
     ) -> None:
         """Test query raise error messsge if query_number is smaller than 0"""
         # Arrange
@@ -140,37 +140,37 @@ class TestBaseScorer:
         # Assert
         with pytest.raises(ValueError):
             # Act
-            base_scorer.query(
+            base_sampler.query(
                 corpus.train.sentences,
                 ordered_indices,
                 query_number=token_required,
                 token_based=True,
             )
 
-    def test_sort_with_ascend_order(self, base_scorer: BaseScorer) -> None:
+    def test_sort_with_ascend_order(self, base_sampler: BaseSampler) -> None:
         """Test sort data on ascend order"""
         # Arrange
         sent_scores = np.array([1.1, 5.5, 2.2])
 
         # Act
-        indices = base_scorer.sort(sent_scores, order="ascend")
+        indices = base_sampler.sort(sent_scores, order="ascend")
 
         # Assert
         assert indices == [0, 2, 1]
 
-    def test_sort_with_descend_order(self, base_scorer: BaseScorer) -> None:
+    def test_sort_with_descend_order(self, base_sampler: BaseSampler) -> None:
         """Test sort data on descend order"""
         # Arrange
         sent_scores = np.array([1.1, 5.5, 2.2])
 
         # Act
-        indices = base_scorer.sort(sent_scores, order="descend")
+        indices = base_sampler.sort(sent_scores, order="descend")
 
         # Assert
         assert indices == [1, 2, 0]
 
     def test_sort_raise_type_error_if_scores_format_is_not_ndarray(
-        self, base_scorer: BaseScorer
+        self, base_sampler: BaseSampler
     ) -> None:
         """Test sort function raise type error if input format is incorrect"""
         # Arrange
@@ -179,10 +179,10 @@ class TestBaseScorer:
         # Assert
         with pytest.raises(TypeError):
             # Act
-            base_scorer.sort(sent_scores)
+            base_sampler.sort(sent_scores)
 
     def test_sort_raise_value_error_if_input_order_is_unavailable_string(
-        self, base_scorer: BaseScorer
+        self, base_sampler: BaseSampler
     ) -> None:
         """Test sort function raise value error if order parameter is incorrect"""
         # Arrange
@@ -191,14 +191,14 @@ class TestBaseScorer:
         # Assert
         with pytest.raises(ValueError):
             # Act
-            base_scorer.sort(sent_scores, order="order")
+            base_sampler.sort(sent_scores, order="order")
 
     def test_similarity_matrix_return_correct_cosine_similarity_of_two_matrix(
-        self, base_scorer: BaseScorer, matrix_multiple_var: dict
+        self, base_sampler: BaseSampler, matrix_multiple_var: dict
     ) -> None:
         """Test similarity_matrix function return correct result"""
         # Act
-        sim_mt = base_scorer.similarity_matrix(
+        sim_mt = base_sampler.similarity_matrix(
             matrix_multiple_var["mat1"], matrix_multiple_var["mat2"]
         )
 
@@ -206,7 +206,7 @@ class TestBaseScorer:
         assert torch.equal(sim_mt, matrix_multiple_var["expected"]) is True
 
     def test_similarity_matrix_comparing_with_cosine_similarity(
-        self, base_scorer: BaseScorer, word_embeddings: dict
+        self, base_sampler: BaseSampler, word_embeddings: dict
     ) -> None:
         """Test similarity_matrix function return correct result"""
         # Arrange
@@ -219,7 +219,7 @@ class TestBaseScorer:
         excepted2 = cosine_similarity(torch.stack([v2]), vectors)
 
         # Act
-        sim_mt = base_scorer.similarity_matrix(vectors, vectors)
+        sim_mt = base_sampler.similarity_matrix(vectors, vectors)
 
         # Assert
         assert torch.allclose(sim_mt[0], excepted0) is True
@@ -227,7 +227,7 @@ class TestBaseScorer:
         assert torch.allclose(sim_mt[2], excepted2) is True
 
     def test_similarity_matrix_raise_error_if_input_type_is_not_tensor(
-        self, base_scorer: BaseScorer, matrix_multiple_var: dict
+        self, base_sampler: BaseSampler, matrix_multiple_var: dict
     ) -> None:
         """Test similarity_matrix function raise error input data type is not Tensor"""
         # Arrange
@@ -236,10 +236,10 @@ class TestBaseScorer:
         # Assert
         with pytest.raises(TypeError):
             # Act
-            base_scorer.similarity_matrix(mat1, matrix_multiple_var["mat2"])
+            base_sampler.similarity_matrix(mat1, matrix_multiple_var["mat2"])
 
     def test_similarity_matrix_raise_error_if_two_matrix_shape_is_not_compatible(
-        self, base_scorer: BaseScorer, matrix_multiple_var: dict
+        self, base_sampler: BaseSampler, matrix_multiple_var: dict
     ) -> None:
         """Test similarity_matrix function raise error input matrix is not compatible"""
         # Arrange
@@ -248,11 +248,11 @@ class TestBaseScorer:
         # Assert
         with pytest.raises(RuntimeError):
             # Act
-            base_scorer.similarity_matrix(matrix_multiple_var["mat1"], mat2)
+            base_sampler.similarity_matrix(matrix_multiple_var["mat1"], mat2)
 
     def test_get_entities_raise_type_error_if_unlabeled_sentences_have_not_been_predicted(
         self,
-        base_scorer: BaseScorer,
+        base_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
     ) -> None:
         """Test get_entities function raise type_error if unlabeled sentences have not been predicted"""
@@ -264,9 +264,9 @@ class TestBaseScorer:
         # Assert
         with pytest.raises(TypeError):
             # Act
-            base_scorer.get_entities(unlabeled_sentences, embeddings, tag_type)
+            base_sampler.get_entities(unlabeled_sentences, embeddings, tag_type)
 
-    def test_get_entity_return_correct_result(self, base_scorer: BaseScorer) -> None:
+    def test_get_entity_return_correct_result(self, base_sampler: BaseSampler) -> None:
         """Test get_entities function return correct result if sentence contains entities"""
         # Arrange
         tag_type = "ner"
@@ -277,7 +277,7 @@ class TestBaseScorer:
         embeddings.embed = MagicMock(return_value=None)
 
         # Act
-        entities = base_scorer.get_entities(sentences, embeddings, tag_type)
+        entities = base_sampler.get_entities(sentences, embeddings, tag_type)
 
         # Assert
         assert entities.entities[0].id == 0

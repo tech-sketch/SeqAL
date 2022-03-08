@@ -8,12 +8,12 @@ from flair.data import Sentence
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import MinMaxScaler
 
-from seqal.base_scorer import BaseScorer
+from seqal.base_sampler import BaseSampler
 from seqal.data import Entities, Entity
 from seqal.tagger import SequenceTagger
 
 
-class RandomScorer(BaseScorer):
+class RandomSampler(BaseSampler):
     """Random sampling method"""
 
     def __call__(
@@ -50,13 +50,13 @@ class RandomScorer(BaseScorer):
         return queried_sent_ids
 
 
-class LeastConfidenceScorer(BaseScorer):
-    """Least confidence scorer
+class LeastConfidenceSampler(BaseSampler):
+    """Least confidence sampler
 
     https://dl.acm.org/doi/10.5555/1619410.1619452
 
     Args:
-        BaseScorer: BaseScorer class.
+        BaseSampler: BaseSampler class.
     """
 
     def __call__(
@@ -105,13 +105,13 @@ class LeastConfidenceScorer(BaseScorer):
         return scores
 
 
-class MaxNormLogProbScorer(BaseScorer):
-    """Maximum Normalized Log-Probability scorer
+class MaxNormLogProbSampler(BaseSampler):
+    """Maximum Normalized Log-Probability sampler
 
     https://arxiv.org/abs/1707.05928
 
     Args:
-        BaseScorer: BaseScorer class.
+        BaseSampler: BaseSampler class.
     """
 
     def __call__(
@@ -161,13 +161,13 @@ class MaxNormLogProbScorer(BaseScorer):
         return normed_log_probs
 
 
-class StringNGramScorer(BaseScorer):
-    """The StringNGramScorer class
+class StringNGramSampler(BaseSampler):
+    """The StringNGramSampler class
 
     https://aclanthology.org/C10-1096.pdf
 
     Args:
-        BaseScorer: BaseScorer class.
+        BaseSampler: BaseSampler class.
     """
 
     def __call__(
@@ -202,8 +202,8 @@ class StringNGramScorer(BaseScorer):
 
         # If no entities, return random indices
         if not entities.entities:
-            random_scorer = RandomScorer()
-            return random_scorer(sentences, tag_type, query_number, token_based)
+            random_sampler = RandomSampler()
+            return random_sampler(sentences, tag_type, query_number, token_based)
 
         scores = self.score(sentences, entities)
         sorted_sent_ids = self.sort(scores, order="ascend")
@@ -340,8 +340,8 @@ class StringNGramScorer(BaseScorer):
         return similarity
 
 
-class DistributeSimilarityScorer(BaseScorer):
-    """Distribute similarity scorer
+class DistributeSimilaritySampler(BaseSampler):
+    """Distribute similarity sampler
 
     We create distribute similarity sampling as a kind of diversity sampling method.
     Different with most of sampling methods that are based on sentence level,
@@ -349,7 +349,7 @@ class DistributeSimilarityScorer(BaseScorer):
     We calculate the similarity between entity pair, the low similarity pair means high diversity.
 
     Args:
-        BaseScorer: BaseScorer class.
+        BaseSampler: BaseSampler class.
     """
 
     def __call__(
@@ -384,8 +384,8 @@ class DistributeSimilarityScorer(BaseScorer):
 
         # If no entities, return random indices
         if not entities.entities:
-            random_scorer = RandomScorer()
-            return random_scorer(sentences, tag_type, query_number, token_based)
+            random_sampler = RandomSampler()
+            return random_sampler(sentences, tag_type, query_number, token_based)
 
         scores = self.score(sentences, entities)
         sorted_sent_ids = self.sort(scores, order="ascend")
@@ -500,8 +500,8 @@ class DistributeSimilarityScorer(BaseScorer):
         return similarity_matrix_per_label
 
 
-class ClusterSimilarityScorer(BaseScorer):
-    """Distribute similarity scorer
+class ClusterSimilaritySampler(BaseSampler):
+    """Distribute similarity sampler
 
     We create cluster sampling as a kind of diversity sampling method.
     Different with most of sampling methods that are based on sentence level,
@@ -511,7 +511,7 @@ class ClusterSimilarityScorer(BaseScorer):
     the low similarity pair means high diversity.
 
     Args:
-        BaseScorer: BaseScorer class.
+        BaseSampler: BaseSampler class.
     """
 
     def __call__(
@@ -551,8 +551,8 @@ class ClusterSimilarityScorer(BaseScorer):
 
         # If no entities, return random indices
         if not entities.entities:
-            random_scorer = RandomScorer()
-            return random_scorer(sentences, tag_type, query_number, token_based)
+            random_sampler = RandomSampler()
+            return random_sampler(sentences, tag_type, query_number, token_based)
 
         scores = self.score(sentences, entities, kwargs)
         sorted_sent_ids = self.sort(scores, order="ascend")
@@ -584,10 +584,10 @@ class ClusterSimilarityScorer(BaseScorer):
         return np.array(sentence_scores)
 
     def get_kmeans_params(self, kwargs: dict) -> bool:
-        """Check the scorer type is availabel or not."""
+        """Check the sampler type is availabel or not."""
         if "kmeans_params" not in kwargs or "n_clusters" not in kwargs["kmeans_params"]:
             output = (
-                "You have to provide 'kmeans_params' parameter to use ClusterSimilarityScorer."
+                "You have to provide 'kmeans_params' parameter to use ClusterSimilaritySampler."
                 " 'kmeans_params' must contain 'n_clusters', which means number of label types in dataset except 'O'."
                 " For example, kmeans_params={'n_clusters': 8, 'n_init': 10, 'random_state': 0}}"
             )
@@ -663,22 +663,22 @@ class ClusterSimilarityScorer(BaseScorer):
         return cluster_centers_matrix, entity_cluster_nums
 
 
-class CombinedMultipleScorer(BaseScorer):
-    """Multiple similarity scorer
+class CombinedMultipleSampler(BaseSampler):
+    """Multiple similarity sampler
 
-    Uncertainty-based scorers do not take full advantage of entity information.
-    The proposed token-level diversity based scorer can fully utilize the entity information.
-    So we combine diversity scorer and uncertainty-based scorer together to improve the active learning performance.
+    Uncertainty-based samplers do not take full advantage of entity information.
+    The proposed token-level diversity based sampler can fully utilize the entity information.
+    So we combine diversity sampler and uncertainty-based sampler together to improve the active learning performance.
 
     Args:
-        BaseScorer: BaseScorer class.
+        BaseSampler: BaseSampler class.
     """
 
     @property
-    def available_scorer_types(self):
-        """Available scorers"""
-        available_scorer_types = ["lc_ds", "lc_cs", "mnlp_ds", "mnlp_cs"]
-        return available_scorer_types
+    def available_sampler_types(self):
+        """Available samplers"""
+        available_sampler_types = ["lc_ds", "lc_cs", "mnlp_ds", "mnlp_cs"]
+        return available_sampler_types
 
     @property
     def available_combined_types(self):
@@ -694,7 +694,7 @@ class CombinedMultipleScorer(BaseScorer):
         token_based: bool = False,
         **kwargs,
     ) -> List[int]:
-        """Combined multiple scorer sampling workflow
+        """Combined multiple sampler sampling workflow
 
         Args:
             sentences (List[Sentence]): Sentences in data pool.
@@ -704,18 +704,18 @@ class CombinedMultipleScorer(BaseScorer):
                                           If false, using query number as sentence number to query data.
 
         kwargs:
-            scorer_type (str):  Which kind of scorer to use.
+            sampler_type (str):  Which kind of sampler to use.
                                 Available types are "lc_ds", "lc_cs", "mnlp_ds", "mnlp_cs"
-                                - "lc_ds" means LeastConfidenceScorer and DistributeSimilarityScorer.
-                                - "lc_cs" means LeastConfidenceScorer and ClusterSimilarityScorer.
-                                - "mnlp_ds" means MaxNormLogProbScorer and DistributeSimilarityScorer.
-                                - "mnlp_cs" means MaxNormLogProbScorer and ClusterSimilarityScorer.
+                                - "lc_ds" means LeastConfidenceSampler and DistributeSimilaritySampler.
+                                - "lc_cs" means LeastConfidenceSampler and ClusterSimilaritySampler.
+                                - "mnlp_ds" means MaxNormLogProbSampler and DistributeSimilaritySampler.
+                                - "mnlp_cs" means MaxNormLogProbSampler and ClusterSimilaritySampler.
 
-            combined_type (str): The combined method of different scorers.
+            combined_type (str): The combined method of different samplers.
                                  Available types are "series", "parallel"
-                                 - "series" means run one scorer first and then run the second one.
-                                 - "parallel" means run two scorers together.
-                                 If scorer_type is "lc_ds", it means first run lc and then run ds.
+                                 - "series" means run one sampler first and then run the second one.
+                                 - "parallel" means run two samplers together.
+                                 If sampler_type is "lc_ds", it means first run lc and then run ds.
                                  If reverse parameter is provided, it runs ds first and then lc.
             reverse (bool): The running order when combined type is "series"
             tagger: The tagger after training
@@ -730,22 +730,22 @@ class CombinedMultipleScorer(BaseScorer):
         Returns:
             List[int]: Queried sentence ids.
         """
-        scorer_type = self.get_scorer_type(kwargs)
+        sampler_type = self.get_sampler_type(kwargs)
         combined_type = self.get_combined_type(kwargs)
 
-        # Get scorers
-        uncertainty_scorer, diversity_scorer = self.get_scorers(scorer_type)
+        # Get samplers
+        uncertainty_sampler, diversity_sampler = self.get_samplers(sampler_type)
 
         # Combine scores
         if combined_type == "series":
-            uncertainty_scorer_queried_sent_ids = uncertainty_scorer(
+            uncertainty_sampler_queried_sent_ids = uncertainty_sampler(
                 sentences, tag_type, 2 * query_number, token_based, **kwargs
             )
-            uncertainty_scorer_queried_sents = [
-                sentences[i] for i in uncertainty_scorer_queried_sent_ids
+            uncertainty_sampler_queried_sents = [
+                sentences[i] for i in uncertainty_sampler_queried_sent_ids
             ]
-            queried_sent_ids = diversity_scorer(
-                uncertainty_scorer_queried_sents,
+            queried_sent_ids = diversity_sampler(
+                uncertainty_sampler_queried_sents,
                 tag_type,
                 query_number,
                 token_based,
@@ -762,15 +762,15 @@ class CombinedMultipleScorer(BaseScorer):
 
         # If no entities, return random indices
         if not entities.entities:
-            random_scorer = RandomScorer()
-            return random_scorer(sentences, tag_type, query_number, token_based)
+            random_sampler = RandomSampler()
+            return random_sampler(sentences, tag_type, query_number, token_based)
 
         # Calculate scores
-        uncertainty_scores = uncertainty_scorer.score(sentences, tagger)
-        diversity_scores = diversity_scorer.score(sentences, entities, kwargs)
+        uncertainty_scores = uncertainty_sampler.score(sentences, tagger)
+        diversity_scores = diversity_sampler.score(sentences, entities, kwargs)
 
         # Normalize scores
-        if "lc" in scorer_type:  # reverse lc order for ascend setup below
+        if "lc" in sampler_type:  # reverse lc order for ascend setup below
             scores = self.normalize_scores(-uncertainty_scores, diversity_scores)
         scores = self.normalize_scores(uncertainty_scores, diversity_scores)
 
@@ -786,8 +786,8 @@ class CombinedMultipleScorer(BaseScorer):
         """Normalize two kinds of scores
 
         Args:
-            uncertainty_scores (np.ndarray): Scores calculated by uncertainty_scorer
-            diversity_scores (np.ndarray): Scores calculated by diversity_scorer
+            uncertainty_scores (np.ndarray): Scores calculated by uncertainty_sampler
+            diversity_scores (np.ndarray): Scores calculated by diversity_sampler
 
         Returns:
             np.ndarray: Normalized score
@@ -797,49 +797,49 @@ class CombinedMultipleScorer(BaseScorer):
         normalized_scores = scaler.fit_transform(np.transpose(concatenate_scores))
         return normalized_scores.sum(axis=1)
 
-    def get_scorers(self, scorer_type: str) -> Tuple[BaseScorer, BaseScorer]:
-        """Get specific scorers"""
-        if scorer_type == "lc_ds":
-            uncertainty_scorer, diversity_scorer = (
-                LeastConfidenceScorer(),
-                DistributeSimilarityScorer(),
+    def get_samplers(self, sampler_type: str) -> Tuple[BaseSampler, BaseSampler]:
+        """Get specific samplers"""
+        if sampler_type == "lc_ds":
+            uncertainty_sampler, diversity_sampler = (
+                LeastConfidenceSampler(),
+                DistributeSimilaritySampler(),
             )
-        elif scorer_type == "lc_cs":
-            uncertainty_scorer, diversity_scorer = (
-                LeastConfidenceScorer(),
-                ClusterSimilarityScorer(),
+        elif sampler_type == "lc_cs":
+            uncertainty_sampler, diversity_sampler = (
+                LeastConfidenceSampler(),
+                ClusterSimilaritySampler(),
             )
-        elif scorer_type == "mnlp_ds":
-            uncertainty_scorer, diversity_scorer = (
-                MaxNormLogProbScorer(),
-                DistributeSimilarityScorer(),
+        elif sampler_type == "mnlp_ds":
+            uncertainty_sampler, diversity_sampler = (
+                MaxNormLogProbSampler(),
+                DistributeSimilaritySampler(),
             )
-        elif scorer_type == "mnlp_cs":
-            uncertainty_scorer, diversity_scorer = (
-                MaxNormLogProbScorer(),
-                ClusterSimilarityScorer(),
+        elif sampler_type == "mnlp_cs":
+            uncertainty_sampler, diversity_sampler = (
+                MaxNormLogProbSampler(),
+                ClusterSimilaritySampler(),
             )
         else:
-            uncertainty_scorer, diversity_scorer = (
-                LeastConfidenceScorer(),
-                DistributeSimilarityScorer(),
+            uncertainty_sampler, diversity_sampler = (
+                LeastConfidenceSampler(),
+                DistributeSimilaritySampler(),
             )
 
-        return uncertainty_scorer, diversity_scorer
+        return uncertainty_sampler, diversity_sampler
 
-    def get_scorer_type(self, kwargs: dict) -> bool:
-        """Check the scorer type is availabel or not."""
-        if "scorer_type" not in kwargs:
-            scorer_type = "lc_ds"
-            print("scorer_type is not found. Default use 'lc_ds' scorer type")
-            return scorer_type
+    def get_sampler_type(self, kwargs: dict) -> bool:
+        """Check the sampler type is availabel or not."""
+        if "sampler_type" not in kwargs:
+            sampler_type = "lc_ds"
+            print("sampler_type is not found. Default use 'lc_ds' sampler type")
+            return sampler_type
 
-        scorer_type = kwargs["scorer_type"]
-        if scorer_type not in self.available_scorer_types:
+        sampler_type = kwargs["sampler_type"]
+        if sampler_type not in self.available_sampler_types:
             raise NameError(
-                f"scorer_type is not found. scorer_type must be one of {self.available_scorer_types}"
+                f"sampler_type is not found. sampler_type must be one of {self.available_sampler_types}"
             )
-        return scorer_type
+        return sampler_type
 
     def get_combined_type(self, kwargs: dict) -> bool:
         """Check the combined type is availabel or not."""
