@@ -17,6 +17,7 @@ from seqal.scorers import (
     LeastConfidenceScorer,
     MaxNormLogProbScorer,
     RandomScorer,
+    StringNGramScorer,
 )
 
 
@@ -32,6 +33,13 @@ def mnlp_scorer(scope="function"):
     """MaxNormLogProbScorer instance"""
     mnlp_scorer = MaxNormLogProbScorer()
     return mnlp_scorer
+
+
+@pytest.fixture()
+def sn_scorer(scope="function"):
+    """StringNGramScorer instance"""
+    sn_scorer = StringNGramScorer()
+    return sn_scorer
 
 
 @pytest.fixture()
@@ -73,10 +81,18 @@ def scorer_params(scope="function"):
 @pytest.fixture()
 def entities4(scope="function"):
     """4 entities for ds_scorer test"""
-    e0 = MagicMock(id=0, sent_id=0, label="PER", vector=torch.tensor([-0.1, 0.1]))
-    e1 = MagicMock(id=0, sent_id=1, label="PER", vector=torch.tensor([0.1, 0.1]))
-    e2 = MagicMock(id=1, sent_id=1, label="PER", vector=torch.tensor([0.1, -0.1]))
-    e3 = MagicMock(id=1, sent_id=0, label="LOC", vector=torch.tensor([-0.1, -0.1]))
+    e0 = MagicMock(
+        id=0, sent_id=0, label="PER", text="Peter", vector=torch.tensor([-0.1, 0.1])
+    )
+    e1 = MagicMock(
+        id=0, sent_id=1, label="PER", text="Lester", vector=torch.tensor([0.1, 0.1])
+    )
+    e2 = MagicMock(
+        id=1, sent_id=1, label="PER", text="Jessy", vector=torch.tensor([0.1, -0.1])
+    )
+    e3 = MagicMock(
+        id=1, sent_id=0, label="LOC", text="NYC", vector=torch.tensor([-0.1, -0.1])
+    )
 
     return [e0, e1, e2, e3]
 
@@ -117,6 +133,23 @@ def similarity_matrix_per_label(scope="function"):
     }
 
     return similarity_matrix_per_label
+
+
+@pytest.fixture()
+def similarity_matrix_per_label_cosine_n_gram(scope="function"):
+    """Similarity matrix for each label"""
+    similarity_matrix_per_label_cosine_n_gram = {
+        "PER": np.array(
+            [
+                [1.4000, 0.547722557505, 0.0000],
+                [0.547722557505, 1.333333333333, 0.0000],
+                [0.0000, 0.0000, 1.4000],
+            ]
+        ),
+        "LOC": np.array([[1.666666666667]]),
+    }
+
+    return similarity_matrix_per_label_cosine_n_gram
 
 
 @pytest.fixture()
@@ -292,6 +325,166 @@ class TestMaxNormLogProbScorer:
 
         # Assert
         assert queried_sent_ids == [0, 1, 2, 3]
+
+
+class TestStringNGramScorer:
+    """Test StringNGramScorer class"""
+
+    def test_call_return_correct_result(
+        self,
+        sn_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
+    ) -> None:
+        """Test call function return correct result"""
+        # Arrange
+        entities = Entities()
+        entities.entities = [None]
+        sn_scorer.get_entities = MagicMock(return_value=entities)
+        sn_scorer.score = MagicMock(
+            return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.05])
+        )
+
+        # Act
+        queried_sent_ids = sn_scorer(
+            unlabeled_sentences,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            label_names=scorer_params["label_names"],
+            embeddings=scorer_params["embeddings"],
+        )
+
+        # Assert
+        assert queried_sent_ids == [9, 8, 7, 6]
+
+    def test_call_return_random_sent_ids_if_entities_is_empty(
+        self,
+        sn_scorer: BaseScorer,
+        unlabeled_sentences: List[Sentence],
+        scorer_params: dict,
+    ) -> None:
+        """Test call function return random sentence ids if entities is empty"""
+        # Arrange
+        entities = Entities()
+        sn_scorer.get_entities = MagicMock(return_value=entities)
+
+        random.seed(0)
+        sent_ids = list(range(len(unlabeled_sentences)))
+        expected_random_sent_ids = random.sample(sent_ids, len(sent_ids))
+
+        # Act
+        queried_sent_ids = sn_scorer(
+            unlabeled_sentences,
+            scorer_params["tag_type"],
+            scorer_params["query_number"],
+            scorer_params["token_based"],
+            tagger=scorer_params["tagger"],
+            label_names=scorer_params["label_names"],
+            embeddings=scorer_params["embeddings"],
+        )
+
+        # Assert
+        assert (
+            queried_sent_ids
+            == expected_random_sent_ids[: scorer_params["query_number"]]
+        )
+
+    def test_n_gram(self, sn_scorer: BaseScorer, entities4: List[Entity]) -> None:
+        """Test n_gram function"""
+        # Act
+        n_grams = sn_scorer.n_gram(entities4[0])
+
+        # Assert
+        assert n_grams == ["$$P", "$Pe", "Pet", "ete", "ter", "er$", "r$$"]
+
+    def test_calculate_diversity(
+        self,
+        sn_scorer: BaseScorer,
+        entities_per_sentence: dict,
+        entity_id_map: dict,
+        similarity_matrix_per_label: dict,
+    ) -> None:
+        """Test calculate diversity function"""
+        # Arrange
+        expected = {0: 0, 1: -0.5}
+
+        # Act
+        sentence_scores = sn_scorer.calculate_diversity(
+            entities_per_sentence, entity_id_map, similarity_matrix_per_label
+        )
+
+        # Assert
+        assert sentence_scores == expected
+
+    def test_sentence_diversity(
+        self, sn_scorer: BaseScorer, entities4: List[Entity]
+    ) -> None:
+        """Test sentence_diversity function"""
+        # Arrange
+        entities = Entities()
+        entities.entities = entities4
+        expected = {0: 0.833333333333, 1: 0}
+
+        # Act
+        sentence_scores = sn_scorer.sentence_diversities(entities)
+
+        # Assert
+        assert compare_approximate(sentence_scores, expected) is True
+
+    def test_similarity_matrix_per_label(
+        self,
+        sn_scorer: BaseScorer,
+        entities_per_label: dict,
+        similarity_matrix_per_label_cosine_n_gram: Dict[str, torch.Tensor],
+    ) -> None:
+        """Test similarity_matrix_per_label function"""
+        # Act
+        sentence_scores = sn_scorer.similarity_matrix_per_label(entities_per_label)
+
+        # Assert
+        assert (
+            compare_approximate(
+                sentence_scores, similarity_matrix_per_label_cosine_n_gram
+            )
+            is True
+        )
+
+    def test_get_entity_id_map(
+        self,
+        sn_scorer: BaseScorer,
+        entities_per_sentence: dict,
+        entities_per_label: dict,
+        entity_id_map: dict,
+    ) -> None:
+        """Test get_entity_id_map function"""
+        # Arrange
+        sentence_count = max(entities_per_sentence.keys()) + 1
+        max_entity_count = max(
+            [len(entities) for entities in entities_per_sentence.values()]
+        )
+
+        # Act
+        entity_id_map_result = sn_scorer.get_entity_id_map(
+            entities_per_label, sentence_count, max_entity_count
+        )
+
+        # Assert
+        assert compare_exact(entity_id_map_result, entity_id_map) is True
+
+    def test_score(self, sn_scorer: BaseScorer) -> None:
+        """Test score function"""
+        # Arrange
+        sents = [0, 1]
+        entities = Entities()
+        sn_scorer.sentence_diversities = MagicMock(return_value={0: 0, 1: -0.5})
+
+        # Act
+        sentence_scores = sn_scorer.score(sents, entities)
+
+        # Assert
+        assert np.array_equal(sentence_scores, np.array([0, -0.5]))
 
 
 class TestDistributeSimilarityScorer:
