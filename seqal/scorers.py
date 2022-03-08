@@ -1,6 +1,6 @@
 import math
 import random
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -526,7 +526,6 @@ class ClusterSimilarityScorer(BaseScorer):
         """
         tagger = kwargs["tagger"]
         embeddings = kwargs["embeddings"]
-        kmeans_params = kwargs["kmeans_params"]
         self.predict(sentences, tagger)
         entities = self.get_entities(sentences, embeddings, tag_type)
 
@@ -535,7 +534,7 @@ class ClusterSimilarityScorer(BaseScorer):
             random_scorer = RandomScorer()
             return random_scorer(sentences, tag_type, query_number, token_based)
 
-        scores = self.score(sentences, entities, kmeans_params)
+        scores = self.score(sentences, entities, kwargs)
         sorted_sent_ids = self.sort(scores, order="ascend")
         queried_sent_ids = self.query(
             sentences, sorted_sent_ids, query_number, token_based
@@ -543,9 +542,14 @@ class ClusterSimilarityScorer(BaseScorer):
         return queried_sent_ids
 
     def score(
-        self, sentences: List[Sentence], entities: Entities, kmeans_params: dict
+        self,
+        sentences: List[Sentence],
+        entities: Entities,
+        kwargs: Optional[dict] = None,
     ) -> np.ndarray:
         """Calculate score for each sentence"""
+        kmeans_params = self.get_kmeans_params(kwargs)
+
         sentence_scores = [0] * len(sentences)
         cluster_centers_matrix, entity_cluster_nums = self.kmeans(
             entities.entities, kmeans_params
@@ -558,6 +562,19 @@ class ClusterSimilarityScorer(BaseScorer):
             sentence_scores[sent_id] = score
 
         return np.array(sentence_scores)
+
+    def get_kmeans_params(self, kwargs: dict) -> bool:
+        """Check the scorer type is availabel or not."""
+        if "kmeans_params" not in kwargs or "n_clusters" not in kwargs["kmeans_params"]:
+            output = (
+                "You have to provide 'kmeans_params' parameter to use ClusterSimilarityScorer."
+                " 'kmeans_params' must contain 'n_clusters', which means number of label types in dataset except 'O'."
+                " For example, kmeans_params={'n_clusters': 8, 'n_init': 10, 'random_state': 0}}"
+            )
+            raise NameError(output)
+
+        kmeans_params = kwargs["kmeans_params"]
+        return kmeans_params
 
     def sentence_diversities(
         self, entities: Entities, cluster_centers_matrix: np.ndarray

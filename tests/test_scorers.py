@@ -811,7 +811,7 @@ class TestClusterSimilarityScorer:
         """Test score function"""
         # Arrange
         sents = [0]  # Just one setnence
-        kmeans_params = {"n_cluster": 8, "n_init": 10, "random_state": 0}
+        kwargs = {"kmeans_params": {"n_clusters": 8, "n_init": 10, "random_state": 0}}
 
         cluster_centers_matrix = np.array([[10.0, 2.0], [1.0, 2.0]])
         entity_cluster_nums = np.array([1, 1, 1, 0, 0, 0])
@@ -825,10 +825,31 @@ class TestClusterSimilarityScorer:
         cs_scorer.sentence_diversities = MagicMock(return_value={0: 0.7138})
 
         # Act
-        sentence_scores = cs_scorer.score(sents, entities, kmeans_params)
+        sentence_scores = cs_scorer.score(sents, entities, kwargs)
 
         # Assert
         assert np.array_equal(sentence_scores, np.array([0.7138]))
+
+    def test_get_kmeans_params_return_normal_value(self, cs_scorer: BaseScorer) -> None:
+        # Arrange
+        kwargs = {"kmeans_params": {"n_clusters": 8, "n_init": 10, "random_state": 0}}
+
+        # Act
+        kmeans_params = cs_scorer.get_kmeans_params(kwargs)
+
+        # Assert
+        assert kmeans_params == kwargs["kmeans_params"]
+
+    def test_get_kmeans_params_return_raise_name_error(
+        self, cs_scorer: BaseScorer
+    ) -> None:
+        # Arrange
+        kwargs = {}
+
+        # Assert
+        with pytest.raises(NameError):
+            # Act
+            cs_scorer.get_kmeans_params(kwargs)
 
 
 class TestCombinedMultipleScorer:
