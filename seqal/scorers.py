@@ -93,7 +93,12 @@ class LeastConfidenceScorer(BaseScorer):
         )
         return queried_sent_ids
 
-    def score(self, sentences: List[Sentence], tagger: SequenceTagger) -> np.ndarray:
+    def score(
+        self,
+        sentences: List[Sentence],
+        tagger: SequenceTagger,
+        kwargs: Optional[dict] = None,
+    ) -> np.ndarray:
         """Calculate score for each sentence"""
         log_probs = tagger.log_probability(sentences)
         scores = 1 - np.exp(log_probs)
@@ -143,7 +148,12 @@ class MaxNormLogProbScorer(BaseScorer):
         )
         return queried_sent_ids
 
-    def score(self, sentences: List[Sentence], tagger: SequenceTagger) -> np.ndarray:
+    def score(
+        self,
+        sentences: List[Sentence],
+        tagger: SequenceTagger,
+        kwargs: Optional[dict] = None,
+    ) -> np.ndarray:
         """Calculate score for each sentence"""
         log_probs = tagger.log_probability(sentences)
         lengths = np.array([len(sent) for sent in sentences])
@@ -202,7 +212,12 @@ class StringNGramScorer(BaseScorer):
         )
         return queried_sent_ids
 
-    def score(self, sentences: List[Sentence], entities: Entities) -> np.ndarray:
+    def score(
+        self,
+        sentences: List[Sentence],
+        entities: Entities,
+        kwargs: Optional[dict] = None,
+    ) -> np.ndarray:
         """Calculate score for each sentence"""
         sentence_scores = [0] * len(sentences)
         diversities_per_sent = self.sentence_diversities(entities)
@@ -379,7 +394,12 @@ class DistributeSimilarityScorer(BaseScorer):
         )
         return queried_sent_ids
 
-    def score(self, sentences: List[Sentence], entities: Entities) -> np.ndarray:
+    def score(
+        self,
+        sentences: List[Sentence],
+        entities: Entities,
+        kwargs: Optional[dict] = None,
+    ) -> np.ndarray:
         """Calculate score for each sentence"""
         sentence_scores = [0] * len(sentences)
         diversities_per_sent = self.sentence_diversities(entities)
@@ -736,8 +756,6 @@ class CombinedMultipleScorer(BaseScorer):
         # The combine_type == "parallel"
         tagger = kwargs["tagger"]
         embeddings = kwargs["embeddings"]
-        if "kmeans_params" in kwargs:
-            kmeans_params = kwargs["kmeans_params"]
 
         self.predict(sentences, tagger)
         entities = self.get_entities(sentences, embeddings, tag_type)
@@ -749,11 +767,7 @@ class CombinedMultipleScorer(BaseScorer):
 
         # Calculate scores
         uncertainty_scores = uncertainty_scorer.score(sentences, tagger)
-        if "kmeans_params" in kwargs:
-            diversity_scores = diversity_scorer.score(
-                sentences, entities, kmeans_params
-            )
-        diversity_scores = diversity_scorer.score(sentences, entities)
+        diversity_scores = diversity_scorer.score(sentences, entities, kwargs)
 
         # Normalize scores
         if "lc" in scorer_type:  # reverse lc order for ascend setup below
