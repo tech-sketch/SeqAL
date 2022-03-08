@@ -1,5 +1,6 @@
 import math
 import random
+from collections import defaultdict
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -226,23 +227,27 @@ class StringNGramSampler(BaseSampler):
 
         return np.array(sentence_scores)
 
-    def n_gram(self, entity: Entity, n: int = 3) -> List[str]:
-        """Get n_gram of a entity
+    def trigram(self, entity: Entity) -> List[str]:
+        """Get trigram of a entity
 
         Args:
             entity (Entity): Entity contains text
-            n (int, optional): Number of gram. Defaults to 3.
 
         Returns:
-            List[str]: n-gram of entity.
-                       e.g. "Peter" will return ['$$P', '$Pe', 'Pet', 'ete', 'ter', 'er$', 'r$$']
+            List[str]: Entity trigram with ordinal number
+                       e.g. "Peter" will return ['$$P1', '$Pe1', 'Pet1', 'ete1', 'ter1', 'er$1', 'r$$1']
+                       e.g. "prepress" will return ['$$p1', '$pr1', 'pre1', 'rep1', 'epr1',
+                                                    'pre2', 'res1', 'ess1', 'ss$1', 's$$1']
         """
+        counter = defaultdict(int)
         entity = "$$" + entity.text + "$$"
         entity = entity.replace(" ", "_")
-        n_grams = []
-        for i in range(len(entity) - n + 1):
-            n_grams.append(entity[i : i + n])  # noqa: E203
-        return n_grams
+        trigrams = []
+        for i in range(len(entity) - 3 + 1):
+            span = entity[i : i + 3]  # noqa: E203
+            counter[span] += 1
+            trigrams.append(span + str(counter[span]))
+        return trigrams
 
     def sentence_diversities(self, entities: Entities) -> Dict[int, float]:
         """Get diversity score of each sentence"""
@@ -318,24 +323,26 @@ class StringNGramSampler(BaseSampler):
         """Calculate similarity matrix of entities in each label"""
         similarity_matrix_per_label = {}
         for label, label_entities in entities_per_label.items():
-            entities_n_grams = [self.n_gram(e) for e in label_entities]
+            entities_trigrams = [self.trigram(e) for e in label_entities]
             similarity_matrix = []
             for i, entity in enumerate(label_entities):
-                entity_n_grams = self.n_gram(entity)
+                entity_trigrams = self.trigram(entity)
                 similarities = [
-                    self.n_gram_cosine_similarity(entity_n_grams, entities_n_grams[i])
+                    self.trigram_cosine_similarity(
+                        entity_trigrams, entities_trigrams[i]
+                    )
                     for i in range(len(label_entities))
                 ]
                 similarity_matrix.append(similarities)
             similarity_matrix_per_label[label] = np.array(similarity_matrix)
         return similarity_matrix_per_label
 
-    def n_gram_cosine_similarity(
-        self, entity_n_gram1: List[str], entity_n_gram2: List[str]
+    def trigram_cosine_similarity(
+        self, entity_trigram1: List[str], entity_trigram2: List[str]
     ) -> float:
-        """Calculate n_gram consine similarity"""
-        similarity = len(set(entity_n_gram1) & set(entity_n_gram2)) / math.sqrt(
-            len(entity_n_gram1) * len(entity_n_gram2)
+        """Calculate trigram consine similarity"""
+        similarity = len(set(entity_trigram1) & set(entity_trigram2)) / math.sqrt(
+            len(entity_trigram1) * len(entity_trigram2)
         )
         return similarity
 

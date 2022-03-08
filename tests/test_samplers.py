@@ -99,6 +99,29 @@ def entities4(scope="function"):
 
 
 @pytest.fixture()
+def trigram_examples(scope="function"):
+    """Trigram examples for test"""
+    trigram_examples = {
+        "Peter": ["$$P1", "$Pe1", "Pet1", "ete1", "ter1", "er$1", "r$$1"],
+        "prepress": [
+            "$$p1",
+            "$pr1",
+            "pre1",
+            "rep1",
+            "epr1",
+            "pre2",
+            "res1",
+            "ess1",
+            "ss$1",
+            "s$$1",
+        ],
+        "Lester": ["$$L1", "$Le1", "Les1", "est1", "ste1", "ter1", "er$1", "r$$1"],
+    }
+
+    return trigram_examples
+
+
+@pytest.fixture()
 def entities_per_label(entities4: List[Entity]):
     """Entity list in each label"""
     entities_per_label = {
@@ -137,9 +160,9 @@ def similarity_matrix_per_label(scope="function"):
 
 
 @pytest.fixture()
-def similarity_matrix_per_label_cosine_n_gram(scope="function"):
+def similarity_matrix_per_label_cosine_trigram(scope="function"):
     """Similarity matrix for each label"""
-    similarity_matrix_per_label_cosine_n_gram = {
+    similarity_matrix_per_label_cosine_trigram = {
         "PER": np.array(
             [
                 [1.0, 0.400891862869, 0.0000],
@@ -150,7 +173,7 @@ def similarity_matrix_per_label_cosine_n_gram(scope="function"):
         "LOC": np.array([[1]]),
     }
 
-    return similarity_matrix_per_label_cosine_n_gram
+    return similarity_matrix_per_label_cosine_trigram
 
 
 @pytest.fixture()
@@ -392,25 +415,32 @@ class TestStringNGramSampler:
             == expected_random_sent_ids[: sampler_params["query_number"]]
         )
 
-    def test_n_gram(self, sn_sampler: BaseSampler, entities4: List[Entity]) -> None:
-        """Test n_gram function"""
+    def test_trigram(self, sn_sampler: BaseSampler, trigram_examples: dict) -> None:
+        """Test trigram function"""
+        # Arrange
+        entity = MagicMock(text="prepress")
+
         # Act
-        n_grams = sn_sampler.n_gram(entities4[0])
+        trigrams = sn_sampler.trigram(entity)
 
         # Assert
-        assert n_grams == ["$$P", "$Pe", "Pet", "ete", "ter", "er$", "r$$"]
+        assert trigrams == trigram_examples["prepress"]
 
-    def n_gram_cosine_similarity(self, sn_sampler: BaseSampler) -> None:
-        """Test n_gram_cosine_similarity function"""
+    def trigram_cosine_similarity(
+        self, sn_sampler: BaseSampler, trigram_examples: dict
+    ) -> None:
+        """Test trigram_cosine_similarity function"""
         # Arrange
-        entity_n_gram1 = ["$$P", "$Pe", "Pet", "ete", "ter", "er$", "r$$"]
-        entity_n_gram2 = ["$$L", "$Le", "Les", "est", "ste", "ter", "er$", "r$$"]
-        expected = len(set(entity_n_gram1) & set(entity_n_gram2)) / math.sqrt(
-            len(entity_n_gram1) * len(entity_n_gram2)
+        entity_trigram1 = trigram_examples["Peter"]
+        entity_trigram2 = trigram_examples["Lester"]
+        expected = len(set(entity_trigram1) & set(entity_trigram2)) / math.sqrt(
+            len(entity_trigram1) * len(entity_trigram2)
         )
 
         # Act
-        similarity = sn_sampler.n_gram_cosine_similarity(entity_n_gram1, entity_n_gram2)
+        similarity = sn_sampler.trigram_cosine_similarity(
+            entity_trigram1, entity_trigram2
+        )
 
         # Assert
         assert expected == similarity
@@ -453,7 +483,7 @@ class TestStringNGramSampler:
         self,
         sn_sampler: BaseSampler,
         entities_per_label: dict,
-        similarity_matrix_per_label_cosine_n_gram: Dict[str, torch.Tensor],
+        similarity_matrix_per_label_cosine_trigram: Dict[str, torch.Tensor],
     ) -> None:
         """Test similarity_matrix_per_label function"""
         # Act
@@ -462,7 +492,7 @@ class TestStringNGramSampler:
         # Assert
         assert (
             compare_approximate(
-                sentence_scores, similarity_matrix_per_label_cosine_n_gram
+                sentence_scores, similarity_matrix_per_label_cosine_trigram
             )
             is True
         )
@@ -830,7 +860,9 @@ class TestClusterSimilaritySampler:
         # Assert
         assert np.array_equal(sentence_scores, np.array([0.7138]))
 
-    def test_get_kmeans_params_return_normal_value(self, cs_sampler: BaseSampler) -> None:
+    def test_get_kmeans_params_return_normal_value(
+        self, cs_sampler: BaseSampler
+    ) -> None:
         # Arrange
         kwargs = {"kmeans_params": {"n_clusters": 8, "n_init": 10, "random_state": 0}}
 
@@ -855,7 +887,9 @@ class TestClusterSimilaritySampler:
 class TestCombinedMultipleSampler:
     """Test CombinedMultipleSampler class"""
 
-    def test_get_sampler_type_return_default_value(self, cm_sampler: BaseSampler) -> None:
+    def test_get_sampler_type_return_default_value(
+        self, cm_sampler: BaseSampler
+    ) -> None:
         # Arrange
         kwargs = {}
 
@@ -865,7 +899,9 @@ class TestCombinedMultipleSampler:
         # Assert
         assert sampler_type == "lc_ds"
 
-    def test_get_sampler_type_return_normal_value(self, cm_sampler: BaseSampler) -> None:
+    def test_get_sampler_type_return_normal_value(
+        self, cm_sampler: BaseSampler
+    ) -> None:
         # Arrange
         kwargs = {"sampler_type": "mnlp_ds"}
 
@@ -898,7 +934,9 @@ class TestCombinedMultipleSampler:
         # Assert
         assert combined_type == "parallel"
 
-    def test_get_combined_type_return_normal_value(self, cm_sampler: BaseSampler) -> None:
+    def test_get_combined_type_return_normal_value(
+        self, cm_sampler: BaseSampler
+    ) -> None:
         # Arrange
         kwargs = {"combined_type": "series"}
 
@@ -963,7 +1001,9 @@ class TestCombinedMultipleSampler:
         assert isinstance(uncertainty_sampler, MaxNormLogProbSampler)
         assert isinstance(diversity_sampler, ClusterSimilaritySampler)
 
-    def test_normalize_samplers_by_min_max_scaler(self, cm_sampler: BaseSampler) -> None:
+    def test_normalize_samplers_by_min_max_scaler(
+        self, cm_sampler: BaseSampler
+    ) -> None:
         # Arrange
         scaler = MinMaxScaler()
         uncertainty_scores = np.array([-0.09, -0.07, -0.05, -0.03, -0.01])
