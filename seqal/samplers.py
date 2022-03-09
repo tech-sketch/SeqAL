@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 from flair.data import Sentence
+from sklearn.base import BaseEstimator
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import MinMaxScaler
 
@@ -739,6 +740,7 @@ class CombinedMultipleSampler(BaseSampler):
         """
         sampler_type = self.get_sampler_type(kwargs)
         combined_type = self.get_combined_type(kwargs)
+        scaler = self.get_scaler(kwargs)
 
         # Get samplers
         uncertainty_sampler, diversity_sampler = self.get_samplers(sampler_type)
@@ -778,8 +780,10 @@ class CombinedMultipleSampler(BaseSampler):
 
         # Normalize scores
         if "lc" in sampler_type:  # reverse lc order for ascend setup below
-            scores = self.normalize_scores(-uncertainty_scores, diversity_scores)
-        scores = self.normalize_scores(uncertainty_scores, diversity_scores)
+            scores = self.normalize_scores(
+                -uncertainty_scores, diversity_scores, scaler
+            )
+        scores = self.normalize_scores(uncertainty_scores, diversity_scores, scaler)
 
         sorted_sent_ids = self.sort(scores, order="ascend")
         queried_sent_ids = self.query(
@@ -788,7 +792,10 @@ class CombinedMultipleSampler(BaseSampler):
         return queried_sent_ids
 
     def normalize_scores(
-        self, uncertainty_scores: np.ndarray, diversity_scores: np.ndarray
+        self,
+        uncertainty_scores: np.ndarray,
+        diversity_scores: np.ndarray,
+        scaler: BaseEstimator,
     ) -> np.ndarray:
         """Normalize two kinds of scores
 
@@ -799,7 +806,6 @@ class CombinedMultipleSampler(BaseSampler):
         Returns:
             np.ndarray: Normalized score
         """
-        scaler = MinMaxScaler()
         concatenate_scores = np.stack([uncertainty_scores, diversity_scores])
         normalized_scores = scaler.fit_transform(np.transpose(concatenate_scores))
         return normalized_scores.sum(axis=1)
@@ -861,3 +867,12 @@ class CombinedMultipleSampler(BaseSampler):
                 f"combined_type is not found. combined_type must be one of {self.available_combined_types}"
             )
         return combined_type
+
+    def get_scaler(self, kwargs: dict) -> bool:
+        """Get scaler"""
+        if "scaler" not in kwargs:
+            scaler = MinMaxScaler()
+            print("scaler is not found. Default use 'MinMaxScaler()'")
+            return scaler
+
+        return kwargs["scaler"]
