@@ -7,7 +7,8 @@ import numpy as np
 import pytest
 import torch
 from flair.data import Sentence
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.base import BaseEstimator
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from seqal.base_sampler import BaseSampler
 from seqal.data import Entities, Entity
@@ -946,6 +947,26 @@ class TestCombinedMultipleSampler:
         # Assert
         assert combined_type == "series"
 
+    def test_get_scaler_return_default_value(self, cm_sampler: BaseSampler) -> None:
+        # Arrange
+        kwargs = {}
+
+        # Act
+        scaler = cm_sampler.get_scaler(kwargs)
+
+        # Assert
+        assert isinstance(scaler, MinMaxScaler) is True
+
+    def test_get_scaler_return_normal_value(self, cm_sampler: BaseSampler) -> None:
+        # Arrange
+        kwargs = {"scaler": MinMaxScaler()}
+
+        # Act
+        scaler = cm_sampler.get_scaler(kwargs)
+
+        # Assert
+        assert isinstance(scaler, MinMaxScaler) is True
+
     def test_check_combined_type_return_raise_name_error(
         self, cm_sampler: BaseSampler
     ) -> None:
@@ -1001,11 +1022,11 @@ class TestCombinedMultipleSampler:
         assert isinstance(uncertainty_sampler, MaxNormLogProbSampler)
         assert isinstance(diversity_sampler, ClusterSimilaritySampler)
 
-    def test_normalize_samplers_by_min_max_scaler(
-        self, cm_sampler: BaseSampler
+    @pytest.mark.parametrize("scaler", [MinMaxScaler(), StandardScaler()])
+    def test_normalize_samplers_by_scaler(
+        self, cm_sampler: BaseSampler, scaler: BaseEstimator
     ) -> None:
         # Arrange
-        scaler = MinMaxScaler()
         uncertainty_scores = np.array([-0.09, -0.07, -0.05, -0.03, -0.01])
         diversity_scores = np.array([0.2, 0.4, 0.6, 0.8, 1])
         concatenate_scores = np.stack([uncertainty_scores, diversity_scores])
@@ -1013,7 +1034,9 @@ class TestCombinedMultipleSampler:
         expected_scores = normalized_scores.sum(axis=1)
 
         # Act
-        scores = cm_sampler.normalize_scores(uncertainty_scores, diversity_scores)
+        scores = cm_sampler.normalize_scores(
+            uncertainty_scores, diversity_scores, scaler
+        )
 
         # Assert
         assert np.allclose(scores, expected_scores) is True
