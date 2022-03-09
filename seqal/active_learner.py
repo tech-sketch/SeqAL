@@ -104,7 +104,7 @@ class ActiveLearner:
         tagger_params: Parameters for model.
         trainer_params: Parameters for training process.
         trained_tagger: The tagger to be used in the active learning loop.
-        label_names: Labels 
+        label_names: Labels
 
     """
 
