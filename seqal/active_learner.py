@@ -98,11 +98,14 @@ class ActiveLearner:
             for instance, seqal.uncertainty.uncertainty_sampling.
         tagger_params: Parameters for model.
         trainer_params: Parameters for training process.
-        tagger: The tagger to be used in the active learning loop.
     Attributes:
-        tagger: The tagger to be used in the active learning loop.
-        query_strategy: Function providing the query strategy for the active learning loop.
         corpus: The corpus to be used in active learning loop.
+        query_strategy: Sampler providing the query strategy for the active learning loop.
+        tagger_params: Parameters for model.
+        trainer_params: Parameters for training process.
+        trained_tagger: The tagger to be used in the active learning loop.
+        label_names: Labels 
+
     """
 
     def __init__(
