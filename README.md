@@ -46,7 +46,7 @@ Install this via pip (or your favourite package manager):
 
 To understand what SeqAL can do, we first introduce the pool-based active learning cycle.
 
-![al_cycle](docs/source/_static/al_cycle.png)
+![al_cycle](./docs/source/_static/al_cycle.png)
 
 - Step 0: Prepare seed data (a small number of labeled data used for training)
 - Step 1: Train the model with seed data
@@ -57,13 +57,14 @@ To understand what SeqAL can do, we first introduce the pool-based active learni
   - Step 6: Retrain model
 - Repeat step2~step6 until the f1 score of the model beyond the threshold or annotation budget is no left
 
-SeqAL can cover all steps except step 0 and step 4. Below is a simple script to demonstrate how to use SeqAL to implement the work flow. Besides, you can see [notebooks](examples) for more detail.
+SeqAL can cover all steps except step 0 and step 4. Below is a simple script to demonstrate how to use SeqAL to implement the work flow. Besides, you can see [examples](./examples) for more detail.
 
 ```python
 from seqal.active_learner import ActiveLearner
 from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import add_tags
-from seqal.datasets import ColumnCorpus, ColumnDataset
+from seqal.datasets import ColumnCorpus
+from seqal.utils import load_plain_text
 from xxxx import annotate_by_human  # User need to prepare this method
 
 
@@ -78,13 +79,10 @@ corpus = ColumnCorpus(
     dev_file="valid.txt",
     test_file="test.txt",
 )
-## Labeled dataset
-labeled_dataset = [s for s in corpus.train.sentences]
-## Unlabeled data pool
-pool_file = data_folder + "/train_data_pool.txt"
-data_pool = ColumnDataset(pool_file, pool_columns)
-unlabeled_sentences = data_pool.sentences
 
+## Unlabeled data pool
+file_path = "./datasets/conll/train_datapool.txt"
+unlabeled_sentences = load_plain_text(file_path)
 
 ## Initilize ActiveLearner
 learner = ActiveLearner(

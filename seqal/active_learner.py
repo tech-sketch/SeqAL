@@ -93,30 +93,34 @@ class ActiveLearner:
     """Active learning workflow class.
 
     Args:
-        tagger: The tagger to be used in the active learning loop.
+        corpus: Corpus contains train(labeled data), dev, test (data pool).
         query_strategy: Function providing the query strategy for the active learning loop,
             for instance, seqal.uncertainty.uncertainty_sampling.
-        corpus: Corpus contains train(labeled data), dev, test (data pool).
-        **trainer_params: keyword arguments.
+        tagger_params: Parameters for model.
+        trainer_params: Parameters for training process.
     Attributes:
-        tagger: The tagger to be used in the active learning loop.
-        query_strategy: Function providing the query strategy for the active learning loop.
         corpus: The corpus to be used in active learning loop.
+        query_strategy: Sampler providing the query strategy for the active learning loop.
+        tagger_params: Parameters for model.
+        trainer_params: Parameters for training process.
+        trained_tagger: The tagger to be used in the active learning loop.
+        label_names: Labels
+
     """
 
     def __init__(
         self,
-        tagger_params: dict,
-        query_strategy: Callable,
         corpus: Corpus,
-        trainer_params,
+        query_strategy: Callable,
+        tagger_params: dict,
+        trainer_params: dict,
     ) -> None:
         assert callable(query_strategy), "query_strategy must be callable"
-        self.tagger_params = tagger_params
-        self.trained_tagger = None
-        self.query_strategy = query_strategy
         self.corpus = corpus
+        self.query_strategy = query_strategy
+        self.tagger_params = tagger_params
         self.trainer_params = trainer_params
+        self.trained_tagger = None
         self.label_names = None
 
     def fit(self, save_path: str = "resources/init_train") -> None:

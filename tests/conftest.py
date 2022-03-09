@@ -78,7 +78,7 @@ def trained_tagger(
     trainer_params["train_with_dev"] = True
     trainer_params["train_with_test"] = True
     random_sampler = RandomSampler()
-    learner = ActiveLearner(tagger_params, random_sampler, corpus, trainer_params)
+    learner = ActiveLearner(corpus, random_sampler, tagger_params, trainer_params)
 
     save_path = fixture_path / "output"
     learner.fit(save_path)
@@ -151,6 +151,6 @@ def learner(corpus: Corpus, embeddings: StackedEmbeddings) -> ActiveLearner:
     trainer_params["train_with_dev"] = True
     trainer_params["train_with_test"] = True
     random_sampler = RandomSampler()
-    learner = ActiveLearner(tagger_params, random_sampler, corpus, trainer_params)
+    learner = ActiveLearner(corpus, random_sampler, tagger_params, trainer_params)
 
     return learner

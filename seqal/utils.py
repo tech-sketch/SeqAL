@@ -95,3 +95,12 @@ def entity_ratio(sentences: List[Sentence], tag_type: str = "ner") -> float:
         return float(0)
 
     return float(sum(entity_counter.values()) / len(entity_counter.keys()))
+
+
+def load_plain_text(file_path: str) -> List[Sentence]:
+    """Load plain dataset"""
+    sentences = []
+    with open(file_path, mode="r", encoding="utf-8") as f:
+        for line in f:
+            sentences.append(Sentence(line))
+    return sentences
