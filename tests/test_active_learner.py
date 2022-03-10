@@ -3,23 +3,23 @@ from typing import List
 
 from flair.data import Sentence
 
-from seqal.active_learner import ActiveLearner, remove_query_samples
+from seqal.active_learner import ActiveLearner, remove_queried_samples
 
 
-def test_remove_query_samples(unlabeled_sentences: List[Sentence]) -> None:
-    """Test remove_query_samples function"""
+def test_remove_queried_samples(unlabeled_sentences: List[Sentence]) -> None:
+    """Test remove_queried_samples function"""
     # Arrange
     sents = unlabeled_sentences[:5]
-    query_idx = [1, 2, 4]
+    queried_idx = [1, 2, 4]
     expected_new_sents = [sents[0], sents[3]]
-    expected_query_sents = [sents[1], sents[2], sents[4]]
+    expected_queried_sents = [sents[1], sents[2], sents[4]]
 
     # Act
-    new_sents, query_sents = remove_query_samples(sents, query_idx)
+    new_sents, queried_sents = remove_queried_samples(sents, queried_idx)
 
     # Assert
     assert new_sents == expected_new_sents
-    assert query_sents == expected_query_sents
+    assert queried_sents == expected_queried_sents
 
 
 class TestActiveLearner:

@@ -30,7 +30,7 @@ def get_label_names(corpus: Corpus, label_type: str) -> List[str]:
     return label_names
 
 
-def remove_query_samples(sents: List[Sentence], query_idx: List[int]) -> None:
+def remove_queried_samples(sents: List[Sentence], query_idx: List[int]) -> None:
     """Remove queried data from data pool.
 
     Args:
@@ -192,20 +192,20 @@ class ActiveLearner:
             sents = load_label_info(sents, labels_info)
 
         # Remove queried data from sents and create a new list to store queried data
-        sents_after_remove, queried_samples = remove_query_samples(
+        sents_after_remove, queried_samples = remove_queried_samples(
             sents, queried_sent_ids
         )
 
         return sents_after_remove, queried_samples
 
     def teach(
-        self, query_samples: Sentence, save_path: str = "resources/retrain"
+        self, queried_samples: Sentence, save_path: str = "resources/retrain"
     ) -> None:
         """Retrain model on new labeled dataset.
 
         Args:
-            query_samples (Sentence): new labeled data.
+            queried_samples (Sentence): new labeled data.
             save_path (str, optional): Log and model save path. Defaults to "resources/retrain".
         """
-        self.corpus.add_query_samples(query_samples)
+        self.corpus.add_queried_samples(queried_samples)
         self.fit(save_path)

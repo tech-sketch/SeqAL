@@ -31,7 +31,7 @@ class Corpus(ParentCorpus):
             parts.append(self.test.sentences)
         return ConcatDataset(parts)
 
-    def remove_query_samples(self, query_idx: List[int]) -> None:
+    def remove_queried_samples(self, query_idx: List[int]) -> None:
         """Remove queried data from data pool.
 
         Args:
@@ -41,7 +41,7 @@ class Corpus(ParentCorpus):
             sent for i, sent in enumerate(self.test.sentences) if i not in query_idx
         ]
 
-    def add_query_samples(self, query_samples: List[Sentence]) -> None:
+    def add_queried_samples(self, query_samples: List[Sentence]) -> None:
         """Add queried data to labeled data.
 
         Args:
