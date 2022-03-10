@@ -10,9 +10,10 @@ from sklearn.base import BaseEstimator
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import MinMaxScaler
 
-from seqal.base_sampler import BaseSampler
 from seqal.data import Entities, Entity
 from seqal.tagger import SequenceTagger
+
+from .base import BaseSampler
 
 
 class RandomSampler(BaseSampler):

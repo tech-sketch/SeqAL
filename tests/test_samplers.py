@@ -10,9 +10,9 @@ from flair.data import Sentence
 from sklearn.base import BaseEstimator
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
-from seqal.base_sampler import BaseSampler
 from seqal.data import Entities, Entity
 from seqal.samplers import (
+    BaseSampler,
     ClusterSimilaritySampler,
     CombinedMultipleSampler,
     DistributeSimilaritySampler,
