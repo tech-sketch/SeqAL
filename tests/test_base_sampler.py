@@ -8,8 +8,8 @@ import torch
 from flair.data import Sentence
 from torch.nn.functional import cosine_similarity
 
-from seqal.base_sampler import BaseSampler
 from seqal.datasets import Corpus
+from seqal.samplers import BaseSampler
 
 
 @pytest.fixture()
