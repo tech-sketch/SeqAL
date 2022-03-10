@@ -199,7 +199,7 @@ class ActiveLearner:
         return sents_after_remove, queried_samples
 
     def teach(
-        self, queried_samples: Sentence, save_path: str = "resources/retrain"
+        self, queried_samples: List[Sentence], save_path: str = "resources/retrain"
     ) -> None:
         """Retrain model on new labeled dataset.
 
