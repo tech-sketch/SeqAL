@@ -93,12 +93,12 @@ learner = ActiveLearner(
 )
 
 # Step 1: Initial training on model
-learner.fit()
+learner.initialize()
 
 # Step 2&3: Predict on unlabeled data and query informative data
-_, query_samples = learner.query(data_pool)
-query_samples = [{"text": sent.to_plain_string()} for sent in query_samples]  # Convert sentence class to plain text
-# query_samples:
+_, queried_samples = learner.query(data_pool)
+queried_samples = [{"text": sent.to_plain_string()} for sent in queried_samples]  # Convert sentence class to plain text
+# queried_samples:
 # [
 #   {
 #     "text": "I love Berlin"
@@ -106,7 +106,7 @@ query_samples = [{"text": sent.to_plain_string()} for sent in query_samples]  # 
 # ]
 
 # Step 4: Annotator annotate the selected samples
-new_labels = annotate_by_human(query_samples)
+new_labels = annotate_by_human(queried_samples)
 # new_labels:
 # [　
 #   {

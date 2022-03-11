@@ -174,10 +174,10 @@ sampler = LeastConfidenceSampler()
 learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
 ```
 
-Finally, we call `fit()` method to train the model on seed data. We can provide path to save the model and trianing log.
+Finally, we call `initialize()` method to train the model on seed data. We can provide path to save the model and trianing log.
 
 ```
-learner.fit(save_path="output/init_train")
+learner.initialize(save_path="output/init_train")
 ```
 
 
