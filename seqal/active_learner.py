@@ -123,11 +123,11 @@ class ActiveLearner:
         self.trained_tagger = None
         self.label_names = None
 
-    def initialize(self, save_path: str = "resources/init_train") -> None:
+    def initialize(self, dir_path: str = "output/init_train") -> None:
         """Train model on labeled data.
 
         Args:
-            save_path (str, optional): Log and model save path. Defaults to "resources/init_train".
+            dir_path (str, optional): Directory path to save log and model. Defaults to "output/init_train".
         """
         # Initialize sequence tagger
         tag_type = self.tagger_params["tag_type"]
@@ -144,7 +144,7 @@ class ActiveLearner:
         )
 
         trainer = ModelTrainer(tagger, self.corpus)
-        trainer.train(save_path, **self.trainer_params)
+        trainer.train(dir_path, **self.trainer_params)
         self.trained_tagger = tagger
 
     def query(
@@ -202,7 +202,7 @@ class ActiveLearner:
         self,
         queried_samples: List[Sentence],
         resume: bool = False,
-        save_path: str = "resources/retrain",
+        dir_path: str = "output/retrain",
     ) -> None:
         """Retrain model on new labeled dataset.
 
@@ -210,18 +210,18 @@ class ActiveLearner:
             queried_samples (Sentence): new labeled data.
             resume (bool, optional): If true, train model on new labeled data.
                                      If false, train a new model on all labeled data.
-            save_path (str, optional): Log and model save path. Defaults to "resources/retrain".
+            dir_path (str, optional): Directory path to save log and model. Defaults to "output/retrain".
         """
         if resume is True:
-            self.resume(queried_samples, save_path)
+            self.resume(queried_samples, dir_path)
         else:
             self.corpus.add_queried_samples(queried_samples)
-            self.initialize(save_path)
+            self.initialize(dir_path)
 
     def resume(
-        self, queried_samples: List[Sentence], save_path: str = "resources/retrain"
+        self, queried_samples: List[Sentence], dir_path: str = "output/retrain"
     ) -> None:
         """Train model on the new labeled data"""
         self.corpus.train.sentences = queried_samples
         trainer = ModelTrainer(self.trained_tagger, self.corpus)
-        trainer.train(save_path, **self.trainer_params)
+        trainer.train(dir_path, **self.trainer_params)

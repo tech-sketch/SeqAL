@@ -177,7 +177,7 @@ learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
 Finally, we call `initialize()` method to train the model on seed data. We can provide path to save the model and trianing log.
 
 ```
-learner.initialize(save_path="output/init_train")
+learner.initialize(dir_path="output/init_train")
 ```
 
 
@@ -195,7 +195,7 @@ for i in range(5):
     unlabeled_sentences, queried_samples = learner.query(
         unlabeled_sentences, query_number, token_based=False
     )
-    learner.teach(queried_samples, save_path=f"output/retrain_{i}")
+    learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
 ```
 
 The `token_based=False` parameter means we count on the sentence level. So we will get 200 sentences in `queried_samples`. If we set `token_based=True`, it means we count on the token level. If one sentence contains 10 tokens, we will get 10 sentences in `queried_samples`. 
