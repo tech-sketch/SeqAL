@@ -93,7 +93,7 @@ learner = ActiveLearner(
 )
 
 # Step 1: Initial training on model
-learner.fit()
+learner.initialize()
 
 # Step 2&3: Predict on unlabeled data and query informative data
 _, queried_samples = learner.query(data_pool)

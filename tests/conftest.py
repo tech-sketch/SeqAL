@@ -81,7 +81,7 @@ def trained_tagger(
     learner = ActiveLearner(corpus, random_sampler, tagger_params, trainer_params)
 
     save_path = fixture_path / "output"
-    learner.fit(save_path)
+    learner.initialize(save_path)
 
     return learner.trained_tagger
 
@@ -178,6 +178,6 @@ def trained_learner(
     )
 
     save_path = fixture_path / "output"
-    trained_learner.fit(save_path)
+    trained_learner.initialize(save_path)
 
     return trained_learner

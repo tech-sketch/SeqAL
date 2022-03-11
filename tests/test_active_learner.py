@@ -26,7 +26,7 @@ def test_remove_queried_samples(unlabeled_sentences: List[Sentence]) -> None:
 class TestActiveLearner:
     """Test ActiveLearner class"""
 
-    def test_fit_without_error(
+    def test_initialize_without_error(
         self, fixture_path: Path, learner: ActiveLearner
     ) -> None:
         """Test fit function works no problem"""
@@ -34,7 +34,7 @@ class TestActiveLearner:
         save_path = fixture_path / "output"
 
         # Act
-        learner.fit(save_path)
+        learner.initialize(save_path)
 
     def test_resume_without_error(
         self, fixture_path: Path, corpus: Corpus, trained_learner: ActiveLearner

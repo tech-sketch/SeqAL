@@ -123,7 +123,7 @@ class ActiveLearner:
         self.trained_tagger = None
         self.label_names = None
 
-    def fit(self, save_path: str = "resources/init_train") -> None:
+    def initialize(self, save_path: str = "resources/init_train") -> None:
         """Train model on labeled data.
 
         Args:
@@ -216,7 +216,7 @@ class ActiveLearner:
             self.resume(queried_samples, save_path)
         else:
             self.corpus.add_queried_samples(queried_samples)
-            self.fit(save_path)
+            self.initialize(save_path)
 
     def resume(
         self, queried_samples: List[Sentence], save_path: str = "resources/retrain"
