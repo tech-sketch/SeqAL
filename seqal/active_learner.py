@@ -30,17 +30,17 @@ def get_label_names(corpus: Corpus, label_type: str) -> List[str]:
     return label_names
 
 
-def remove_queried_samples(sents: List[Sentence], query_idx: List[int]) -> None:
+def remove_queried_samples(sents: List[Sentence], queried_idx: List[int]) -> None:
     """Remove queried data from data pool.
 
     Args:
         sents (List[Sentence]): Sentences in data pool.
-        query_idx (List[int]): Index list of queried data.
+        queried_idx (List[int]): Index list of queried data.
     """
     new_sents = []
     query_sents = []
     for i, sent in enumerate(sents):
-        if i in query_idx:
+        if i in queried_idx:
             query_sents.append(sent)
         else:
             new_sents.append(sent)
@@ -167,7 +167,7 @@ class ActiveLearner:
         Returns:
             Tuple[List[Sentence], List[Sentence]]:
                 sents: The data pool after removing query samples.
-                query_samples: Query samples.
+                queried_samples: Query samples.
         """
         tag_type = self.tagger_params["tag_type"]
         embeddings = self.tagger_params["embeddings"]
@@ -199,13 +199,29 @@ class ActiveLearner:
         return sents_after_remove, queried_samples
 
     def teach(
-        self, queried_samples: List[Sentence], save_path: str = "resources/retrain"
+        self,
+        queried_samples: List[Sentence],
+        resume: bool = False,
+        save_path: str = "resources/retrain",
     ) -> None:
         """Retrain model on new labeled dataset.
 
         Args:
             queried_samples (Sentence): new labeled data.
+            resume (bool, optional): If true, train model on new labeled data.
+                                     If false, train a new model on all labeled data.
             save_path (str, optional): Log and model save path. Defaults to "resources/retrain".
         """
-        self.corpus.add_queried_samples(queried_samples)
-        self.fit(save_path)
+        if resume is True:
+            self.resume(queried_samples, save_path)
+        else:
+            self.corpus.add_queried_samples(queried_samples)
+            self.fit(save_path)
+
+    def resume(
+        self, queried_samples: List[Sentence], save_path: str = "resources/retrain"
+    ) -> None:
+        """Train model on the new labeled data"""
+        self.corpus.train.sentences = queried_samples
+        trainer = ModelTrainer(self.trained_tagger, self.corpus)
+        trainer.train(save_path, **self.trainer_params)

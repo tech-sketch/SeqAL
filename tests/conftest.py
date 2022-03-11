@@ -154,3 +154,30 @@ def learner(corpus: Corpus, embeddings: StackedEmbeddings) -> ActiveLearner:
     learner = ActiveLearner(corpus, random_sampler, tagger_params, trainer_params)
 
     return learner
+
+
+@pytest.fixture
+def trained_learner(
+    fixture_path: Path, corpus: Corpus, embeddings: StackedEmbeddings
+) -> SequenceTagger:
+    """A trained tagger used for test"""
+    tagger_params = {}
+    tagger_params["tag_type"] = "ner"  # what tag do we want to predict?
+    tagger_params["hidden_size"] = 256
+    tagger_params["embeddings"] = embeddings
+
+    trainer_params = {}
+    trainer_params["max_epochs"] = 1
+    trainer_params["learning_rate"] = 0.1
+    trainer_params["train_with_dev"] = True
+    trainer_params["train_with_test"] = True
+    random_sampler = RandomSampler()
+
+    trained_learner = ActiveLearner(
+        corpus, random_sampler, tagger_params, trainer_params
+    )
+
+    save_path = fixture_path / "output"
+    trained_learner.fit(save_path)
+
+    return trained_learner

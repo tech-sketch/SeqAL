@@ -4,6 +4,7 @@ from typing import List
 from flair.data import Sentence
 
 from seqal.active_learner import ActiveLearner, remove_queried_samples
+from seqal.datasets import Corpus
 
 
 def test_remove_queried_samples(unlabeled_sentences: List[Sentence]) -> None:
@@ -34,4 +35,42 @@ class TestActiveLearner:
 
         # Act
         learner.fit(save_path)
-        del learner
+
+    def test_resume_without_error(
+        self, fixture_path: Path, corpus: Corpus, trained_learner: ActiveLearner
+    ) -> None:
+        """Test fit function works no problem"""
+        # Arrange
+        save_path = fixture_path / "output"
+        queried_samples = corpus.dev.sentences
+
+        # Act
+        trained_learner.resume(queried_samples, save_path)
+
+    def test_teach_with_resume_false_return_new_model(
+        self, corpus: Corpus, trained_learner: ActiveLearner
+    ) -> None:
+        """Test teach function when train a new model on all labeled data"""
+        # Arrange
+        model_id = id(trained_learner.trained_tagger)
+        queried_samples = corpus.dev.sentences
+
+        # Act
+        trained_learner.teach(queried_samples, resume=False)
+
+        # Assert
+        assert model_id != id(trained_learner.trained_tagger)
+
+    def test_teach_with_resume_true_return_same_model(
+        self, corpus: Corpus, trained_learner: ActiveLearner
+    ) -> None:
+        """Test teach function when train a new model on all labeled data"""
+        # Arrange
+        model_id = id(trained_learner.trained_tagger)
+        queried_samples = corpus.dev.sentences
+
+        # Act
+        trained_learner.teach(queried_samples, resume=True)
+
+        # Assert
+        assert model_id == id(trained_learner.trained_tagger)
