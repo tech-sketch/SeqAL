@@ -31,21 +31,21 @@ class Corpus(ParentCorpus):
             parts.append(self.test.sentences)
         return ConcatDataset(parts)
 
-    def remove_queried_samples(self, query_idx: List[int]) -> None:
+    def remove_queried_samples(self, queried_idx: List[int]) -> None:
         """Remove queried data from data pool.
 
         Args:
-            query_idx (List[int]): Index list of queried data.
+            queried_idx (List[int]): Index list of queried data.
         """
         self.test.sentences = [
-            sent for i, sent in enumerate(self.test.sentences) if i not in query_idx
+            sent for i, sent in enumerate(self.test.sentences) if i not in queried_idx
         ]
 
     def add_queried_samples(self, queried_samples: List[Sentence]) -> None:
         """Add queried data to labeled data.
 
         Args:
-            query_idx (int): Index list of queried data.
+            queried_samples (List[Sentence]): Queried data.
         """
         for sample in queried_samples:
             self.train.sentences.append(sample)
