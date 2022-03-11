@@ -27,19 +27,19 @@ def assign_id_corpus(corpus: Corpus) -> Corpus:
     return corpus
 
 
-def output_conll_format(sents: List[Sentence], save_path: str) -> None:
+def output_conll_format(sentences: List[Sentence], file_path: str) -> None:
     """Output dataset as conll format.
 
     Args:
-        sents (List[Sentence]): [description]
-        save_path (str): [description]
+        sentences (List[Sentence]): List of Sentence class.
+        file_path (str): Path to save file.
     """
-    with open(save_path, "w") as f:
-        for sent in sents:
+    with open(file_path, "w", encoding="utf-8") as file:
+        for sent in sentences:
             for token in sent:
                 line = f"{token.text}\t{token.get_tag('pos').value}\t{token.get_tag('ner').value}\n"  # noqa: E731
-                f.write(line)
-            f.write("\n")
+                file.write(line)
+            file.write("\n")
 
 
 def add_tags(query_labels: List[dict]) -> List[Sentence]:
@@ -51,7 +51,7 @@ def add_tags(query_labels: List[dict]) -> List[Sentence]:
     Returns:
         List[Sentence]: A list of sentences.
     """
-    annotated_sents = []
+    annotated_sentences = []
     for sent in query_labels:
         sentence = Sentence(sent["text"])
         sent_labels = sent["labels"]
@@ -68,9 +68,9 @@ def add_tags(query_labels: List[dict]) -> List[Sentence]:
         else:
             for token in sentence:
                 token.add_tag("ner", "O")
-        annotated_sents.append(sentence)
+        annotated_sentences.append(sentence)
 
-    return annotated_sents
+    return annotated_sentences
 
 
 def entity_ratio(sentences: List[Sentence], tag_type: str = "ner") -> float:
