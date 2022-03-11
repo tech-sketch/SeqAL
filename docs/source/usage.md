@@ -85,18 +85,18 @@ Here we prepare the unlabeled data pool.
 ```python
 # 7. query data
 query_number = 20
-sents, query_samples = learner.query(sents, query_number, token_based=True)
+sents, queried_samples = learner.query(sents, query_number, token_based=True)
 ```
 
 We can query samples from data pool by the `learner.query()` method. `query_number` means how many sentence we want to query. 
 
-If we set `token_based=True`, the `query_number` means how many tokens we want to query. We usually set `token_based=True` For the sequence labeling task. For examples, what have 5 sentences and each sentence have 4 tokens. If we set `query_number=15` and `token_based=True`, the returned `query_samples` will contain 4 sentences (16 tokens > 15), and `sents` contains the rest of unqueried sentences (1 sentences).
+If we set `token_based=True`, the `query_number` means how many tokens we want to query. We usually set `token_based=True` For the sequence labeling task. For examples, what have 5 sentences and each sentence have 4 tokens. If we set `query_number=15` and `token_based=True`, the returned `queried_samples` will contain 4 sentences (16 tokens > 15), and `sents` contains the rest of unqueried sentences (1 sentences).
 
 
-`sents` and `query_samples` are lists that contains Sentence class from flair. You can check more usaage of Sentence class on the flair [tutorial](https://github.com/flairNLP/flair/blob/master/resources/docs/HUNFLAIR_TUTORIAL_1_TAGGING.md) or [code]((https://github.com/flairNLP/flair/blob/c1e30faa63/flair/data.py#L621)). For example, we can get the plain text by the `to_plain_string()` method. We can 
+`sents` and `queried_samples` are lists that contains Sentence class from flair. You can check more usaage of Sentence class on the flair [tutorial](https://github.com/flairNLP/flair/blob/master/resources/docs/HUNFLAIR_TUTORIAL_1_TAGGING.md) or [code]((https://github.com/flairNLP/flair/blob/c1e30faa63/flair/data.py#L621)). For example, we can get the plain text by the `to_plain_string()` method. We can 
 
 ```
-In [1]: query_samples[0].to_plain_string()
+In [1]: queried_samples[0].to_plain_string()
 Out[1]: 'I love Berlin .'
 ```
 
@@ -105,8 +105,8 @@ Next we need to annotate the selected data.
 ```python
 from seqal.utils import add_tags
 
-# 8. obtaining labels for "query_samples" by the human
-query_labels = annotate_by_human(query_samples)
+# 8. obtaining labels for "queried_samples" by the human
+query_labels = annotate_by_human(queried_samples)
 # query_labels = [
 #       {
 #         "text": "I love Berlin .",

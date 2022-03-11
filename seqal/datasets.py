@@ -41,13 +41,13 @@ class Corpus(ParentCorpus):
             sent for i, sent in enumerate(self.test.sentences) if i not in query_idx
         ]
 
-    def add_queried_samples(self, query_samples: List[Sentence]) -> None:
+    def add_queried_samples(self, queried_samples: List[Sentence]) -> None:
         """Add queried data to labeled data.
 
         Args:
             query_idx (int): Index list of queried data.
         """
-        for sample in query_samples:
+        for sample in queried_samples:
             self.train.sentences.append(sample)
 
 
