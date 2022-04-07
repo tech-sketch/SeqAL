@@ -46,7 +46,7 @@ Install this via pip (or your favourite package manager):
 
 To understand what SeqAL can do, we first introduce the pool-based active learning cycle.
 
-![al_cycle](./docs/source/_static/al_cycle.png)
+![al_cycle](./docs/images/al_cycle.png)
 
 - Step 0: Prepare seed data (a small number of labeled data used for training)
 - Step 1: Train the model with seed data
@@ -57,7 +57,7 @@ To understand what SeqAL can do, we first introduce the pool-based active learni
   - Step 6: Retrain model
 - Repeat step2~step6 until the f1 score of the model beyond the threshold or annotation budget is no left
 
-SeqAL can cover all steps except step 0 and step 4. Below is a simple script to demonstrate how to use SeqAL to implement the work flow. Besides, you can see [examples](./examples) for more detail.
+SeqAL can cover all steps except step 0 and step 4. Below is a simple script to demonstrate how to use SeqAL to implement the work flow. Besides, you can see [docs](./docs) and [examples](./examples) for more detail.
 
 ```python
 from seqal.active_learner import ActiveLearner
@@ -179,19 +179,6 @@ If you want to delete the local envirement, run below command.
 ```
 conda remove --name seqal --all
 ```
-
-## Contributors ✨
-
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<!-- markdownlint-enable -->
-<!-- prettier-ignore-end -->
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
 ## Credits
 
