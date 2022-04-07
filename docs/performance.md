@@ -16,14 +16,14 @@
   - 25 epoches
 
 
-![al_cycle](./_static/al_cycle.png)
+![al_cycle](./images/al_cycle.png)
 
 Each iteration means run step2~step6 one time.
 
 
 ### F1 score
 
-![al_performance](./_static/al_performance.jpg)
+![al_performance](./images/al_performance.jpg)
 
 - **Supervise** means that training model on full data, and the f1 score is 91.38
 - **LC** (Least confidence) and **MNLP** (Maximum Normalized Log-Probability) are query algorithm with different calculation on informativeness. 
