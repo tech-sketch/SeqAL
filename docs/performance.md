@@ -43,11 +43,11 @@ We first train the model on seed data (2% of training data). Then we query 2％ 
 
 
 
-## Renmin Daily 2014 (CN)
+## People's Daily 2014 (CN)
 
 **Setup**
 
-- dataset: Renmin Daily 2014
+- dataset: People's Daily 2014
 - model: Bi-LSTM CRF
 - total query data: 50%
 - epochs: 20
@@ -56,5 +56,4 @@ We first train the model on seed data (2% of training data). Then we query 2％ 
 - embeddings: bert-base-chinese 
 - GPU: AWS ml.p3.8xlarge
 
-![renmin](images/renmin.jpg)
-
+![people_daily](images/people_daily.jpg)
