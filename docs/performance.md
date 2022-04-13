@@ -9,7 +9,9 @@ We will show the performance of SeqAL on different datasets with different langu
 
 We first train the model on seed data (2% of training data). Then we query 2％ of training data in each iteration untill 50% data are queried.
 
-## Ontonotes 5.0 (EN)
+## SeqAL on different languages
+
+### Ontonotes 5.0 (EN)
 
 **Setup**
 
@@ -20,13 +22,13 @@ We first train the model on seed data (2% of training data). Then we query 2％ 
 - batch_size: 32
 - learning_rate: 0.015
 - embeddings: bert-base-uncased
-- GPU: AWS ml.p3.8xlarge
+- GPU: AWS p3.8xlarge
 
 
-![ontonotes](images/ontonotes.png)
+![ontonotes](images/f1_ontonotes.png)
 
 
-## BCCWJ (JP)
+### BCCWJ (JP)
 
 **Setup**
 
@@ -37,13 +39,13 @@ We first train the model on seed data (2% of training data). Then we query 2％ 
 - batch_size: 32
 - learning_rate: 0.015
 - embeddings: bert-base-japanese 
-- GPU: AWS ml.p3.8xlarge
+- GPU: AWS p3.8xlarge
 
-![bccwj](images/bccwj.jpg)
+![bccwj](images/f1_bccwj.jpg)
 
 
 
-## People's Daily 2014 (CN)
+### People's Daily 2014 (CN)
 
 **Setup**
 
@@ -56,4 +58,23 @@ We first train the model on seed data (2% of training data). Then we query 2％ 
 - embeddings: bert-base-chinese 
 - GPU: AWS ml.p3.8xlarge
 
-![people_daily](images/people_daily.jpg)
+![people_daily](images/f1_people_daily.jpg)
+
+
+## SeqAL on different domain
+
+
+### Ritter (SNS)
+
+**Setup**
+
+- dataset: Ritter
+- model: Bi-LSTM CRF
+- total query data: 50%
+- epochs: 20
+- batch_size: 32
+- learning_rate: 0.015
+- embeddings: bert-base-japanese 
+- GPU: AWS g4dn.2xlarge
+
+![ritter](images/f1_ritter.jpg)
