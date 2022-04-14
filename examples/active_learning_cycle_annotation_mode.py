@@ -40,7 +40,7 @@ learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
 learner.initialize(dir_path="output/init_train")
 
 # 6. prepare unlabeled data pool
-file_path = "./datasets/conll/train_datapool.txt"
+file_path = "./data/trivial_bioes/train_datapool.txt"
 unlabeled_sentences = load_plain_text(file_path)
 
 # 7. calculate query how many sentences in each iteration based on tokens
@@ -72,8 +72,8 @@ for i in range(25):
 
     # Annotator annotate the queried samples
     # 'annotate_by_human' method should be provide by user
-    new_labels = annotate_by_human(queried_texts)  # noqa: F821
-    # new_labels:
+    labeled_texts = annotate_by_human(queried_texts)  # noqa: F821
+    # labeled_texts:
     # [
     #   {
     #     "text": "I love Berlin .",
@@ -90,11 +90,10 @@ for i in range(25):
     print(f"Number of the rest sentences: {len(unlabeled_sentences)}")
 
     # Add labels to Sentence class
-    queried_samples = add_tags(queried_samples, new_labels)
+    labeled_samples = add_tags(labeled_texts)
 
-    # queried_samples will be added to corpus.train and retrain model
-    learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
+    # 'teach' method adds labeled_samples to corpus.train and retrain model
+    learner.teach(labeled_samples, dir_path=f"output/retrain_{i}")
     print(f"Number of the labeled data: {len(corpus.train)}")
 
-    # queried_samples will be added to corpus.train
     print()
