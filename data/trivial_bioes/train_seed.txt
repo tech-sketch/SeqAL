@@ -1,0 +1,17 @@
+this O
+is O
+New B-LOC
+York I-LOC
+
+this O
+is O
+Berlin B-LOC
+
+here O
+is O
+New B-LOC
+York I-LOC
+
+here O
+is O
+Berlin B-LOC
