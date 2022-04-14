@@ -35,7 +35,7 @@ def test_add_tags() -> None:
     assert len(annotated_sents[1].get_spans("ner")) == 0
 
 
-def test_entity_ratio_return_0(unlabeled_sentences: List[Sentence]):
+def test_entity_ratio_return_0(unlabeled_sentences: List[Sentence]) -> None:
     """Test entity_ratio if no entities"""
     # Act
     result = utils.entity_ratio(unlabeled_sentences)
@@ -44,7 +44,7 @@ def test_entity_ratio_return_0(unlabeled_sentences: List[Sentence]):
     assert result == 0
 
 
-def test_entity_ratio():
+def test_entity_ratio() -> None:
     """Test entity_ratio return normal result"""
     # Arrange
     sentence1 = MagicMock()
@@ -76,3 +76,12 @@ def test_load_plain_text(fixture_path: Path) -> None:
 
     # Assert
     assert sentences[1].to_plain_string() == sentence1
+
+
+def test_count_tokens(unlabeled_sentences: List[Sentence]) -> None:
+    """Test entity_ratio if no entities"""
+    # Act
+    result = utils.count_tokens(unlabeled_sentences[:2])
+
+    # Assert
+    assert result == 11

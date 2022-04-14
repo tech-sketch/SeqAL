@@ -104,3 +104,8 @@ def load_plain_text(file_path: str) -> List[Sentence]:
         for line in f:
             sentences.append(Sentence(line))
     return sentences
+
+
+def count_tokens(sentences: List[Sentence]) -> int:
+    """Count tokens in sentences"""
+    return sum(len(s.tokens) for s in sentences)
