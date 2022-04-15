@@ -60,12 +60,12 @@ corpus = ColumnCorpus(
     data_folder,
     columns,
     train_file="train_seed.txt",
-    dev_file="valid.txt",
+    dev_file="dev.txt",
     test_file="test.txt",
 )
 ```
 
-The `valid.txt` is the dataset used to give an estimate of model skill while tuning the model’s hyperparameters. The `test.txt` is the dataset used to give an unbiased estimate of the final tuned model. 
+The `dev.txt` is the dataset used to give an estimate of model skill while tuning the model’s hyperparameters. The `test.txt` is the dataset used to give an unbiased estimate of the final tuned model. 
 
 ```python
 # print the number of Sentences in the train split
@@ -114,7 +114,7 @@ from seqal.datasets import ColumnDataset
 
 columns = {0: "text", 3: "ner"}
 data_folder = "./datasets/conll"
-pool_file = data_folder + "/train_datapool.txt"
+pool_file = data_folder + "/train_pool.txt"
 data_pool = ColumnDataset(pool_file, columns)
 unlabeled_sentences = data_pool.sentences
 ```
@@ -138,11 +138,90 @@ We can use `load_plain_text` to read the unlabeled dataset. This will create a l
 ```python
 from seqal.utils import load_plain_text
 
-file_path = "./datasets/conll/train_datapool.txt"
+file_path = "./datasets/conll/train_pool.txt"
 unlabeled_sentences = load_plain_text(file_path)
 ```
 
-## 2 Initialize Active Learner
+## 2 Prepare Data
+
+We take the [trivial bioes](../data/trivial_bioes/) samples to show how should we prepare the dataset.
+
+
+### Annotation mode
+
+The annotation mode means we use SeqAL in a real annotation project, which means we should prepare seed data and unlabeled data pool as shown in the following image.
+
+![al_cycle](./images/al_cycle.png)
+
+A dataset should contians four files. Beblow are the files in [trivial bioes](../data/trivial_bioes/) dataset.
+
+
+- `train_seed.txt`: initialize the model.
+- `dev.txt`: tune the model’s hyperparameters.
+- `test.txt`: give an unbiased estimate of the final tuned model.
+- `train_pool.txt`: unlabeled data that waits for querying.
+
+We can load these data by following code.
+
+```python
+from seqal.datasets import ColumnCorpus
+from seqal.utils import load_plain_text
+
+# Load labeled data
+columns = {0: "text", 1: "ner"}
+data_folder = "./data/trivial_bioes"
+corpus = ColumnCorpus(
+    data_folder,
+    columns,
+    train_file="train_seed.txt",
+    dev_file="dev.txt",
+    test_file="test.txt",
+)
+
+# Load unlabeled data
+file_path = "./data/trivial_bioes/train_pool.txt"
+unlabeled_data = load_plain_text(file_path)
+```
+
+You can find more detail in the [example](../examples/active_learning_cycle_annotation_mode.py).
+
+
+
+### Research mode
+
+The research mode means we have a labeled dataset, and we do not need people to annotate the data. We just want to simulate the active learning cycle to see the performance of model. This mode is usually used on research, which means we already have a labeled dataset.
+
+Usually a labeled dataset contains three files, `train.txt`, `dev.txt`, and `test.txt`. In order to simulate the active learning cycle, we have to split the `train.txt` to `train_seed.txt` and `train_pool.txt`.
+
+We can select 2% of original training data as the seed data. In each round, every sampling algorithm chooses 2% from the rest of the training data. On thing we should pay attention to is that controling the percentage of each class to create a balanced seed data.
+
+
+We can load these data by following code.
+
+```python
+from seqal.datasets import ColumnCorpus, ColumnDataset
+
+# Load labeled data
+columns = {0: "text", 1: "ner"}
+data_folder = "./data/trivial_bioes"
+corpus = ColumnCorpus(
+    data_folder,
+    columns,
+    train_file="train_seed.txt",
+    dev_file="dev.txt",
+    test_file="test.txt",
+)
+
+
+# Load labeled data pool
+pool_file = data_folder + "/train_labeled_pool.txt"
+data_pool = ColumnDataset(pool_file, columns)
+```
+
+You can find more detail in the [example](../examples/active_learning_cycle_research_mode.py).
+
+
+## 3 Initialize Active Learner
 
 The model used for training is the Bi-LSTM CRF. We have to prepare the model parameters and training parameters in advance.
 
@@ -181,7 +260,7 @@ learner.initialize(dir_path="output/init_train")
 ```
 
 
-## 3 Active Learning Cycle
+## 4 Active Learning Cycle
 
 We assume that we need 1000 labeled data. So we run the active learning 5 iterations, and we query 200 samples in each iteration. These 200 samples are sent to workers for annotation. 
 
@@ -226,3 +305,7 @@ weighted avg     0.8203    0.6034    0.6875      5648
  samples avg     0.5495    0.5495    0.5495      5648
 ```
 
+
+## References
+
+1. Y. Shen, H. Yun, Z. C. Lipton, Y. Kronrod, and A. Anandkumar, “Deep active learning for named entity recognition,” in ICLR, 2017.
