@@ -7,13 +7,13 @@ from seqal.datasets import ColumnCorpus, ColumnDataset
 from seqal.samplers import LeastConfidenceSampler
 
 # 1. get the corpus
-columns = {0: "text", 3: "ner"}
-data_folder = "/Users/smap/Project/seqal/datasets/conll"
+columns = {0: "text", 1: "ner"}
+data_folder = "./data/trivial_bioes"
 corpus = ColumnCorpus(
     data_folder,
     columns,
     train_file="train_seed.txt",
-    dev_file="valid.txt",
+    dev_file="dev.txt",
     test_file="test.txt",
 )
 
@@ -39,9 +39,8 @@ learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
 learner.initialize(dir_path="output/init_train")
 
 # 6. prepare data pool
-pool_columns = {0: "text", 3: "ner"}
-pool_file = data_folder + "/train_datapool.txt"
-data_pool = ColumnDataset(pool_file, pool_columns)
+pool_file = data_folder + "/train_labeled_pool.txt"
+data_pool = ColumnDataset(pool_file, columns)
 unlabeled_sentences = data_pool.sentences
 
 # 7. calculate query how many sentences in each iteration based on tokens
