@@ -131,16 +131,11 @@ class ActiveLearner:
         """
         # Initialize sequence tagger
         tag_type = self.tagger_params["tag_type"]
-        hidden_size = self.tagger_params["hidden_size"]
-        embeddings = self.tagger_params["embeddings"]
-        tag_dictionary = self.corpus.make_tag_dictionary(tag_type=tag_type)
+        self.tagger_params["tag_dictionary"] = self.corpus.make_tag_dictionary(tag_type=tag_type)
         self.label_names = get_label_names(self.corpus, tag_type)
 
         tagger = SequenceTagger(
-            hidden_size=hidden_size,
-            embeddings=embeddings,
-            tag_dictionary=tag_dictionary,
-            tag_type=tag_type,
+            **self.tagger_params
         )
 
         trainer = ModelTrainer(tagger, self.corpus)
