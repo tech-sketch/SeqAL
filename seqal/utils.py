@@ -109,3 +109,90 @@ def load_plain_text(file_path: str) -> List[Sentence]:
 def count_tokens(sentences: List[Sentence]) -> int:
     """Count tokens in sentences"""
     return sum(len(s.tokens) for s in sentences)
+
+
+def bilou2bioes(tags: List[str]) -> List[str]:
+    """Convert BILOU format to BIOES format
+
+    Args:
+        tags (List[str]): List of tags with BILOU format.
+
+    Returns:
+        List[str]: List of tags with BIOES format.
+    """
+    new_tags = []
+    for tag in tags:
+        tag_list = list(tag)
+        if tag[0] == "L":
+            tag_list[0] = "E"
+        elif tag[0] == "U":
+            tag_list[0] = "S"
+        tag = "".join(tag_list)
+        new_tags.append(tag)
+    return new_tags
+
+
+def bilou2bio(tags: List[str]) -> List[str]:
+    """Convert BILOU format to BIO format
+
+    Args:
+        tags (List[str]): List of tags with BILOU format.
+
+    Returns:
+        List[str]: List of tags with BIO format.
+    """
+    new_tags = []
+    for tag in tags:
+        tag_list = list(tag)
+        if tag[0] == "L":
+            tag_list[0] = "I"
+        elif tag[0] == "U":
+            tag_list[0] = "B"
+        tag = "".join(tag_list)
+        new_tags.append(tag)
+    return new_tags
+
+
+def bioes2bio(tags: List[str]) -> List[str]:
+    """Convert BIOES format to BIO format
+
+    Args:
+        tags (List[str]): List of tags with BIOES format.
+
+    Returns:
+        List[str]: List of tags with BIO format.
+    """
+    new_tags = []
+    for tag in tags:
+        tag_list = list(tag)
+        if tag[0] == "E":
+            tag_list[0] = "I"
+        elif tag[0] == "S":
+            tag_list[0] = "B"
+        tag = "".join(tag_list)
+        new_tags.append(tag)
+    return new_tags
+
+
+def bio2bioes(tags: List[str]) -> List[str]:
+    """Convert BIOES format to BIO format
+
+    Args:
+        tags (List[str]): List of tags with BIOES format.
+
+    Returns:
+        List[str]: List of tags with BIO format.
+    """
+    new_tags = []
+    for i, tag in enumerate(tags):
+        tag_list = list(tag)
+        if tag[0] == "B":
+            if (i == len(tags) - 1) or ("I-" not in tags[i + 1]):
+                tag_list[0] = "S"
+        elif tag[0] == "I":
+            if (i == len(tags) - 1) or ("I-" not in tags[i + 1]):
+                tag_list[0] = "E"
+
+        tag = "".join(tag_list)
+        new_tags.append(tag)
+    return new_tags
