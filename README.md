@@ -62,7 +62,7 @@ SeqAL can cover all steps except step 0 and step 4. Below is a simple script to 
 ```python
 from seqal.active_learner import ActiveLearner
 from seqal.samplers import LeastConfidenceSampler
-from seqal.utils import add_tags
+from seqal.alinger import Alinger
 from seqal.datasets import ColumnCorpus
 from seqal.utils import load_plain_text
 from xxxx import annotate_by_human  # User need to prepare this method
@@ -101,31 +101,23 @@ queried_samples = [{"text": sent.to_plain_string()} for sent in queried_samples]
 # queried_samples:
 # [
 #   {
-#     "text": "I love Berlin"
+#     "text": "Tokyo is a city"
 #   }
 # ]
 
 # Step 4: Annotator annotate the selected samples
 new_labels = annotate_by_human(queried_samples)
 # new_labels:
-# [　
+# [
 #   {
-#     "text": "I love Berlin .",
-#     "labels": [  # The labels created by annotators
-#       {
-#         "start_pos": 7,
-#         "text": "Berlin",
-#         "label": "S-LOC"
-#       }
-#     ]
+#     "text": ['Tokyo', 'is', 'a', 'city'],
+#     "labels": ['B-LOC', 'O', 'O', 'O']
 #   }
 # ]
 
 ## Convert data to Sentence class
-new_labeled_samples = add_tags(new_labels)
-
-# Step 5&6: Add new labeled samples to training and retrain model
-learner.teach(new_labeled_samples)
+alinger = Alinger()
+new_labeled_samples = alinger.add_tags_on_token(new_labels)
 ```
 
 The [usage](./docs/source/usage.md) page has more detail on parameter setup and method explanations.
