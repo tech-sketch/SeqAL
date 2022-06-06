@@ -47,7 +47,7 @@ class Transformer:
                     else:
                         tag_list = list(tag)
                         if i == len(token.text) - 1:
-                            tag_list[0] = "L"
+                            tag_list[0] = "E"
                         else:
                             tag_list[0] = "I"
                         new_sentence[char_idx_in_setence].set_label(

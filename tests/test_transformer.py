@@ -15,7 +15,7 @@ class TestTransformer:
         sentence[2].set_label("ner", "O")
         sentence[3].set_label("ner", "O")
 
-        expected = ["B-LOC", "I-LOC", "I-LOC", "L-LOC", "O", "O", "O", "O", "O", "O"]
+        expected = ["B-LOC", "I-LOC", "I-LOC", "E-LOC", "O", "O", "O", "O", "O", "O"]
 
         # Act
         transformer = Transformer(nlp)
