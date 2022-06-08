@@ -258,7 +258,7 @@ class TestLeastConfidenceSampler:
     def test_score_return_correct_result_if_log_probability_runs_after_prediction(
         self, lc_sampler: BaseSampler, predicted_sentences: List[Sentence]
     ) -> None:
-        """Test score function return correct result if log_probability runs after prediction"""
+        """Test RandomSampler.score function return correct result if log_probability runs after prediction"""
         # Arrange
         tagger = MagicMock()
         tagger.log_probability = MagicMock(
@@ -307,7 +307,7 @@ class TestMaxNormLogProbSampler:
     def test_score_return_correct_result_if_log_probability_runs_after_prediction(
         self, mnlp_sampler: BaseSampler, predicted_sentences: List[Sentence]
     ) -> None:
-        """Test score function return correct result if log_probability runs after prediction"""
+        """Test MaxNormLogProbSampler.score function return correct result if log_probability runs after prediction"""
         # Arrange
         tagger = MagicMock()
         log_probs = np.array(
@@ -417,7 +417,7 @@ class TestStringNGramSampler:
         )
 
     def test_trigram(self, sn_sampler: BaseSampler, trigram_examples: dict) -> None:
-        """Test trigram function"""
+        """Test StringNGramSampler.trigram function"""
         # Arrange
         entity = MagicMock(text="prepress")
 
@@ -430,7 +430,7 @@ class TestStringNGramSampler:
     def trigram_cosine_similarity(
         self, sn_sampler: BaseSampler, trigram_examples: dict
     ) -> None:
-        """Test trigram_cosine_similarity function"""
+        """Test StringNGramSampler.trigram_cosine_similarity function"""
         # Arrange
         entity_trigram1 = trigram_examples["Peter"]
         entity_trigram2 = trigram_examples["Lester"]
@@ -453,7 +453,7 @@ class TestStringNGramSampler:
         entity_id_map: dict,
         similarity_matrix_per_label: dict,
     ) -> None:
-        """Test calculate diversity function"""
+        """Test StringNGramSampler.calculate_diversity function"""
         # Arrange
         expected = {0: 0, 1: -0.5}
 
@@ -468,7 +468,7 @@ class TestStringNGramSampler:
     def test_sentence_diversity(
         self, sn_sampler: BaseSampler, entities4: List[Entity]
     ) -> None:
-        """Test sentence_diversity function"""
+        """Test StringNGramSampler.sentence_diversity function"""
         # Arrange
         entities = Entities()
         entities.entities = entities4
@@ -486,7 +486,7 @@ class TestStringNGramSampler:
         entities_per_label: dict,
         similarity_matrix_per_label_cosine_trigram: Dict[str, torch.Tensor],
     ) -> None:
-        """Test similarity_matrix_per_label function"""
+        """Test StringNGramSampler.similarity_matrix_per_label function"""
         # Act
         sentence_scores = sn_sampler.similarity_matrix_per_label(entities_per_label)
 
@@ -505,7 +505,7 @@ class TestStringNGramSampler:
         entities_per_label: dict,
         entity_id_map: dict,
     ) -> None:
-        """Test get_entity_id_map function"""
+        """Test StringNGramSampler.get_entity_id_map function"""
         # Arrange
         sentence_count = max(entities_per_sentence.keys()) + 1
         max_entity_count = max(
@@ -521,7 +521,7 @@ class TestStringNGramSampler:
         assert compare_exact(entity_id_map_result, entity_id_map) is True
 
     def test_score(self, sn_sampler: BaseSampler) -> None:
-        """Test score function"""
+        """Test StringNGramSampler.score function"""
         # Arrange
         sents = [0, 1]
         entities = Entities()
@@ -605,7 +605,7 @@ class TestDistributeSimilaritySampler:
         entity_id_map: dict,
         similarity_matrix_per_label: dict,
     ) -> None:
-        """Test calculate diversity function"""
+        """Test DistributeSimilaritySampler.calculate_diversity function"""
         # Arrange
         expected = {0: 0, 1: -0.5}
 
@@ -620,7 +620,7 @@ class TestDistributeSimilaritySampler:
     def test_sentence_diversity(
         self, ds_sampler: BaseSampler, entities4: List[Entity]
     ) -> None:
-        """Test sentence_diversity function"""
+        """Test DistributeSimilaritySampler.sentence_diversity function"""
         # Arrange
         entities = Entities()
         entities.entities = entities4
@@ -638,7 +638,7 @@ class TestDistributeSimilaritySampler:
         entities_per_label: dict,
         similarity_matrix_per_label: Dict[str, torch.Tensor],
     ) -> None:
-        """Test similarity_matrix_per_label function"""
+        """Test DistributeSimilaritySampler.similarity_matrix_per_label function"""
         # Act
         sentence_scores = ds_sampler.similarity_matrix_per_label(entities_per_label)
 
@@ -652,7 +652,7 @@ class TestDistributeSimilaritySampler:
         entities_per_label: dict,
         entity_id_map: dict,
     ) -> None:
-        """Test get_entity_id_map function"""
+        """Test DistributeSimilaritySampler.get_entity_id_map function"""
         # Arrange
         sentence_count = max(entities_per_sentence.keys()) + 1
         max_entity_count = max(
@@ -668,7 +668,7 @@ class TestDistributeSimilaritySampler:
         assert compare_exact(entity_id_map_result, entity_id_map) is True
 
     def test_score(self, ds_sampler: BaseSampler) -> None:
-        """Test score function"""
+        """Test DistributeSimilaritySampler.score function"""
         # Arrange
         sents = [0, 1]
         entities = Entities()
@@ -748,7 +748,7 @@ class TestClusterSimilaritySampler:
     def test_kmeans_raise_key_error_if_n_cluster_param_is_not_found(
         self, cs_sampler: BaseSampler, unlabeled_sentences: List[Sentence]
     ) -> None:
-        """Test kmeans function raise key_error if n_cluster parameter is not found"""
+        """Test ClusterSimilaritySampler.kmeans function raise key_error if n_cluster parameter is not found"""
         # Arrange
         kmeans_params = {"n_init": 10, "random_state": 0}
 
@@ -760,7 +760,7 @@ class TestClusterSimilaritySampler:
     def test_kmeans_return_correct_result(
         self, cs_sampler: BaseSampler, sampler_params: dict, entities6: List[Entity]
     ) -> None:
-        """Test kmeans function return correct result"""
+        """Test ClusterSimilaritySampler.kmeans function return correct result"""
         # Arrange
         entities = Entities()
         entities.entities = entities6
@@ -777,7 +777,7 @@ class TestClusterSimilaritySampler:
         assert np.array_equal(entity_cluster_nums, np.array([1, 1, 1, 0, 0, 0]))
 
     def test_assign_cluster(self, cs_sampler: BaseSampler) -> None:
-        """Test assign cluster function"""
+        """Test ClusterSimilaritySampler.assign_cluster function"""
         # Arrange
         e0 = MagicMock(label="PER", vector=torch.tensor([1, 2]))
         entities = Entities()
@@ -793,7 +793,7 @@ class TestClusterSimilaritySampler:
     def test_calculate_diversity(
         self, cs_sampler: BaseSampler, entities6: List[Entity]
     ) -> None:
-        """Test calculate diversity function"""
+        """Test ClusterSimilaritySampler.calculate_diversity function"""
         # Arrange
         entities_per_cluster = {
             1: [entities6[0], entities6[1], entities6[2]],
@@ -813,7 +813,7 @@ class TestClusterSimilaritySampler:
     def test_sentence_diversity(
         self, cs_sampler: BaseSampler, entities6: List[Entity]
     ) -> None:
-        """Test sentence diversity function"""
+        """Test ClusterSimilaritySampler.sentence_diversities function"""
         # Arrange
         entities_per_cluster = {
             1: [entities6[0], entities6[1], entities6[2]],
@@ -839,7 +839,7 @@ class TestClusterSimilaritySampler:
         np.testing.assert_allclose([sentence_score[0]], [0.7138], rtol=1e-3)
 
     def test_score(self, cs_sampler: BaseSampler, entities6: List[Entity]) -> None:
-        """Test score function"""
+        """Test ClusterSimilaritySampler.score function"""
         # Arrange
         sents = [0]  # Just one setnence
         kwargs = {"kmeans_params": {"n_clusters": 8, "n_init": 10, "random_state": 0}}
@@ -864,6 +864,7 @@ class TestClusterSimilaritySampler:
     def test_get_kmeans_params_return_normal_value(
         self, cs_sampler: BaseSampler
     ) -> None:
+        """Test ClusterSimilaritySampler.get_kmeans_params return normal value."""
         # Arrange
         kwargs = {"kmeans_params": {"n_clusters": 8, "n_init": 10, "random_state": 0}}
 
@@ -876,6 +877,7 @@ class TestClusterSimilaritySampler:
     def test_get_kmeans_params_return_raise_name_error(
         self, cs_sampler: BaseSampler
     ) -> None:
+        """Test ClusterSimilaritySampler.get_kmeans_params raise error if parameters are inconpatible"""
         # Arrange
         kwargs = {}
 
@@ -891,6 +893,7 @@ class TestCombinedMultipleSampler:
     def test_get_sampler_type_return_default_value(
         self, cm_sampler: BaseSampler
     ) -> None:
+        """Test CombinedMultipleSampler.get_sampler_type return default value"""
         # Arrange
         kwargs = {}
 
@@ -903,6 +906,7 @@ class TestCombinedMultipleSampler:
     def test_get_sampler_type_return_normal_value(
         self, cm_sampler: BaseSampler
     ) -> None:
+        """Test CombinedMultipleSampler.get_sampler_type return normal value"""
         # Arrange
         kwargs = {"sampler_type": "mnlp_ds"}
 
@@ -915,6 +919,7 @@ class TestCombinedMultipleSampler:
     def test_get_sampler_type_return_raise_name_error(
         self, cm_sampler: BaseSampler
     ) -> None:
+        """Test CombinedMultipleSampler.get_sampler_type raise error if parameters are inconpatible"""
         # Arrange
         kwargs = {"sampler_type": "lcc_ds"}
 
@@ -926,6 +931,8 @@ class TestCombinedMultipleSampler:
     def test_get_combined_type_return_default_value(
         self, cm_sampler: BaseSampler
     ) -> None:
+        """Test CombinedMultipleSampler.get_combined_type return default value"""
+
         # Arrange
         kwargs = {}
 
@@ -938,6 +945,8 @@ class TestCombinedMultipleSampler:
     def test_get_combined_type_return_normal_value(
         self, cm_sampler: BaseSampler
     ) -> None:
+        """Test CombinedMultipleSampler.get_combined_type return normal value"""
+
         # Arrange
         kwargs = {"combined_type": "series"}
 
@@ -948,6 +957,8 @@ class TestCombinedMultipleSampler:
         assert combined_type == "series"
 
     def test_get_scaler_return_default_value(self, cm_sampler: BaseSampler) -> None:
+        """Test CombinedMultipleSampler.get_scaler return default value"""
+
         # Arrange
         kwargs = {}
 
@@ -958,6 +969,8 @@ class TestCombinedMultipleSampler:
         assert isinstance(scaler, MinMaxScaler) is True
 
     def test_get_scaler_return_normal_value(self, cm_sampler: BaseSampler) -> None:
+        """Test CombinedMultipleSampler.get_scaler return normal value"""
+
         # Arrange
         kwargs = {"scaler": MinMaxScaler()}
 
@@ -970,6 +983,8 @@ class TestCombinedMultipleSampler:
     def test_check_combined_type_return_raise_name_error(
         self, cm_sampler: BaseSampler
     ) -> None:
+        """Test CombinedMultipleSampler.get_combined_type raise error if parameters are inconpatible"""
+
         # Arrange
         kwargs = {"sampler_type": "lc_ds", "combined_type": "mix"}
 
@@ -979,6 +994,8 @@ class TestCombinedMultipleSampler:
             cm_sampler.get_combined_type(kwargs)
 
     def test_get_samplers_with_lc_ds(self, cm_sampler: BaseSampler) -> None:
+        """Test CombinedMultipleSampler.get_samplers for lc_ds samples"""
+
         # Arrange
         sampler_type = "lc_ds"
 
@@ -990,6 +1007,8 @@ class TestCombinedMultipleSampler:
         assert isinstance(diversity_sampler, DistributeSimilaritySampler)
 
     def test_get_samplers_with_lc_cs(self, cm_sampler: BaseSampler) -> None:
+        """Test CombinedMultipleSampler.get_samplers for lc_cs samples"""
+
         # Arrange
         sampler_type = "lc_cs"
 
@@ -1001,6 +1020,8 @@ class TestCombinedMultipleSampler:
         assert isinstance(diversity_sampler, ClusterSimilaritySampler)
 
     def test_get_samplers_with_mnlp_ds(self, cm_sampler: BaseSampler) -> None:
+        """Test CombinedMultipleSampler.get_samplers for mnlp_ds samples"""
+
         # Arrange
         sampler_type = "mnlp_ds"
 
@@ -1012,6 +1033,8 @@ class TestCombinedMultipleSampler:
         assert isinstance(diversity_sampler, DistributeSimilaritySampler)
 
     def test_get_samplers_with_mnlp_cs(self, cm_sampler: BaseSampler) -> None:
+        """Test CombinedMultipleSampler.get_samplers for mnlp_cs samples"""
+
         # Arrange
         sampler_type = "mnlp_cs"
 
@@ -1026,6 +1049,8 @@ class TestCombinedMultipleSampler:
     def test_normalize_samplers_by_scaler(
         self, cm_sampler: BaseSampler, scaler: BaseEstimator
     ) -> None:
+        """Test CombinedMultipleSampler.normalize_scores by scaler"""
+
         # Arrange
         uncertainty_scores = np.array([-0.09, -0.07, -0.05, -0.03, -0.01])
         diversity_scores = np.array([0.2, 0.4, 0.6, 0.8, 1])
@@ -1049,6 +1074,8 @@ class TestCombinedMultipleSampler:
         unlabeled_sentences: List[Sentence],
         sampler_params: dict,
     ) -> None:
+        """Test CombinedMultipleSampler call function return correct result with lc_ds"""
+
         # Arrange
         lc_sampler.predict = MagicMock(return_value=None)
         lc_sampler.score = MagicMock(
@@ -1090,7 +1117,7 @@ class TestCombinedMultipleSampler:
         unlabeled_sentences: List[Sentence],
         sampler_params: dict,
     ) -> None:
-        """Test call function return random sentence ids if entities is empty"""
+        """Test CombinedMultipleSampler call function return random sentence ids if entities is empty"""
         # Arrange
         sampler_type = "lc_ds"
         combined_type = "parallel"
@@ -1129,6 +1156,8 @@ class TestCombinedMultipleSampler:
         unlabeled_sentences: List[Sentence],
         sampler_params: dict,
     ) -> None:
+        """Test CombinedMultipleSampler call function return correct result with parallel lc_ds"""
+
         # Arrange
         sampler_type = "lc_ds"
         combined_type = "parallel"
@@ -1168,6 +1197,8 @@ class TestCombinedMultipleSampler:
         unlabeled_sentences: List[Sentence],
         sampler_params: dict,
     ) -> None:
+        """Test CombinedMultipleSampler call function return correct result with parallel lc_cs"""
+
         # Arrange
         sampler_type = "lc_ds"
         combined_type = "parallel"
@@ -1208,8 +1239,10 @@ class TestCombinedMultipleSampler:
         unlabeled_sentences: List[Sentence],
         sampler_params: dict,
     ) -> None:
+        """Test CombinedMultipleSampler call function return correct result with parallel mnlp_ds"""
+
         # Arrange
-        sampler_type = "lc_ds"
+        sampler_type = "mnlp_ds"
         combined_type = "parallel"
         cm_sampler.predict = MagicMock(return_value=[None])
         entities = Entities()
@@ -1247,8 +1280,10 @@ class TestCombinedMultipleSampler:
         unlabeled_sentences: List[Sentence],
         sampler_params: dict,
     ) -> None:
+        """Test CombinedMultipleSampler call function return correct result with parallel mnlp_cs"""
+
         # Arrange
-        sampler_type = "lc_ds"
+        sampler_type = "mnlp_cs"
         combined_type = "parallel"
         cm_sampler.predict = MagicMock(return_value=[None])
         entities = Entities()

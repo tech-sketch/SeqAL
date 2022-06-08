@@ -6,7 +6,10 @@ from seqal.transformer import Transformer
 
 
 class TestTransformer:
-    def test_token2char_for_non_space_language(self) -> None:
+    """Test Transformer class"""
+
+    def test_to_char_for_non_space_language(self) -> None:
+        """Test Transform.to_char to convert subword form to character form for non-spaced language"""
         # Arrange
         nlp = MagicMock()
         sentence = Sentence(["ロンドン", "は", "大都市", "です"])

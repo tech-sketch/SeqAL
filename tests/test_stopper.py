@@ -25,7 +25,7 @@ class TestF1Stopper:
         macro_score: int,
         expected: bool,
     ) -> None:
-        """Test stop function"""
+        """Test F1Stopper.stop function"""
         # Arrange
         stopper = F1Stopper(goal=15)
         classification_report = {
@@ -46,7 +46,7 @@ class TestBudgetStopper:
 
     @pytest.mark.parametrize("unit_count,expected", [(10, False), (20, True)])
     def test_stop(self, unit_count: int, expected: bool) -> None:
-        """Test stop function"""
+        """Test BudgetStopper.stop function"""
         # Arrange
         stopper = BudgetStopper(goal=15, unit_price=1)
 
