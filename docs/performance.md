@@ -78,3 +78,70 @@ We first train the model on seed data (2% of training data). Then we query 2％ 
 - GPU: AWS g4dn.2xlarge
 
 ![ritter](images/f1_ritter.jpg)
+
+# Time cost
+
+According to the [active learning cycle](./images/al_cycle.png), we run experiments to check the time cost in each step.
+
+## GPU model time cost in each step.
+
+The GPU model is Bi-LSTM CRF model. Below is the experiment setup.
+
+| Setup                    | Value                                          |
+| ------------------------ | ---------------------------------------------- |
+| Dataset                  | Ontonotes 5.0                                  |
+| Model                    | Bi-LSTM CRF                                    |
+| Total query data         | 50%                                            |
+| Iterations               | 25                                             |
+| Epochs in each iteration | 20                                             |
+| Batchsize                | 32                                             |
+| Learning rate            | 0.015                                          |
+| Embeddings               | bert-base-uncased                              |
+| GPU                      | NVIDIA T4                                      |
+| CPU                      | Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz |
+
+Below is the percentage in each step.
+
+![gpu_fan](./images/gpu_fan.png)
+
+Below is the absolute value of time cost in each step.
+
+![gpu_time](./images/gpu_time.png)
+
+Below is the GPU model performance.
+
+![gpu_model_permance](./images/gpu_model_permance.png)
+
+
+## CPU model time cost in each step.
+
+The CPU model is CRF model. Below is the experiment setup.
+
+| Setup                    | Value                                          |
+| ------------------------ | ---------------------------------------------- |
+| Dataset                  | Ontonotes 5.0                                  |
+| Model                    | CRF                                    |
+| Total query data         | 50%                                            |
+| Iterations               | 25                                             |
+| Epochs in each iteration | 20                                             |
+| Batchsize                | 32                                             |
+| Learning rate            | 0.015                                          |
+| Embeddings               | bert-base-uncased                              |
+| CPU                      | Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz |
+
+Below is the percentage in each step.
+
+![cpu_fan](./images/cpu_fan.png)
+
+Below is the absolute value of time cost in each step.
+
+![cpu_time](./images/cpu_time.png)
+
+Below is the CPU model performance.
+
+![cpu_model_permance](./images/cpu_model_permance.png)
+
+
+## Conclusion
+
+Compare with the time cost and perforamnce on GPU model and CPU model, we recommend use the CPU model. Because CPU model can decrease the time cost greatly only sacrificing a little performance. Another reason is that CPU model is cheaper than GPU mode. The price of CPU machine is only 1/3 price of GPU machine.
