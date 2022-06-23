@@ -37,7 +37,7 @@ class F1Stopper(BaseStopper):
     def __init__(self, goal: float) -> None:
         self.goal = goal
 
-    def stop(self, result: dict, micro: bool = True, macro: bool = False) -> bool:
+    def stop(self, result: dict, micro: bool = True) -> bool:
         """Stop active learning cycle if result meet the goal
 
         Args:
@@ -48,9 +48,10 @@ class F1Stopper(BaseStopper):
         Returns:
             bool: True or False.
         """
-        score_type = "macro avg"
         if micro:
             score_type = "micro avg"
+        else:
+            score_type = "macro avg"
         score = result.classification_report[score_type]["f1-score"]
         if score >= self.goal:
             return True

@@ -9,19 +9,18 @@ class TestF1Stopper:
     """Test F1Stopper class"""
 
     @pytest.mark.parametrize(
-        "micro,micro_score,macro,macro_score,expected",
+        "micro,micro_score,macro_score,expected",
         [
-            (True, 16, False, 0, True),
-            (True, 14, False, 0, False),
-            (False, 0, True, 16, True),
-            (False, 0, True, 14, False),
+            (True, 16, 0, True),
+            (True, 14, 0, False),
+            (False, 0, 16, True),
+            (False, 0, 14, False),
         ],
     )
     def test_stop(
         self,
         micro: bool,
         micro_score: int,
-        macro: bool,
         macro_score: int,
         expected: bool,
     ) -> None:
@@ -35,7 +34,7 @@ class TestF1Stopper:
         result = MagicMock(classification_report=classification_report)
 
         # Act
-        decision = stopper.stop(result, micro=micro, macro=macro)
+        decision = stopper.stop(result, micro=micro)
 
         # Assert
         assert decision == expected
