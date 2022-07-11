@@ -18,8 +18,7 @@ class IterationPerformance:
     macro_f1: float
 
 
-@dataclass
-class Performance:
+class PerformanceRecorder:
     """Performance of all iterations"""
 
     def __init__(self) -> None:
