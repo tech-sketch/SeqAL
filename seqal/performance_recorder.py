@@ -47,7 +47,7 @@ class PerformanceRecorder:
         )
         self.performance_list.append(iteration_performance)
 
-    def plot_performance(
+    def plot(
         self,
         metric: str = "f1",
         sampling_method: str = "sampling_method",
