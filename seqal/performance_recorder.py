@@ -12,7 +12,6 @@ class IterationPerformance:
     data: float
     precision: float
     recall: float
-    f1: float
     accuracy: float
     micro_f1: float
     macro_f1: float
@@ -31,7 +30,7 @@ class PerformanceRecorder:
             data (int): How many data used. This number could be a percentage or real count number.
             result (Result): The performance result of evaluation.
         """
-        precision, recall, f1, accuracy = [
+        precision, recall, _, accuracy = [
             float(score) for score in result.log_line.split("\t")
         ]
         micro_f1 = result.classification_report["micro avg"]["f1-score"]
@@ -40,18 +39,31 @@ class PerformanceRecorder:
             data=data,
             precision=precision,
             recall=recall,
-            f1=f1,
             accuracy=accuracy,
             micro_f1=micro_f1,
             macro_f1=macro_f1,
         )
         self.performance_list.append(iteration_performance)
 
+    def save(self, file_path: str) -> None:
+        """Save performance to file.
+
+        Args:
+            file_path (str): Path to save file.
+        """
+        with open(file_path, 'w', encoding="utf-8") as file:
+            for performance in self.performance_list:
+                line = (
+                    f"{performance.data},{performance.precision},{performance.recall},{performance.f1},{performance.accuracy},{performance.micro_f1},{performance.macro_f1}"
+                )
+                file.write(line)
+            file.write("\n")
+
     def plot(
         self,
-        metric: str = "f1",
+        metric: str = "micro_f1",
         sampling_method: str = "sampling_method",
-        save_img: bool = True,
+        save_path: str = "",
     ) -> None:
         """Draw performance graph
 
@@ -77,10 +89,10 @@ class PerformanceRecorder:
 
         plt.title("Performance on Dataset")
         plt.xlabel("Used data")
-        plt.ylabel("F1-score")
+        plt.ylabel(metric)
         plt.legend(loc="lower right")
         plt.grid()
-        if save_img:
-            plt.savefig(f"{sampling_method}.jpg", dpi=300)
+        if save_path:
+            plt.savefig(save_path, dpi=300)
         else:
             plt.show()

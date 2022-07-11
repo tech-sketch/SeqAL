@@ -27,7 +27,6 @@ class TestPerformanceRecorder:
         assert iteration_performance.data == 20
         assert iteration_performance.precision == 0.77
         assert iteration_performance.recall == 0.28
-        assert iteration_performance.f1 == 0.41
         assert iteration_performance.accuracy == 0.26
         assert iteration_performance.micro_f1 == 0.41
         assert iteration_performance.macro_f1 == 0.33
