@@ -5,7 +5,7 @@ We will show the performance of SeqAL on different datasets with different langu
 - **Supervise** means that training model on full data
 - **LC** (Least confidence) and **MNLP** (Maximum Normalized Log-Probability) are query algorithm with different calculation on informativeness. 
 - **Random** means randomly query data without caring about informativeness.
-- **CS** and **DS** are the diversity based sampling methods for NER
+- **CS** (Clustering Similarity) and **DS** (Distributed Similarity) are the diversity based sampling methods for NER
 
 We first train the model on seed data (2% of training data). Then we query 2％ of training data in each iteration untill 50% data are queried.
 
@@ -97,6 +97,7 @@ The GPU model is Bi-LSTM CRF model. Below is the experiment setup.
 | Batchsize                | 32                                             |
 | Learning rate            | 0.015                                          |
 | Embeddings               | bert-base-uncased                              |
+| AWS machine                      |      AWS g4dn.2xlarge (0.752 USD/hour)                                 |
 | GPU                      | NVIDIA T4                                      |
 | CPU                      | Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz |
 
@@ -127,6 +128,7 @@ The CPU model is CRF model. Below is the experiment setup.
 | Batchsize                | 32                                             |
 | Learning rate            | 0.015                                          |
 | Embeddings               | bert-base-uncased                              |
+| AWS machine                      |      AWS c5.2xlarge (0.34 USD/hour)                                 |
 | CPU                      | Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz |
 
 Below is the percentage in each step.
@@ -144,4 +146,4 @@ Below is the CPU model performance.
 
 ## Conclusion
 
-Compare with the time cost and perforamnce on GPU model and CPU model, we recommend use the CPU model. Because CPU model can decrease the time cost greatly only sacrificing a little performance. Another reason is that CPU model is cheaper than GPU mode. The price of CPU machine is only 1/3 price of GPU machine.
+Compare with the time cost and perforamnce on GPU model and CPU model, we recommend use the CPU model. Because CPU model can decrease the time cost greatly only sacrificing a little performance. Another reason is that CPU model is cheaper than GPU mode. The price of CPU machine is about half price of GPU machine.

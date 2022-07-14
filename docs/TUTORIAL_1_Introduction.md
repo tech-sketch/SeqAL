@@ -65,7 +65,7 @@ for i in range(iterations):
     annotated_data = human_annotate(queried_samples)
 
     # 11. retrain model with newly added queried_samples
-    alinger = Alinger()
+    queried_samples = add_tags(annotated_data)
     learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
 ```
 
