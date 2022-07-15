@@ -122,6 +122,20 @@ new_labeled_samples = alinger.add_tags_on_token(new_labels)
 
 The [usage](./docs/source/usage.md) page has more detail on parameter setup and method explanations.
 
+## Tutorials
+
+We provide a set of quick tutorials to get you started with the library.
+
+- [Tutorial 1: Introduction](docs/TUTORIAL_1_Introduction.md)
+- [Tutorial 2: Prepare Corpus](docs/TUTORIAL_2_Prepare_Corpus.md)
+- [Tutorial 3: Active Learner Setup](docs/TUTORIAL_3_Active_Learner_Setup.md)
+- [Tutorial 4: Prepare Data Pool](docs/TUTORIAL_4_Prepare_Data_Pool.md)
+- [Tutorial 5: Research and Annotation Mode](docs/TUTORIAL_5_Research_and_Annotation_Mode.md)
+- [Tutorial 6: Query Setup](docs/TUTORIAL_6_Query_Setup.md)
+- [Tutorial 7: Annotated Data](docs/TUTORIAL_7_Annotated_Data.md)
+- [Tutorial 8: Stopper](docs/TUTORIAL_8_Stopper.md)
+- [Tutorial 9: Ouput Labeled Data](docs/TUTORIAL_9_Ouput_Labeled_Data.md)
+- [Tutorial 10: Performance_Recorder](docs/TUTORIAL_10_Performance_Recorder.md)
 
 ## Performance
 

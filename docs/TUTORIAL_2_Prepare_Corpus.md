@@ -21,6 +21,18 @@ corpus = ColumnCorpus(
 
 Flair support Flair supports the [BIO schema and the BIOES schema](https://en.wikipedia.org/wiki/Inside–outside–beginning_(tagging)). So we need our data follow the BIO schema and BIOES schema.
 
+If you want to change to BIO shema or BIOES shema, we provide below methods.
+
+```python
+from seqal import utils
+
+bilou_tags = ["B-X", "I-X", "L-X", "U-X", "O"]
+bioes_tags = utils.bilou2bio(bilou_tags)
+bio_tags = utils.bilou2bio(bilou_tags)
+bio_tags = utils.bilou2bio(bioes_tags)
+bioes_tags = utils.bio2bioes(bio_tags)
+```
+
 ## Spaced Language
 
 The spaced language means a sentence can split tokens by space. For example, `Tokyo is a city`.
