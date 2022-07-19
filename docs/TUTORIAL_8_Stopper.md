@@ -4,7 +4,7 @@ This tutorial shows how to use stoppers.
 
 ## Stop by Budget
 
-Annotation cost a lot of money. Usually we will have a budget. If we run out of budget, the active learning cycle will stop.
+Annotation costs a lot of money. Usually, we will have a budget. If we run out of budget, the active learning cycle will stop.
 
 Below is a demo to show how to use `BudgetStopper`.
 
@@ -42,7 +42,7 @@ for i in range(iterations):
         break
 ```
 
-The `BudgetStopper(goal=200, unit_price=0.02)` initialize the budget stopper. The `goal` means how much money we have, here we say 200\$. The `unit_price` means annotation cost for each unit, here we say 0.02\$/unit. A unit cound ba a sentence or a token. Usually it is token.
+The `BudgetStopper(goal=200, unit_price=0.02)` initialize the budget stopper. The `goal` means how much money we have, here we say 200\$. The `unit_price` means annotation cost for each unit, here we say 0.02\$/unit. A unit could be a sentence or a token. Usually, it is a token.
 
 ## Stop by F1
 

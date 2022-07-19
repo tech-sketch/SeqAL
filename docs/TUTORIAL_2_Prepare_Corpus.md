@@ -19,9 +19,9 @@ corpus = ColumnCorpus(
 
 ## Data format
 
-Flair support Flair supports the [BIO schema and the BIOES schema](https://en.wikipedia.org/wiki/Inside–outside–beginning_(tagging)). So we need our data follow the BIO schema and BIOES schema.
+Flair support Flair supports the [BIO schema and the BIOES schema](https://en.wikipedia.org/wiki/Inside–outside–beginning_(tagging)). So we need our data to follow the BIO schema and BIOES schema.
 
-If you want to change to BIO shema or BIOES shema, we provide below methods.
+If you want to change to BIO shema or BIOES shema, we provide the below methods.
 
 ```python
 from seqal import utils

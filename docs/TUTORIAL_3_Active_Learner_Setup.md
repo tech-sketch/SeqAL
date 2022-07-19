@@ -61,8 +61,8 @@ The `seqal.sampler` provide below sampling method.
 - Other:
   - `RandomSampler` 
 
-According to our [experiment](https://fintan.jp/page/4127/) (Japanese), there are some advice to choose the suitable sampling method.
-- If you want to decrease training time, we recommend the uncertainty based sampling methods
+According to our [experiment](https://fintan.jp/page/4127/) (Japanese), there is some advice to choose a suitable sampling method.
+- If you want to decrease training time, we recommend the uncertainty-based sampling methods
 - If you want to increase the performance, we recommend the combined sampled methods.
 
 
@@ -82,9 +82,9 @@ tagger_params["embeddings"] = embeddings
 
 The `tagger_params` means model parameters. The default model is Bi-LSTM CRF.
 
-- `tag_type`: what kind of tag we want to predict, like 'ner', 'pos' and so on.
+- `tag_type`: what kind of tag we want to predict, like 'ner', 'pos', and so on.
 - `hidden_szie`: number of hidden states in RNN
-- `embeddings`: word embedding used in tagger. Make sure the dataset and emebddings are the same language.
+- `embeddings`: word embedding used in tagger. Make sure the dataset and embeddings are the same language.
 
 ### CPU model (CRF)
 
@@ -94,7 +94,7 @@ If we want to speed up the training cycle, we can just use the CRF model by add 
 tagger_params["use_rnn"] = False
 ```
 
-According to the [comparing result](performance.md) of GPU model and CPU model, we highly recommend to use the CPU model. The performance of GPU model is slightly better than the performance of CPU model, but the CPU model's training speed is far faster than GPU model's. And the price of CPU machine is only about half price of GPU machine.
+According to the [comparing result](performance.md) of the GPU model and CPU model, we highly recommend to use the CPU model. The performance of the GPU model is slightly better than the performance of the CPU model, but the CPU model's training speed is far faster than the GPU model's. And the price of a CPU machine is only about half the price of a GPU machine.
 
 
 ## Trainer parameters
@@ -107,12 +107,11 @@ trainer_params["learning_rate"] = 0.1
 trainer_params["patience"] = 5
 ```
 
-The `trainer_params` contorls training process.
+The `trainer_params` control the training process.
 
-- `max_epochs`: the maximum number of epochs to train in each iteration. Usually we set this value smaller than 20 to decrease the training time.
+- `max_epochs`: the maximum number of epochs to train in each iteration. Usually, we set this value smaller than 20 to decrease the training time.
 - `mini_batch_size`: minimum size of data samples in each batch.
 - `learning_rate`: initial learning rate.
-- number of hidden states in RNN
-- `patience`: the number of epochs with no improvement the Trainer waits
+- `patience`: the number of epochs with no improvement the Trainer waits.
 
 Because we use the flair model, you can find more detail about parameters in [flair.ModelTrainer.train](https://github.com/flairNLP/flair/blob/master/flair/trainers/trainer.py#L129)

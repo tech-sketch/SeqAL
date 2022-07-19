@@ -30,7 +30,7 @@ The query setup above is to query 10 sentences in each iterations. Usually we wi
 
 ## Query on Sentence
 
-If we set `token_based` as `False`, this will count `query_number` as sentence number. We prefer give a percentage query number to query data instead of a fixed query numher. 
+If we set `token_based` as `False`, this will count `query_number` as a sentence number. We prefer to give a percentage query number to query data instead of a fixed query number. 
 
 ```python
 
@@ -53,7 +53,7 @@ The `query_percent` could be `0.01` or `0.02`.
 
 ## Query on Token
 
-If we set `token_based` as `True`, this will count `query_number` as token number. In real case, we usually query data based on token. Because we don't know how many tokens a queried sentence has.
+If we set `token_based` as `True`, this will count `query_number` as a token number. In the real case, we usually query data based on the token. Because we don't know how many tokens a queried sentence has.
 
 
 ```python

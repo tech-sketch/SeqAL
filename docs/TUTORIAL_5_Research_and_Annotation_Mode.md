@@ -25,9 +25,9 @@ The parameter `research_mode` controls which mode we use.
 
 ## Research mode
 
-The research mode means we run experiment for research purpose. When we are doing research, we already have a labeled dataset. So we do not need people to annotate the data. We just want to simulate the active learning cycle to see the performance of model.
+The research mode means we run the experiment for research purposes. When we are doing research, we already have a labeled dataset. So we do not need people to annotate the data. We just want to simulate the active learning cycle to see the performance of the model.
 
-When model predicts, predicted labels will overwrite the glod labels. But we assume that human will assign glod labels. In case of add predicted labels to training dataset, we set the `research_mode` is `True`.
+When the model predicts, predicted labels will overwrite the gold labels. But we assume that humans will assign glod labels. In the case of adding predicted labels to the training dataset, we set the `research_mode` as `True`.
 
 Make sure that we load the labeled data pool.
 
@@ -57,7 +57,7 @@ for i in range(iterations):
 
 ## Annotation mode
 
-The annotation mode means we use SeqAL in a real annotation project, which means that the data pool do not contain labels. We set the `research_mode` is `False`.
+The annotation mode means we use SeqAL in a real annotation project, which means that the data pool does not contain labels. We set the `research_mode` as `False`.
 
 ```python
 from seqal.datasets import ColumnDataset

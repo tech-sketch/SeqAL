@@ -2,7 +2,7 @@
 
 This tutorial shows how to use SeqAL to perform active learning for NER(named entity recognition).
 
-We will use below example to explain the SeqAL usage.
+We will use the below example to explain the SeqAL usage.
 
 ```python
 from flair.embeddings import WordEmbeddings
@@ -72,7 +72,7 @@ for i in range(iterations):
 
 ## 1 Load Corpus
 
-First, we need to parepare small labeled data (seed data), which can be splited to training data, validation data, and test data.
+First, we need to prepare small labeled data (seed data), which can be split into training data, validation data, and test data.
 
 ```python
 columns = {0: "text", 1: "ner"}
@@ -86,9 +86,9 @@ corpus = ColumnCorpus(
 )
 ```
 
-For such data, we import `ColumnCorpus` class and provide a `columns` variable to specify which column is the name entity tag. 
+For such data, we import the `ColumnCorpus` class and provide a `columns` variable to specify which column is the name entity tag. 
 
-The `train_seed.txt` is the datased used to train the model. The `dev.txt` is the dataset used to give an estimate of model skill while tuning the model’s hyperparameters. The `test.txt` is the dataset used to give an unbiased estimate of the final tuned model.
+The `train_seed.txt` is the dataset used to train the model. The `dev.txt` is the dataset used to give an estimate of model skill while tuning the model’s hyperparameters. The `test.txt` is the dataset used to give an unbiased estimate of the final tuned model.
 
 
 ## 2~5 Initialize Active Learner
@@ -116,9 +116,9 @@ learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
 learner.initialize(dir_path="output/init_train")
 ```
 
-To setup active learner, we have to provide `corpus`, `sampler`, `tagger_params`, and `trainer_params`. The `sampler` means the sampling method. The `tagger_params` means model parameters. The default model is Bi-LSTM CRF. The `trainer_params` contorls training process.
+To set up an active learner, we have to provide `corpus`, `sampler`, `tagger_params`, and `trainer_params`. The `sampler` means the sampling method. The `tagger_params` means model parameters. The default model is Bi-LSTM CRF. The `trainer_params` control the training process.
 
-After the setup, we can initialize learner by calling `learner.initialize`. This will first train model from scratch. The training log and model will be save to `dir_path`.
+After the setup, we can initialize the learner by calling `learner.initialize`. This will first train the model from scratch. The training log and model will be saved to `dir_path`.
 
 ## 6 Prepare Data Pool
 
@@ -140,8 +140,7 @@ query_number = 10
 iterations = 5
 ```
 
-The `query_number` means how many data we want to query. If `token_based` is `True`, we will query `10` sentence in each iteration. If `token_based` is `False`, we will query `10` tokens in each iteration, which might be one sentence. `iterations` means how many round we run the active learning cycle.
-
+The `query_number` means how much data we want to query. If `token_based` is `True`, we will query the `10` sentences in each iteration. If `token_based` is `False`, we will query `10` tokens in each iteration, which might be one sentence. `iterations` means how many rounds we run the active learning cycle.
 
 ## 8 Iteration
 
@@ -161,13 +160,13 @@ for i in range(iterations):
     learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
 ```
 
-The `learner.query()` run the query process. The parameter `research_mode` is `False` means that we run a real annotation project. The detail can be found in [](). The `queried_samples` contains the samples selected by sampling method. The `unlabeled_setence` contains the rest data.
+The `learner.query()` run the query process. The parameter `research_mode` is `False` which means that we run a real annotation project. The detail can be found in [TUTORIAL_5_Research_and_Annotation_Mode](docs/TUTORIAL_5_Research_and_Annotation_Mode.md). The `queried_samples` contains the samples selected by the sampling method. The `unlabeled_setence` contains the rest data.
 
-The user should provide `human_annotate()`, and the `annotated_data` should contains text and labels.
+The user should provide `human_annotate()`, and the `annotated_data` should contain text and labels.
 
 Next we convert `annotated_data` to a list of `flair.data.Sentence` by `add_tags()`
 
-Finally, `learner.teach()` will add `queried_sampels` to training dataset and retrain the model from scratch.
+Finally, `learner. teach()` will add `queried_sampels` to the training dataset and retrain the model from scratch.
 
 In each iteration, the model will print the performance on different labels, like below:
 

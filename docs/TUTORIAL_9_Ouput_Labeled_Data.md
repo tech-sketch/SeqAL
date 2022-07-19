@@ -33,11 +33,12 @@ for i in range(iterations):
 output_labeled_data(corpus.train.sentences, file_path="labeled_data.txt", file_format="conll", tag_type='ner')
 ```
 
-We should know that all newly labeled data are added to the training dataset, so we just need to output training dataset. 
+We should know that all newly labeled data are added to the training dataset, so we just need to output the training dataset. 
 
-The `file_path` is the path to save file, `file_format` is the output format, the `tag_type` is the tag type we want to output.
+The `file_path` is the path to save the file, `file_format` is the output format, and the `tag_type` is the tag type we want to output.
 
-If we want to output the JSON file, we change use below code.
+If we want to output the JSON file, we change the use below code.
+
 
 ```python
 output_labeled_data(corpus.train.sentences, file_path="labeled_data.json", file_format="json", tag_type='ner')

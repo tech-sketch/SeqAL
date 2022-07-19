@@ -54,4 +54,4 @@ performance_recorder.save("lc_performance.txt")
 performance_recorder.plot(metric="micro_f1", sampling_method="lc", save_path="lc_performance.jpg")
 ```
 
-As above shows, we use `performance_recorder` to record evaluation result of all iterations to `performance_list` property. For each `iteration_performance`, we could get the scores by accessing properties. Finally, we can save the performance by calling `performance_recorder.save()` and plot the graph by calling `performance_recorder.plot()`. The `metric` specify the score we want to draw, the `sampling_metod` will show up on the graph lengend, and the `save_path` will save the graph to image.
+As the above shows, we use `performance_recorder` to record the evaluation result of all iterations to the `performance_list` property. For each `iteration_performance`, we could get the scores by accessing properties. Finally, we can save the performance by calling `performance_recorder.save()` and plot the graph by calling `performance_recorder.plot()`. The `metric` specify the score we want to draw, the `sampling_metod` will show up on the graph legend, and the `save_path` will save the graph to the image.

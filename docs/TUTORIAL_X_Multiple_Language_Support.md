@@ -1,4 +1,4 @@
-# Tutorial 2: Multiple Language Support
+# Tutorial 11: Multiple Language Support
 
 This tutorial shows how to use SeqAL for different language.
 
@@ -39,7 +39,6 @@ trainer_params = {}
 trainer_params["max_epochs"] = 1
 trainer_params["mini_batch_size"] = 32
 trainer_params["learning_rate"] = 0.1
-trainer_params["train_with_dev"] = True
 
 sampler = LeastConfidenceSampler()
 learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
