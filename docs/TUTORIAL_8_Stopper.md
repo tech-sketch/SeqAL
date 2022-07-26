@@ -44,7 +44,7 @@ for i in range(iterations):
 
 The `BudgetStopper(goal=200, unit_price=0.02)` initialize the budget stopper. The `goal` means how much money we have, here we say 200\$. The `unit_price` means annotation cost for each unit, here we say 0.02\$/unit. A unit could be a sentence or a token. Usually, it is a token.
 
-## Stop by F1
+## Stop by Metric
 
 Another motivation to stop active learning cycle is model's performance is beyond our goal.
 
@@ -55,12 +55,22 @@ from seqal.active_learner import ActiveLearner
 from seqal.datasets import ColumnCorpus, ColumnDataset
 from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import load_plain_text, add_tags, count_tokens
-from seqal.stoppers import BudgetStopper
+from seqal.stoppers import MetricStopper
 
-# 1~7
+# 1~6
+
+# 7. query setup
+query_percent = 0.02
+token_based = True
+total_tokens = count_tokens(corpus.train.sentences) + count_tokens(data_pool.sentences)
+query_number = tokens_each_iteration = int(total_tokens * query_percent)
+
+# performance recorder setup
+performance_recorder = PerformanceRecorder()
+accumulate_data = 0
 
 # Stopper setup
-stopper = F1Stopper(goal=0.9)
+stopper = MetricStopper(goal=0.9)
 
 # 8. iteration
 for i in range(iterations):
@@ -78,12 +88,18 @@ for i in range(iterations):
 
     # 12. stop iteration early
     result = learner.trained_tagger.evaluate(corpus.test, gold_label_type="ner")
-    if stopper.stop(result, micro=True):
+    accumulate_data += query_percent
+    performance_recorder.get_result(accumulate_data, result)
+    iteration_performance = performance_recorder.performance_list[i]
+
+    if stopper.stop(iteration_performance.micro_f1):
         break
 ```
 
-The `F1Stopper(goal=0.9)` initialize the budget stopper. The `goal` means the f1 score we want to achieve. 
+The `MetricStopper(goal=0.9)` initialize the budget stopper. The `goal` means the f1 score we want to achieve. 
 
 The `learner.trained_tagger.evaluate(corpus.test, gold_label_type="ner")` evaluate on test dataset and return the evaluation result.
 
-The `stopper.stop(result, micro=True)` compare the goal and the evaluation result on micro f1 score. We also can set `stopper.stop(result, micro=False)` to compare the result on macro f1 score.
+We use `performance_recorder` to parse the evluation result. 
+
+The `stopper.stop(iteration_performance.micro_f1)` compare the goal and the evaluation result on micro f1 score. We can also compare other metrics like macro f1, accuracy, etc. 

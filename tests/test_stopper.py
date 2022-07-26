@@ -2,39 +2,30 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from seqal.stoppers import BudgetStopper, F1Stopper
+from seqal.stoppers import BudgetStopper, MetricStopper
 
 
-class TestF1Stopper:
-    """Test F1Stopper class"""
+class TestMetricStopper:
+    """Test MetricStopper class"""
 
     @pytest.mark.parametrize(
-        "micro,micro_score,macro_score,expected",
+        "micro_score,expected",
         [
-            (True, 16, 0, True),
-            (True, 14, 0, False),
-            (False, 0, 16, True),
-            (False, 0, 14, False),
+            (16, True),
+            (14, False),
         ],
     )
     def test_stop(
         self,
-        micro: bool,
         micro_score: int,
-        macro_score: int,
         expected: bool,
     ) -> None:
         """Test F1Stopper.stop function"""
         # Arrange
-        stopper = F1Stopper(goal=15)
-        classification_report = {
-            "micro avg": {"f1-score": micro_score},
-            "macro avg": {"f1-score": macro_score},
-        }
-        result = MagicMock(classification_report=classification_report)
+        stopper = MetricStopper(goal=15)
 
         # Act
-        decision = stopper.stop(result, micro=micro)
+        decision = stopper.stop(micro_score)
 
         # Assert
         assert decision == expected

@@ -27,8 +27,8 @@ class BudgetStopper(BaseStopper):
             return False
 
 
-class F1Stopper(BaseStopper):
-    """F1 score stopper class
+class MetricStopper(BaseStopper):
+    """Metric score stopper class
 
     Args:
         BaseStopper (_type_): Base class of stopper
@@ -37,22 +37,15 @@ class F1Stopper(BaseStopper):
     def __init__(self, goal: float) -> None:
         self.goal = goal
 
-    def stop(self, result: dict, micro: bool = True) -> bool:
+    def stop(self, score: float) -> bool:
         """Stop active learning cycle if result meet the goal
 
         Args:
-            result (dict): Evaluation result
-            micro (bool, optional): Compare with f1-micro. Defaults to True.
-            macro (bool, optional): Compare with f1-macro. Defaults to False.
+            score (float): Metric score.
 
         Returns:
             bool: True or False.
         """
-        if micro:
-            score_type = "micro avg"
-        else:
-            score_type = "macro avg"
-        score = result.classification_report[score_type]["f1-score"]
         if score >= self.goal:
             return True
         else:
