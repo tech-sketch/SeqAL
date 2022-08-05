@@ -210,7 +210,8 @@ class ActiveLearner:
         if resume is True:
             self.resume(queried_samples, dir_path)
         else:
-            self.corpus.add_queried_samples(queried_samples)
+            for sample in queried_samples:
+                self.corpus.train.sentences.append(sample)
             self.initialize(dir_path)
 
     def resume(
