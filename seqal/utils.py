@@ -62,11 +62,9 @@ def output_labeled_data(
 
         json_object = json.dumps(data, indent=4)
         with open(file_path, "w", encoding="utf-8") as file:
-            file.write(json_object) 
+            file.write(json_object)
     else:
-        raise NameError(
-            "The file_format must be 'conll' or 'json'."
-        )
+        raise NameError("The file_format must be 'conll' or 'json'.")
 
 
 def add_tags(query_labels: List[dict]) -> List[Sentence]:
