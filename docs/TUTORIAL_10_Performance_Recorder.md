@@ -49,6 +49,9 @@ for i in range(iterations):
     print(iteration_performance.accuracy)
     print(iteration_performance.micro_f1)
     print(iteration_performance.macro_f1)
+    print(iteration_performance.weighted_f1)
+    print(iteration_performance.samples_f1)
+    print(iteration_performance.label_scores)
 
 performance_recorder.save("lc_performance.txt")
 performance_recorder.plot(metric="micro_f1", sampling_method="lc", save_path="lc_performance.jpg")

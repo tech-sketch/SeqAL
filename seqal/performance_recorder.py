@@ -15,6 +15,9 @@ class IterationPerformance:
     accuracy: float
     micro_f1: float
     macro_f1: float
+    weighted_f1: float
+    samples_f1: float
+    label_scores: dict
 
 
 class PerformanceRecorder:
@@ -35,6 +38,16 @@ class PerformanceRecorder:
         ]
         micro_f1 = result.classification_report["micro avg"]["f1-score"]
         macro_f1 = result.classification_report["macro avg"]["f1-score"]
+        weighted_f1 = result.classification_report["weighted avg"]["f1-score"]
+        samples_f1 = result.classification_report["samples avg"]["f1-score"]
+        metrics_list = ["micro avg", "macro avg", "weighted avg", "samples avg"]
+
+        label_scores = {}
+        for key, item in result.classification_report.items():
+            if key in metrics_list:
+                continue
+            label_scores[key] = item
+
         iteration_performance = IterationPerformance(
             data=data,
             precision=precision,
@@ -42,6 +55,9 @@ class PerformanceRecorder:
             accuracy=accuracy,
             micro_f1=micro_f1,
             macro_f1=macro_f1,
+            weighted_f1=weighted_f1,
+            samples_f1=samples_f1,
+            label_scores=label_scores,
         )
         self.performance_list.append(iteration_performance)
 
@@ -51,11 +67,9 @@ class PerformanceRecorder:
         Args:
             file_path (str): Path to save file.
         """
-        with open(file_path, 'w', encoding="utf-8") as file:
-            for performance in self.performance_list:
-                line = (
-                    f"{performance.data},{performance.precision},{performance.recall},{performance.f1},{performance.accuracy},{performance.micro_f1},{performance.macro_f1}"
-                )
+        with open(file_path, "w", encoding="utf-8") as file:
+            for p in self.performance_list:
+                line = f"{p.data},{p.precision},{p.recall},{p.f1},{p.accuracy},{p.micro_f1},{p.macro_f1}"
                 file.write(line)
             file.write("\n")
 
