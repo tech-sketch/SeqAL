@@ -53,3 +53,26 @@ An example with CoNLL format:
 です
 ```
 
+If the input format is plain text `東京は都市です`. We should use tokenize the sentence.
+
+We mainly use the spacy model for the tokenization.
+
+```python
+import spacy
+from seqal.transformer import Transformer
+
+nlp = spacy.load("ja_core_news_sm")
+tokenizer = Transformer(nlp)
+unlabeled_sentences = [tokenizer.to_subword(sentence) for sentence in sentences]
+```
+
+We also can directly use the spacy tokenizer.
+
+```python
+import spacy
+from flair.data import Sentence
+from flair.tokenization import SpacyTokenizer
+
+tokenizer = SpacyTokenizer("ja_core_news_sm")
+unlabeled_sentences = [Sentence(sentence, use_tokenizer=tokenizer) for sentence in sentences]
+```
