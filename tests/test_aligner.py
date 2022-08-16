@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from seqal.alinger import Aligner
+from seqal.aligner import Aligner
 
 
 class TestAligner:
