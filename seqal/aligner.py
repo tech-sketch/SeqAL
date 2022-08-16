@@ -170,10 +170,10 @@ class Aligner:
             final_sentence, final_tags = self.align_spaced_language(sentence, tags)
         else:
             final_sentence, final_tags = self.align_non_spaced_language(
-                sentence, tags, spaced_language
+                sentence, tags, spacy_model
             )
 
-        if input_schema == "BIO":
+        if output_schema == "BIO":
             tags = utils.bioes2bio(tags)
 
         return final_sentence, final_tags
@@ -213,6 +213,7 @@ class Aligner:
             input_schema (str, optional): Input tag shema. Defaults to "BIO". Support "BIO", "BILOU", "BIOES"
             output_schema (str, optional): Output tag shema. Defaults to "BIO". Support "BIO", "BIOES"
                                            Flair don't support "BILOU", so we don't output this schema.
+            tag_type (str, optional): Tag type. Defaults to "ner".
 
         Returns:
             annotated_sentence (List[Sentence]): A list of sentence.
@@ -224,26 +225,32 @@ class Aligner:
 
             if spaced_language:
                 subword_sentence, subword_tags = self.to_subword(
-                    sentence, tags, spaced_language, input_schema, output_schema
+                    sentence=sentence,
+                    tags=tags,
+                    spaced_language=spaced_language,
+                    input_schema=input_schema,
+                    output_schema=output_schema,
                 )
             else:
                 subword_sentence, subword_tags = self.to_subword(
-                    sentence,
-                    tags,
-                    spaced_language,
-                    spacy_model,
-                    input_schema,
-                    output_schema,
+                    sentence=sentence,
+                    tags=tags,
+                    spaced_language=spaced_language,
+                    spacy_model=spacy_model,
+                    input_schema=input_schema,
+                    output_schema=output_schema,
                 )
 
             sentence = Sentence(subword_sentence)
             for i, tag in enumerate(subword_tags):
-                sentence[i].add_tag("ner", tag)
+                sentence[i].add_tag(tag_type, tag)
             annotated_sentence.append(sentence)
 
         return annotated_sentence
 
-    def add_tags_on_token(self, labled_data: List[dict]) -> List[Sentence]:
+    def add_tags_on_token(
+        self, labled_data: List[dict], tag_type: str = "ner"
+    ) -> List[Sentence]:
         """Add tags to sentence on token based
 
         Args:
@@ -262,6 +269,7 @@ class Aligner:
                             "labels": ['B-LOC', 'O', 'O', 'O']
                         }
                     ]
+            tag_type (str, optional): Tag type. Defaults to "ner".
 
         Returns:
             annotated_sentence (List[Sentence]): A list of sentence.
@@ -270,7 +278,7 @@ class Aligner:
         for sample in labled_data:
             sentence = Sentence(sample["text"])
             for i, tag in enumerate(sample["labels"]):
-                sentence[i].add_tag("ner", tag)
+                sentence[i].add_tag(tag_type, tag)
             annotated_sentence.append(sentence)
 
         return annotated_sentence
