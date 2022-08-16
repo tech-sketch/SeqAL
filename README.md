@@ -57,7 +57,7 @@ To understand what SeqAL can do, we first introduce the pool-based active learni
   - Step 6: Retrain model
 - Repeat step2~step6 until the f1 score of the model beyond the threshold or annotation budget is no left
 
-SeqAL can cover all steps except step 0 and step 4. Below is a simple script to demonstrate how to use SeqAL to implement the work flow. Besides, you can see [docs](./docs) and [examples](./examples) for more detail.
+SeqAL can cover all steps except step 0 and step 4. Below is a simple script to demonstrate how to use SeqAL to implement the work flow.
 
 ```python
 from seqal.active_learner import ActiveLearner
@@ -117,10 +117,8 @@ new_labels = annotate_by_human(queried_samples)
 
 ## Convert data to Sentence class
 alinger = Alinger()
-new_labeled_samples = alinger.add_tags_on_token(new_labels)
+new_labeled_samples = alinger.add_tags_on_token(new_labels, 'ner')
 ```
-
-The [usage](./docs/source/usage.md) page has more detail on parameter setup and method explanations.
 
 ## Tutorials
 
@@ -135,13 +133,14 @@ We provide a set of quick tutorials to get you started with the library.
 - [Tutorial 7: Annotated Data](docs/TUTORIAL_7_Annotated_Data.md)
 - [Tutorial 8: Stopper](docs/TUTORIAL_8_Stopper.md)
 - [Tutorial 9: Ouput Labeled Data](docs/TUTORIAL_9_Ouput_Labeled_Data.md)
-- [Tutorial 10: Performance_Recorder](docs/TUTORIAL_10_Performance_Recorder.md)
+- [Tutorial 10: Performance Recorder](docs/TUTORIAL_10_Performance_Recorder.md)
+- [Tutorial 11: Multiple Language Support](docs/TUTORIAL_11_Multiple_Language_Support.md)
 
 ## Performance
 
-Active learning algorithms achieve 97% performance of the best deep model trained on full data using only 30%% of the training data on the CoNLL 2003 English dataset.
+Active learning algorithms achieve 97% performance of the best deep model trained on full data using only 30%% of the training data on the CoNLL 2003 English dataset. The CPU model can decrease the time cost greatly only sacrificing a little performance.
 
-See [performance.md](./docs/source/performance.md) for detail.
+See [performance.md](./docs/performance.md) for more detail about performance and time cost.
 
 
 ## Construct envirement locally

@@ -53,7 +53,7 @@ An example with CoNLL format:
 です
 ```
 
-If the input format is plain text `東京は都市です`. We should use tokenize the sentence.
+If the input format is plain text `東京は都市です`. We should tokenize the sentence.
 
 We mainly use the spacy model for the tokenization.
 
