@@ -19,6 +19,8 @@ jobs:
             run: black --check .
           - name: isort
             run: isort -c -v .
+          - name: mypy
+            run: mypy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

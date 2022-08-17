@@ -49,6 +49,7 @@ pre-commit = "^2.20.0"
 pylint = "^2.14.5"
 pandas = "^1.4.3"
 seaborn = "^0.11.2"
+mypy = "^0.971"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
