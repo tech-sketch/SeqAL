@@ -131,17 +131,12 @@ class ActiveLearner:
         """
         # Initialize sequence tagger
         tag_type = self.tagger_params["tag_type"]
-        hidden_size = self.tagger_params["hidden_size"]
-        embeddings = self.tagger_params["embeddings"]
-        tag_dictionary = self.corpus.make_tag_dictionary(tag_type=tag_type)
+        self.tagger_params["tag_dictionary"] = self.corpus.make_tag_dictionary(
+            tag_type=tag_type
+        )
         self.label_names = get_label_names(self.corpus, tag_type)
 
-        tagger = SequenceTagger(
-            hidden_size=hidden_size,
-            embeddings=embeddings,
-            tag_dictionary=tag_dictionary,
-            tag_type=tag_type,
-        )
+        tagger = SequenceTagger(**self.tagger_params)
 
         trainer = ModelTrainer(tagger, self.corpus)
         trainer.train(dir_path, **self.trainer_params)
@@ -152,7 +147,7 @@ class ActiveLearner:
         sents: List[Sentence],
         query_number: int,
         token_based: bool = False,
-        simulation_mode: bool = False,
+        research_mode: bool = False,
     ) -> Tuple[List[Sentence], List[Sentence]]:
         """Query data from pool (sents).
 
@@ -161,8 +156,8 @@ class ActiveLearner:
             query_number (int): batch query number.
             token_based (bool, optional): If true, using query number as token number to query data.
                                           If false, using query number as sentence number to query data.
-            simulation_mode (bool, optional): If ture, sents contains real NER tags.
-                                              If false, sents do not contains NER tags.
+            research_mode (bool, optional): If ture, sents contains real NER tags.
+                                            If false, sents do not contains NER tags.
 
         Returns:
             Tuple[List[Sentence], List[Sentence]]:
@@ -172,7 +167,7 @@ class ActiveLearner:
         tag_type = self.tagger_params["tag_type"]
         embeddings = self.tagger_params["embeddings"]
 
-        if simulation_mode is True:
+        if research_mode is True:
             # Save labels information before prediction in case of overwriting real NER tags.
             # This is because Flair will assign NER tags to token after prediction
             labels_info = save_label_info(sents)
@@ -187,7 +182,7 @@ class ActiveLearner:
             embeddings=embeddings,
         )
 
-        if simulation_mode is True:
+        if research_mode is True:
             # Reload the real NER labels
             sents = load_label_info(sents, labels_info)
 
@@ -196,7 +191,7 @@ class ActiveLearner:
             sents, queried_sent_ids
         )
 
-        return sents_after_remove, queried_samples
+        return queried_samples, sents_after_remove
 
     def teach(
         self,
@@ -215,7 +210,8 @@ class ActiveLearner:
         if resume is True:
             self.resume(queried_samples, dir_path)
         else:
-            self.corpus.add_queried_samples(queried_samples)
+            for sample in queried_samples:
+                self.corpus.train.sentences.append(sample)
             self.initialize(dir_path)
 
     def resume(

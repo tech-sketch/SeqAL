@@ -1,13 +1,14 @@
-# Tutorial 2: Multiple Language Support
+# Tutorial 11: Multiple Language Support
 
 This tutorial shows how to use SeqAL for different language.
 
 [Tutorial 1](./TUTORIAL_1_Introduction.md) show example on English. If you want to use SeqAL on other language, you only need to do two things. 
 
-1. Prepare the data with IOB2 format on the language you used
+1. Prepare the data with BIO or BIOES format on the language you used
 2. Prepare the embedding on the same language
+3. Use spacy model to tokenize the non-spaced language
 
-## Example 
+## Spaced Language
 
 Below is the simple example of active learning cycle on English.
 
@@ -39,7 +40,6 @@ trainer_params = {}
 trainer_params["max_epochs"] = 1
 trainer_params["mini_batch_size"] = 32
 trainer_params["learning_rate"] = 0.1
-trainer_params["train_with_dev"] = True
 
 sampler = LeastConfidenceSampler()
 learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
@@ -84,3 +84,28 @@ embedding = BertEmbeddings("bert-base-german-cased")
 ```
 
 [Here](https://github.com/flairNLP/flair/blob/master/resources/docs/embeddings/TRANSFORMER_EMBEDDINGS.md) are more explanations on the `TransformerWordEmbeddings` class. We can find more language embeddings on [](https://huggingface.co/models)
+
+## Non-spaced Language
+
+If your dataset is non-spaced language, we should tokenize the sentence. we have to tokenize it. For example, assuming that the input is `東京は都市です`.
+
+
+```python
+import spacy
+from seqal.transformer import Transformer
+
+nlp = spacy.load("ja_core_news_sm")
+tokenizer = Transformer(nlp)
+unlabeled_sentences = [tokenizer.to_subword(sentence) for sentence in sentences]
+```
+
+We also can directly use the spacy tokenizer.
+
+```python
+import spacy
+from flair.data import Sentence
+from flair.tokenization import SpacyTokenizer
+
+tokenizer = SpacyTokenizer("ja_core_news_sm")
+unlabeled_sentences = [Sentence(sentence, use_tokenizer=tokenizer) for sentence in sentences]
+```

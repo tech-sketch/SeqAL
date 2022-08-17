@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List
 from unittest.mock import MagicMock
 
+import pytest
 from flair.data import Sentence
 
 from seqal import utils
@@ -85,3 +86,58 @@ def test_count_tokens(unlabeled_sentences: List[Sentence]) -> None:
 
     # Assert
     assert result == 11
+
+
+def test_bilou2bioes() -> None:
+    """Test bilou2bioes conversion"""
+    # Arrange
+    tags = ["B-X", "I-X", "L-X", "U-X", "O"]
+    expected = ["B-X", "I-X", "E-X", "S-X", "O"]
+
+    # Act
+    result = utils.bilou2bioes(tags)
+
+    # Assert
+    assert result == expected
+
+
+def test_bilou2bio() -> None:
+    """Test bilou2bio conversion"""
+    # Arrange
+    tags = ["B-X", "I-X", "L-X", "U-X", "O"]
+    expected = ["B-X", "I-X", "I-X", "B-X", "O"]
+
+    # Act
+    result = utils.bilou2bio(tags)
+
+    # Assert
+    assert result == expected
+
+
+def test_bioes2bio() -> None:
+    """Test bioes2bio conversion"""
+    # Arrange
+    tags = ["B-X", "I-X", "E-X", "S-X", "O"]
+    expected = ["B-X", "I-X", "I-X", "B-X", "O"]
+
+    # Act
+    result = utils.bioes2bio(tags)
+
+    # Assert
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    "tags,expected",
+    [
+        (["B-X", "I-X", "I-X", "B-X", "O"], ["B-X", "I-X", "E-X", "S-X", "O"]),
+        (["B-X", "I-X", "I-X", "B-X"], ["B-X", "I-X", "E-X", "S-X"]),
+    ],
+)
+def test_bio2bioes(tags: List[str], expected: List[str]) -> None:
+    """Test bio2bioes conversion"""
+    # Act
+    result = utils.bio2bioes(tags)
+
+    # Assert
+    assert result == expected
