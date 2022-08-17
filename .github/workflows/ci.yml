@@ -20,7 +20,7 @@ jobs:
           - name: isort
             run: isort -c -v .
           - name: mypy
-            run: mypy
+            run: mypy seqal
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
