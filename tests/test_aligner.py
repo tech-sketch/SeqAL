@@ -10,10 +10,9 @@ class TestAligner:
     @pytest.mark.parametrize(
         "tags,expected",
         [
-            (["B-LOC", "I-LOC", "I-LOC", "I-LOC", "E-LOC"], "B-LOC"),
-            (["S-NON"], "S-NON"),
+            (["B-LOC", "I-LOC", "I-LOC", "I-LOC"], "B-LOC"),
             (["I-LOC", "I-LOC", "I-LOC"], "I-LOC"),
-            (["I-LOC", "I-LOC", "E-LOC"], "E-LOC"),
+            (["O", "O"], "O"),
         ],
     )
     def test_concat_tags(self, tags: List[str], expected: str) -> None:
@@ -54,12 +53,12 @@ class TestAligner:
                     "I-LOC",
                     "I-LOC",
                     "I-LOC",
-                    "E-LOC",
+                    "I-LOC",
                     "O",
                     "O",
                     "O",
                     "O",
-                    "S-NON",
+                    "O",
                     "O",
                     "O",
                     "O",
@@ -68,7 +67,7 @@ class TestAligner:
                     "O",
                 ],
                 ["Tokyo", "is", "a", "city", "."],
-                ["B-LOC", "O", "S-NON", "O", "O"],
+                ["B-LOC", "O", "O", "O", "O"],
             ),
             (
                 [
@@ -94,12 +93,12 @@ class TestAligner:
                     "I-LOC",
                     "I-LOC",
                     "I-LOC",
-                    "E-LOC",
+                    "I-LOC",
                     "O",
                     "B-LOC",
-                    "E-LOC",
+                    "I-LOC",
                     "O",
-                    "S-NON",
+                    "O",
                     "O",
                     "O",
                     "O",
@@ -108,7 +107,7 @@ class TestAligner:
                     "O",
                 ],
                 ["Tokyo", ",", "LA", "a", "city", "."],
-                ["B-LOC", "O", "B-LOC", "S-NON", "O", "O"],
+                ["B-LOC", "O", "B-LOC", "O", "O", "O"],
             ),
             (
                 [
@@ -145,7 +144,7 @@ class TestAligner:
                     "I-LOC",
                     "I-LOC",
                     "I-LOC",
-                    "E-LOC",
+                    "I-LOC",
                     "O",
                     "O",
                     "O",
@@ -158,7 +157,7 @@ class TestAligner:
                     "O",
                 ],
                 ["Los", "angeles", "is", "a", "city"],
-                ["B-LOC", "E-LOC", "O", "O", "O"],
+                ["B-LOC", "I-LOC", "O", "O", "O"],
             ),
         ],
     )
@@ -185,7 +184,7 @@ class TestAligner:
         # Arrage
         aligner = Aligner()
         sentence = ["ロ", "ン", "ド", "ン", "は", "都", "市", "で", "す"]
-        tags = ["B-LOC", "I-LOC", "I-LOC", "E-LOC", "O", "B-NONE", "E-NONE", "O", "O"]
+        tags = ["B-LOC", "I-LOC", "I-LOC", "I-LOC", "O", "B-NONE", "I-NONE", "O", "O"]
         expected_sentence = ["ロンドン", "は", "都市", "です"]
         expected_tags = ["B-LOC", "O", "B-NONE", "O"]
 
