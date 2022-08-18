@@ -76,3 +76,5 @@ from flair.tokenization import SpacyTokenizer
 tokenizer = SpacyTokenizer("ja_core_news_sm")
 unlabeled_sentences = [Sentence(sentence, use_tokenizer=tokenizer) for sentence in sentences]
 ```
+
+We should download the spacy model beforehand and we can find different language's spacy model in [spacy models](https://spacy.io/models/en).

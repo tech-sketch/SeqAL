@@ -115,9 +115,12 @@ new_labels = annotate_by_human(queried_samples)
 #   }
 # ]
 
-## Convert data to Sentence class
+## Convert data to the suitable format
 alinger = Alinger()
 new_labeled_samples = alinger.add_tags_on_token(new_labels, 'ner')
+
+# Step 5&6: Add new labeled samples to training and retrain model
+learner.teach(new_labeled_samples)
 ```
 
 ## Tutorials

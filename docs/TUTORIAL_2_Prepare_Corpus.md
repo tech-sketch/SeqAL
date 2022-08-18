@@ -67,7 +67,7 @@ Angeles E-LOC
 
 ## Non-spaced Language
 
-The non-spaced language means a sentence can be split by space, for example, `東京は都市です`.
+The non-spaced language means a sentence can not be split by space, for example, `東京は都市です`.
 
 Usually, one character with a label.
 
