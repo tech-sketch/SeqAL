@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import List
 
@@ -31,21 +32,23 @@ class TestActiveLearner:
     ) -> None:
         """Test fit function works no problem"""
         # Arrange
-        dir_path = fixture_path / "output"
+        dir_path = fixture_path / "test_output"
 
         # Act
         learner.initialize(dir_path)
+        shutil.rmtree(dir_path)
 
     def test_resume_without_error(
         self, fixture_path: Path, corpus: Corpus, trained_learner: ActiveLearner
     ) -> None:
         """Test fit function works no problem"""
         # Arrange
-        dir_path = fixture_path / "output"
+        dir_path = fixture_path / "test_output"
         queried_samples = corpus.dev.sentences
 
         # Act
         trained_learner.resume(queried_samples, dir_path)
+        shutil.rmtree(dir_path)
 
     def test_teach_with_resume_false_return_new_model(
         self, corpus: Corpus, trained_learner: ActiveLearner

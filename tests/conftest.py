@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from typing import List
 
@@ -80,8 +81,9 @@ def trained_tagger(
     random_sampler = RandomSampler()
     learner = ActiveLearner(corpus, random_sampler, tagger_params, trainer_params)
 
-    dir_path = fixture_path / "output"
+    dir_path = fixture_path / "test_output"
     learner.initialize(dir_path)
+    shutil.rmtree(dir_path)
 
     return learner.trained_tagger
 
@@ -177,7 +179,7 @@ def trained_learner(
         corpus, random_sampler, tagger_params, trainer_params
     )
 
-    dir_path = fixture_path / "output"
+    dir_path = fixture_path / "test_output"
     trained_learner.initialize(dir_path)
 
     return trained_learner
