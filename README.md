@@ -141,9 +141,9 @@ We provide a set of quick tutorials to get you started with the library.
 
 ## Performance
 
-Active learning algorithms achieve 97% performance of the best deep model trained on full data using only 30%% of the training data on the CoNLL 2003 English dataset. The CPU model can decrease the time cost greatly only sacrificing a little performance.
+Active learning algorithms achieve 97% performance of the best deep model trained on full data using only 30% of the training data on the CoNLL 2003 English dataset. The CPU model can decrease the time cost greatly only sacrificing a little performance.
 
-See [performance.md](./docs/performance.md) for more detail about performance and time cost.
+See [performance](./docs/performance.md) for more detail about performance and time cost.
 
 
 ## Construct envirement locally
