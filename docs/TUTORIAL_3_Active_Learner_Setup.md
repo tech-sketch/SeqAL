@@ -47,7 +47,7 @@ To setup active learner, we have to provide `corpus`, `sampler`, `tagger_params`
 
 ## Sampler
 
-The `seqal.sampler` provide below sampling method.
+The `seqal.samplers` provides below sampling methods.
 
 - Uncertainty based sampling method:
   - `LeastConfidenceSampler` (Least Confidence; LC)
@@ -59,11 +59,74 @@ The `seqal.sampler` provide below sampling method.
 - Combine uncertainty and diversity sampling method:
   - `CombinedMultipleSampler`: LC+DS, LC+CS, MNLP+DS, MNLP+CS
 - Other:
-  - `RandomSampler` 
+  - `RandomSampler`: Random sampling method
 
-According to our [experiment](https://fintan.jp/page/4127/) (Japanese), there is some advice to choose a suitable sampling method.
+According to our [experiment](https://fintan.jp/page/4127/) (Japanese), there are some advice to choose a suitable sampling method.
 - If you want to decrease training time, we recommend the uncertainty-based sampling methods
 - If you want to increase the performance, we recommend the combined sampled methods.
+
+Below are some setup method for different samples.
+
+```python
+from sklearn.preprocessing import MinMaxScaler
+from seqal.samplers import (
+    ClusterSimilaritySampler,
+    CombinedMultipleSampler,
+    DistributeSimilaritySampler,
+    LeastConfidenceSampler,
+    MaxNormLogProbSampler,
+    StringNGramSampler
+    RandomSampler,
+)
+
+# RandomSampler setup
+random_sampler = RandomSampler()
+
+# LeastConfidenceSampler setup
+lc_sampler = LeastConfidenceSampler()
+
+# MaxNormLogProbSampler setup
+mnlp_sampler = MaxNormLogProbSampler()
+
+# StringNGramSampler setup, n=3
+sn_sampler = StringNGramSampler()
+
+# DistributeSimilaritySampler setup
+ds_sampler = DistributeSimilaritySampler()
+
+# ClusterSimilaritySampler setup
+kmeans_params = {"n_clusters": 2, "n_init": 10, "random_state": 0}
+cs_sampler = ClusterSimilaritySampler(kmeans_params)
+
+# CombinedMultipleSampler setup
+sampler_type = "lc_cs"
+combined_type = "parallel"
+kmeans_params = {"n_clusters": 8, "n_init": 10, "random_state": 0}
+scaler = MinMaxScaler()
+cm_sampler = CombinedMultipleSampler(
+    sampler_type=sampler_type,
+    combined_type=combined_type,
+    kmeans_params=kmeans_params,
+    scaler=scaler
+)
+```
+
+Most of samples' setup is simple. The biggest difference are the setups of `ClusterSimilaritySampler()` and `CombinedMultipleSampler()`. 
+
+The `ClusterSimilaritySampler()` needs parameter for kmeans. One impartant thing is the number of `n_clusters` should be the same with the label types, except "O". More parameters detail can be found in [`sklearn.cluster.KMeans`](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html). 
+
+The parameters of `CombinedMultipleSampler()`:
+
+- `sampler_type`: Samples to use. Defaults to "lc_ds". Available types are "lc_ds", "lc_cs", "mnlp_ds", "mnlp_cs"
+  - `lc_ds`: `LeastConfidenceSampler` and `DistributeSimilaritySampler`
+  - `lc_cs`: `LeastConfidenceSampler` and `ClusterSimilaritySampler`
+  - `mnlp_ds`: `MaxNormLogProbSampler` and `DistributeSimilaritySampler`
+  - `mnlp_cs`: `MaxNormLogProbSampler` and `ClusterSimilaritySampler`
+- `combined_type`: The combined method of different samplers
+  - `parallel`: run two samplers together
+  - `series`: run one sampler first and then run the second sampler
+- `kmeans_params`: Parameters for clustering. When `sampler_type` contains `cs`, we need to add kmeans parameters. More parameters on [`sklearn.cluster.KMeans`](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html)
+- `scaler`: The scaler method for two kinds of samplers. When `combined_type` is `parallel`, `scaler` will normalize the scores of two kinds of samplers. More `scaler` can be found in [`sklearn.preprocessing`](https://scikit-learn.org/stable/modules/classes.html#module-sklearn.preprocessing)
 
 
 ## Tagger parameters
