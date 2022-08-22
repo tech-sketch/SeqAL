@@ -523,6 +523,25 @@ class ClusterSimilaritySampler(BaseSampler):
         BaseSampler: BaseSampler class.
     """
 
+    def __init__(self, kmeans_params: dict = None) -> None:
+        """Inits ClusterSimilaritySampler class with kmeans_params
+        Args:
+            kmeans_params (dict, optional): Parameters for clustering, detail on sklearn.cluster.KMeans.
+                    e.g. {"n_clusters": 8, "n_init": 10, "random_state": 0}
+                        "n_clusters": The number of cluster (label types except "O")
+                        "n_init": Number of time the k-means algorithm
+                                will be run with different centroid seeds.
+                        "random_state": Determines random number generation for centroid initialization.
+        """
+        if "n_clusters" not in kmeans_params:
+            output = (
+                "You have to provide 'kmeans_params' parameter to use ClusterSimilaritySampler."
+                " 'kmeans_params' must contain 'n_clusters', which means number of label types in dataset except 'O'."
+                " For example, kmeans_params={'n_clusters': 8, 'n_init': 10, 'random_state': 0}}"
+            )
+            raise NameError(output)
+        self.kmeans_params = kmeans_params
+
     def __call__(
         self,
         sentences: List[Sentence],
@@ -543,12 +562,6 @@ class ClusterSimilaritySampler(BaseSampler):
         kwargs:
             tagger: The tagger after training
             embeddings: The embeddings method
-            kmeans_params (dict): Parameters for clustering, detail on sklearn.cluster.KMeans.
-                                  e.g. {"n_clusters": 8, "n_init": 10, "random_state": 0}
-                                  "n_clusters": The number of cluster (label types except "O")
-                                  "n_init": Number of time the k-means algorithm
-                                            will be run with different centroid seeds.
-                                  "random_state": Determines random number generation for centroid initialization.
 
         Returns:
             List[int]: Queried sentence ids.
@@ -577,11 +590,9 @@ class ClusterSimilaritySampler(BaseSampler):
         kwargs: Optional[dict] = None,
     ) -> np.ndarray:
         """Calculate score for each sentence"""
-        kmeans_params = self.get_kmeans_params(kwargs)
-
         sentence_scores = [0] * len(sentences)
         cluster_centers_matrix, entity_cluster_nums = self.kmeans(
-            entities.entities, kmeans_params
+            entities.entities, self.kmeans_params
         )
         entities = self.assign_cluster(entities, entity_cluster_nums)
         diversities_per_sent = self.sentence_diversities(
@@ -591,19 +602,6 @@ class ClusterSimilaritySampler(BaseSampler):
             sentence_scores[sent_id] = score
 
         return np.array(sentence_scores)
-
-    def get_kmeans_params(self, kwargs: dict) -> bool:
-        """Check the sampler type is availabel or not."""
-        if "kmeans_params" not in kwargs or "n_clusters" not in kwargs["kmeans_params"]:
-            output = (
-                "You have to provide 'kmeans_params' parameter to use ClusterSimilaritySampler."
-                " 'kmeans_params' must contain 'n_clusters', which means number of label types in dataset except 'O'."
-                " For example, kmeans_params={'n_clusters': 8, 'n_init': 10, 'random_state': 0}}"
-            )
-            raise NameError(output)
-
-        kmeans_params = kwargs["kmeans_params"]
-        return kmeans_params
 
     def sentence_diversities(
         self, entities: Entities, cluster_centers_matrix: np.ndarray
@@ -649,12 +647,9 @@ class ClusterSimilaritySampler(BaseSampler):
             scores.append(float(score))
         return sum(scores) / len(sentence_entities)
 
-    def kmeans(
-        self, entities: List[Entity], kmeans_params: dict
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    def kmeans(self, entities: List[Entity]) -> Tuple[np.ndarray, np.ndarray]:
         """K-Means cluster to get cluster centers and entity cluster"""
-        if "n_clusters" not in kmeans_params:
-            raise KeyError("n_clusters is not found.")
+        kmeans_params = self.kmeans_params
         if "random_state" not in kmeans_params:
             kmeans_params["random_state"] = 0
 
@@ -683,17 +678,63 @@ class CombinedMultipleSampler(BaseSampler):
         BaseSampler: BaseSampler class.
     """
 
-    @property
-    def available_sampler_types(self):
-        """Available samplers"""
-        available_sampler_types = ["lc_ds", "lc_cs", "mnlp_ds", "mnlp_cs"]
-        return available_sampler_types
+    def __init__(
+        self,
+        sampler_type: str = "lc_ds",
+        combined_type: str = "parallel",
+        kmeans_params: dict = None,
+        scaler: BaseEstimator = None,
+    ) -> None:
+        """Inits CombinedMultipleSampler class
 
-    @property
-    def available_combined_types(self):
-        """Available combined type"""
-        available_combined_types = ["series", "parallel"]
-        return available_combined_types
+        Args:
+            sampler_type (str, optional): Samples to use. Defaults to "lc_ds".
+                    Available types are "lc_ds", "lc_cs", "mnlp_ds", "mnlp_cs"
+                    - "lc_ds" means LeastConfidenceSampler and DistributeSimilaritySampler.
+                    - "lc_cs" means LeastConfidenceSampler and ClusterSimilaritySampler.
+                    - "mnlp_ds" means MaxNormLogProbSampler and DistributeSimilaritySampler.
+                    - "mnlp_cs" means MaxNormLogProbSampler and ClusterSimilaritySampler.
+            combined_type (str, optional): The combined method of different samplers. Defaults to "parallel".
+                    Available types are "series", "parallel"
+                    - "parallel" means run two samplers together.
+                    - "series" means run one sampler first and then run the second sampler.
+            kmeans_params (dict, optional): Parameters for clustering, detail on sklearn.cluster.KMeans.
+                    e.g. {"n_clusters": 8, "n_init": 10, "random_state": 0}
+                        "n_clusters": The number of cluster (label types except "O")
+                        "n_init": Number of time the k-means algorithm
+                                will be run with different centroid seeds.
+                        "random_state": Determines random number generation for centroid initialization.
+            scaler (BaseEstimator, optional): The scaler method for two kinds of samplers. Defaults to "None".
+        """
+        self.available_sampler_types = ["lc_ds", "lc_cs", "mnlp_ds", "mnlp_cs"]
+        self.available_combined_types = ["series", "parallel"]
+
+        if sampler_type not in self.available_sampler_types:
+            raise NameError(
+                f"sampler_type is not found. sampler_type must be one of {self.available_sampler_types}"
+            )
+
+        if combined_type not in self.available_combined_types:
+            raise NameError(
+                f"combined_type is not found. combined_type must be one of {self.available_combined_types}"
+            )
+
+        if kmeans_params is not None and "n_clusters" not in kmeans_params:
+            output = (
+                "You have to provide 'kmeans_params' parameter to use ClusterSimilaritySampler."
+                " 'kmeans_params' must contain 'n_clusters', which means number of label types in dataset except 'O'."
+                " For example, kmeans_params={'n_clusters': 8, 'n_init': 10, 'random_state': 0}}"
+            )
+            raise NameError(output)
+
+        if combined_type == "parallel" and scaler is None:
+            scaler = MinMaxScaler()
+            print("scaler is not found. Default use 'MinMaxScaler()'")
+
+        self.sampler_type = sampler_type
+        self.combined_type = combined_type
+        self.kmeans_params = kmeans_params
+        self.scaler = scaler
 
     def __call__(
         self,
@@ -713,35 +754,14 @@ class CombinedMultipleSampler(BaseSampler):
                                           If false, using query number as sentence number to query data.
 
         kwargs:
-            sampler_type (str):  Which kind of sampler to use.
-                                Available types are "lc_ds", "lc_cs", "mnlp_ds", "mnlp_cs"
-                                - "lc_ds" means LeastConfidenceSampler and DistributeSimilaritySampler.
-                                - "lc_cs" means LeastConfidenceSampler and ClusterSimilaritySampler.
-                                - "mnlp_ds" means MaxNormLogProbSampler and DistributeSimilaritySampler.
-                                - "mnlp_cs" means MaxNormLogProbSampler and ClusterSimilaritySampler.
-
-            combined_type (str): The combined method of different samplers.
-                                 Available types are "series", "parallel"
-                                 - "series" means run one sampler first and then run the second one.
-                                 - "parallel" means run two samplers together.
-                                 If sampler_type is "lc_ds", it means first run lc and then run ds.
-                                 If reverse parameter is provided, it runs ds first and then lc.
-            reverse (bool): The running order when combined type is "series"
             tagger: The tagger after training
             embeddings: The embeddings method
-            kmeans_params (dict): Parameters for clustering, detail on sklearn.cluster.KMeans.
-                                  e.g. {"n_clusters": 8, "n_init": 10, "random_state": 0}
-                                  "n_clusters": The number of cluster (label types except "O")
-                                  "n_init": Number of time the k-means algorithm
-                                            will be run with different centroid seeds.
-                                  "random_state": Determines random number generation for centroid initialization.
 
         Returns:
             List[int]: Queried sentence ids.
         """
-        sampler_type = self.get_sampler_type(kwargs)
-        combined_type = self.get_combined_type(kwargs)
-        scaler = self.get_scaler(kwargs)
+        sampler_type = self.sampler_type
+        combined_type = self.combined_type
 
         # Get samplers
         uncertainty_sampler, diversity_sampler = self.get_samplers(sampler_type)
@@ -781,10 +801,8 @@ class CombinedMultipleSampler(BaseSampler):
 
         # Normalize scores
         if "lc" in sampler_type:  # reverse lc order for ascend setup below
-            scores = self.normalize_scores(
-                -uncertainty_scores, diversity_scores, scaler
-            )
-        scores = self.normalize_scores(uncertainty_scores, diversity_scores, scaler)
+            scores = self.normalize_scores(-uncertainty_scores, diversity_scores)
+        scores = self.normalize_scores(uncertainty_scores, diversity_scores)
 
         sorted_sent_ids = self.sort(scores, order="ascend")
         queried_sent_ids = self.query(
@@ -796,7 +814,6 @@ class CombinedMultipleSampler(BaseSampler):
         self,
         uncertainty_scores: np.ndarray,
         diversity_scores: np.ndarray,
-        scaler: BaseEstimator,
     ) -> np.ndarray:
         """Normalize two kinds of scores
 
@@ -808,7 +825,7 @@ class CombinedMultipleSampler(BaseSampler):
             np.ndarray: Normalized score
         """
         concatenate_scores = np.stack([uncertainty_scores, diversity_scores])
-        normalized_scores = scaler.fit_transform(np.transpose(concatenate_scores))
+        normalized_scores = self.scaler.fit_transform(np.transpose(concatenate_scores))
         return normalized_scores.sum(axis=1)
 
     def get_samplers(self, sampler_type: str) -> Tuple[BaseSampler, BaseSampler]:
@@ -821,7 +838,7 @@ class CombinedMultipleSampler(BaseSampler):
         elif sampler_type == "lc_cs":
             uncertainty_sampler, diversity_sampler = (
                 LeastConfidenceSampler(),
-                ClusterSimilaritySampler(),
+                ClusterSimilaritySampler(self.kmeans_params),
             )
         elif sampler_type == "mnlp_ds":
             uncertainty_sampler, diversity_sampler = (
@@ -831,7 +848,7 @@ class CombinedMultipleSampler(BaseSampler):
         elif sampler_type == "mnlp_cs":
             uncertainty_sampler, diversity_sampler = (
                 MaxNormLogProbSampler(),
-                ClusterSimilaritySampler(),
+                ClusterSimilaritySampler(self.kmeans_params),
             )
         else:
             uncertainty_sampler, diversity_sampler = (
@@ -840,40 +857,3 @@ class CombinedMultipleSampler(BaseSampler):
             )
 
         return uncertainty_sampler, diversity_sampler
-
-    def get_sampler_type(self, kwargs: dict) -> bool:
-        """Check the sampler type is availabel or not."""
-        if "sampler_type" not in kwargs:
-            sampler_type = "lc_ds"
-            print("sampler_type is not found. Default use 'lc_ds' sampler type")
-            return sampler_type
-
-        sampler_type = kwargs["sampler_type"]
-        if sampler_type not in self.available_sampler_types:
-            raise NameError(
-                f"sampler_type is not found. sampler_type must be one of {self.available_sampler_types}"
-            )
-        return sampler_type
-
-    def get_combined_type(self, kwargs: dict) -> bool:
-        """Check the combined type is availabel or not."""
-        if "combined_type" not in kwargs:
-            combined_type = "parallel"
-            print("combined_type is not found. Default use 'parallel' combined type")
-            return combined_type
-
-        combined_type = kwargs["combined_type"]
-        if combined_type not in self.available_combined_types:
-            raise NameError(
-                f"combined_type is not found. combined_type must be one of {self.available_combined_types}"
-            )
-        return combined_type
-
-    def get_scaler(self, kwargs: dict) -> bool:
-        """Get scaler"""
-        if "scaler" not in kwargs:
-            scaler = MinMaxScaler()
-            print("scaler is not found. Default use 'MinMaxScaler()'")
-            return scaler
-
-        return kwargs["scaler"]

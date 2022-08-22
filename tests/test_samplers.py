@@ -54,14 +54,24 @@ def ds_sampler(scope="function"):
 @pytest.fixture()
 def cs_sampler(scope="function"):
     """ClusterSimilaritySampler instance"""
-    cs_sampler = ClusterSimilaritySampler()
+    kmeans_params = {"n_clusters": 2, "n_init": 10, "random_state": 0}
+    cs_sampler = ClusterSimilaritySampler(kmeans_params)
     return cs_sampler
 
 
 @pytest.fixture()
 def cm_sampler(scope="function"):
     """CombinedMultipleSampler instance"""
-    cm_sampler = CombinedMultipleSampler()
+    sampler_type = "lc_ds"
+    combined_type = "parallel"
+    kmeans_params = {"n_clusters": 8, "n_init": 10, "random_state": 0}
+    scaler = MinMaxScaler()
+    cm_sampler = CombinedMultipleSampler(
+        sampler_type=sampler_type,
+        combined_type=combined_type,
+        kmeans_params=kmeans_params,
+        scaler=scaler,
+    )
     return cm_sampler
 
 
@@ -75,7 +85,6 @@ def sampler_params(scope="function"):
         "token_based": False,
         "tagger": MagicMock(),
         "embeddings": MagicMock(),
-        "kmeans_params": {"n_clusters": 2, "n_init": 10, "random_state": 0},
     }
     return params
 
@@ -707,7 +716,6 @@ class TestClusterSimilaritySampler:
             sampler_params["token_based"],
             tagger=sampler_params["tagger"],
             embeddings=sampler_params["embeddings"],
-            kmeans_params=sampler_params["kmeans_params"],
         )
 
         # Assert
@@ -736,7 +744,6 @@ class TestClusterSimilaritySampler:
             sampler_params["token_based"],
             tagger=sampler_params["tagger"],
             embeddings=sampler_params["embeddings"],
-            kmeans_params=sampler_params["kmeans_params"],
         )
 
         # Assert
@@ -744,18 +751,6 @@ class TestClusterSimilaritySampler:
             queried_sent_ids
             == expected_random_sent_ids[: sampler_params["query_number"]]
         )
-
-    def test_kmeans_raise_key_error_if_n_cluster_param_is_not_found(
-        self, cs_sampler: BaseSampler, unlabeled_sentences: List[Sentence]
-    ) -> None:
-        """Test ClusterSimilaritySampler.kmeans function raise key_error if n_cluster parameter is not found"""
-        # Arrange
-        kmeans_params = {"n_init": 10, "random_state": 0}
-
-        # Assert
-        with pytest.raises(KeyError):
-            # Act
-            cs_sampler.kmeans(unlabeled_sentences, kmeans_params)
 
     def test_kmeans_return_correct_result(
         self, cs_sampler: BaseSampler, sampler_params: dict, entities6: List[Entity]
@@ -767,7 +762,7 @@ class TestClusterSimilaritySampler:
 
         # Act
         cluster_centers_matrix, entity_cluster_nums = cs_sampler.kmeans(
-            entities.entities, sampler_params["kmeans_params"]
+            entities.entities
         )
 
         # Assert
@@ -861,109 +856,35 @@ class TestClusterSimilaritySampler:
         # Assert
         assert np.array_equal(sentence_scores, np.array([0.7138]))
 
-    def test_get_kmeans_params_return_normal_value(
-        self, cs_sampler: BaseSampler
-    ) -> None:
-        """Test ClusterSimilaritySampler.get_kmeans_params return normal value."""
-        # Arrange
-        kwargs = {"kmeans_params": {"n_clusters": 8, "n_init": 10, "random_state": 0}}
-
-        # Act
-        kmeans_params = cs_sampler.get_kmeans_params(kwargs)
-
-        # Assert
-        assert kmeans_params == kwargs["kmeans_params"]
-
-    def test_get_kmeans_params_return_raise_name_error(
-        self, cs_sampler: BaseSampler
-    ) -> None:
+    def test_init_return_raise_name_error(self, cs_sampler: BaseSampler) -> None:
         """Test ClusterSimilaritySampler.get_kmeans_params raise error if parameters are inconpatible"""
         # Arrange
-        kwargs = {}
+        kmeans_kwargs = {}
 
         # Assert
         with pytest.raises(NameError):
             # Act
-            cs_sampler.get_kmeans_params(kwargs)
+            ClusterSimilaritySampler(kmeans_kwargs)
 
 
 class TestCombinedMultipleSampler:
     """Test CombinedMultipleSampler class"""
 
-    def test_get_sampler_type_return_default_value(
-        self, cm_sampler: BaseSampler
-    ) -> None:
-        """Test CombinedMultipleSampler.get_sampler_type return default value"""
-        # Arrange
-        kwargs = {}
-
-        # Act
-        sampler_type = cm_sampler.get_sampler_type(kwargs)
-
-        # Assert
-        assert sampler_type == "lc_ds"
-
-    def test_get_sampler_type_return_normal_value(
-        self, cm_sampler: BaseSampler
-    ) -> None:
-        """Test CombinedMultipleSampler.get_sampler_type return normal value"""
-        # Arrange
-        kwargs = {"sampler_type": "mnlp_ds"}
-
-        # Act
-        sampler_type = cm_sampler.get_sampler_type(kwargs)
-
-        # Assert
-        assert sampler_type == "mnlp_ds"
-
-    def test_get_sampler_type_return_raise_name_error(
-        self, cm_sampler: BaseSampler
-    ) -> None:
+    def test_get_sampler_type_return_raise_name_error(self) -> None:
         """Test CombinedMultipleSampler.get_sampler_type raise error if parameters are inconpatible"""
         # Arrange
-        kwargs = {"sampler_type": "lcc_ds"}
+        sampler_type = "lcc_ds"
 
         # Assert
         with pytest.raises(NameError):
             # Act
-            cm_sampler.get_sampler_type(kwargs)
-
-    def test_get_combined_type_return_default_value(
-        self, cm_sampler: BaseSampler
-    ) -> None:
-        """Test CombinedMultipleSampler.get_combined_type return default value"""
-
-        # Arrange
-        kwargs = {}
-
-        # Act
-        combined_type = cm_sampler.get_combined_type(kwargs)
-
-        # Assert
-        assert combined_type == "parallel"
-
-    def test_get_combined_type_return_normal_value(
-        self, cm_sampler: BaseSampler
-    ) -> None:
-        """Test CombinedMultipleSampler.get_combined_type return normal value"""
-
-        # Arrange
-        kwargs = {"combined_type": "series"}
-
-        # Act
-        combined_type = cm_sampler.get_combined_type(kwargs)
-
-        # Assert
-        assert combined_type == "series"
+            CombinedMultipleSampler(sampler_type=sampler_type)
 
     def test_get_scaler_return_default_value(self, cm_sampler: BaseSampler) -> None:
         """Test CombinedMultipleSampler.get_scaler return default value"""
 
         # Arrange
-        kwargs = {}
-
-        # Act
-        scaler = cm_sampler.get_scaler(kwargs)
+        scaler = cm_sampler.scaler
 
         # Assert
         assert isinstance(scaler, MinMaxScaler) is True
@@ -972,26 +893,32 @@ class TestCombinedMultipleSampler:
         """Test CombinedMultipleSampler.get_scaler return normal value"""
 
         # Arrange
-        kwargs = {"scaler": MinMaxScaler()}
+        scaler = StandardScaler()
 
         # Act
-        scaler = cm_sampler.get_scaler(kwargs)
+        sampler_type = "lc_ds"
+        combined_type = "parallel"
+        kmeans_params = {"n_clusters": 8, "n_init": 10, "random_state": 0}
+        cm_sampler = CombinedMultipleSampler(
+            sampler_type=sampler_type,
+            combined_type=combined_type,
+            kmeans_params=kmeans_params,
+            scaler=scaler,
+        )
 
         # Assert
-        assert isinstance(scaler, MinMaxScaler) is True
+        assert isinstance(cm_sampler.scaler, StandardScaler) is True
 
-    def test_check_combined_type_return_raise_name_error(
-        self, cm_sampler: BaseSampler
-    ) -> None:
+    def test_check_combined_type_return_raise_name_error(self) -> None:
         """Test CombinedMultipleSampler.get_combined_type raise error if parameters are inconpatible"""
 
         # Arrange
-        kwargs = {"sampler_type": "lc_ds", "combined_type": "mix"}
+        combined_type = "mix"
 
         # Assert
         with pytest.raises(NameError):
             # Act
-            cm_sampler.get_combined_type(kwargs)
+            CombinedMultipleSampler(combined_type=combined_type)
 
     def test_get_samplers_with_lc_ds(self, cm_sampler: BaseSampler) -> None:
         """Test CombinedMultipleSampler.get_samplers for lc_ds samples"""
@@ -1006,11 +933,20 @@ class TestCombinedMultipleSampler:
         assert isinstance(uncertainty_sampler, LeastConfidenceSampler)
         assert isinstance(diversity_sampler, DistributeSimilaritySampler)
 
-    def test_get_samplers_with_lc_cs(self, cm_sampler: BaseSampler) -> None:
+    def test_get_samplers_with_lc_cs(self) -> None:
         """Test CombinedMultipleSampler.get_samplers for lc_cs samples"""
 
         # Arrange
         sampler_type = "lc_cs"
+        combined_type = "parallel"
+        kmeans_params = {"n_clusters": 8, "n_init": 10, "random_state": 0}
+        scaler = MinMaxScaler()
+        cm_sampler = CombinedMultipleSampler(
+            sampler_type=sampler_type,
+            combined_type=combined_type,
+            kmeans_params=kmeans_params,
+            scaler=scaler,
+        )
 
         # Act
         uncertainty_sampler, diversity_sampler = cm_sampler.get_samplers(sampler_type)
@@ -1019,11 +955,16 @@ class TestCombinedMultipleSampler:
         assert isinstance(uncertainty_sampler, LeastConfidenceSampler)
         assert isinstance(diversity_sampler, ClusterSimilaritySampler)
 
-    def test_get_samplers_with_mnlp_ds(self, cm_sampler: BaseSampler) -> None:
+    def test_get_samplers_with_mnlp_ds(self) -> None:
         """Test CombinedMultipleSampler.get_samplers for mnlp_ds samples"""
 
         # Arrange
         sampler_type = "mnlp_ds"
+        combined_type = "parallel"
+        scaler = MinMaxScaler()
+        cm_sampler = CombinedMultipleSampler(
+            sampler_type=sampler_type, combined_type=combined_type, scaler=scaler
+        )
 
         # Act
         uncertainty_sampler, diversity_sampler = cm_sampler.get_samplers(sampler_type)
@@ -1052,6 +993,7 @@ class TestCombinedMultipleSampler:
         """Test CombinedMultipleSampler.normalize_scores by scaler"""
 
         # Arrange
+        cm_sampler = CombinedMultipleSampler(scaler=scaler)
         uncertainty_scores = np.array([-0.09, -0.07, -0.05, -0.03, -0.01])
         diversity_scores = np.array([0.2, 0.4, 0.6, 0.8, 1])
         concatenate_scores = np.stack([uncertainty_scores, diversity_scores])
@@ -1059,9 +1001,7 @@ class TestCombinedMultipleSampler:
         expected_scores = normalized_scores.sum(axis=1)
 
         # Act
-        scores = cm_sampler.normalize_scores(
-            uncertainty_scores, diversity_scores, scaler
-        )
+        scores = cm_sampler.normalize_scores(uncertainty_scores, diversity_scores)
 
         # Assert
         assert np.allclose(scores, expected_scores) is True
@@ -1089,8 +1029,8 @@ class TestCombinedMultipleSampler:
             return_value=np.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2])
         )
 
-        sampler_type = "lc_ds"
         combined_type = "series"
+        cm_sampler = CombinedMultipleSampler(combined_type=combined_type)
         cm_sampler.get_samplers = MagicMock(return_value=(lc_sampler, ds_sampler))
 
         # Act
@@ -1102,8 +1042,6 @@ class TestCombinedMultipleSampler:
             tagger=sampler_params["tagger"],
             label_names=sampler_params["label_names"],
             embeddings=sampler_params["embeddings"],
-            sampler_type=sampler_type,
-            combined_type=combined_type,
         )
 
         # Assert
@@ -1112,18 +1050,17 @@ class TestCombinedMultipleSampler:
     def test_call_return_random_sent_ids_if_entities_is_empty(
         self,
         cm_sampler: BaseSampler,
-        lc_sampler: BaseSampler,
-        ds_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
         sampler_params: dict,
     ) -> None:
         """Test CombinedMultipleSampler call function return random sentence ids if entities is empty"""
         # Arrange
-        sampler_type = "lc_ds"
-        combined_type = "parallel"
         entities = Entities()
         cm_sampler.predict = MagicMock(return_value=None)
         cm_sampler.get_entities = MagicMock(return_value=entities)
+        cm_sampler.kmeans_params = MagicMock(
+            return_value={"n_clusters": 8, "n_init": 10, "random_state": 0}
+        )
 
         random.seed(0)
         sent_ids = list(range(len(unlabeled_sentences)))
@@ -1137,9 +1074,6 @@ class TestCombinedMultipleSampler:
             sampler_params["token_based"],
             tagger=sampler_params["tagger"],
             embeddings=sampler_params["embeddings"],
-            kmeans_params=sampler_params["kmeans_params"],
-            sampler_type=sampler_type,
-            combined_type=combined_type,
         )
 
         # Assert
@@ -1159,8 +1093,6 @@ class TestCombinedMultipleSampler:
         """Test CombinedMultipleSampler call function return correct result with parallel lc_ds"""
 
         # Arrange
-        sampler_type = "lc_ds"
-        combined_type = "parallel"
         cm_sampler.predict = MagicMock(return_value=[None])
         entities = Entities()
         entities.entities = [None]
@@ -1182,8 +1114,6 @@ class TestCombinedMultipleSampler:
             tagger=sampler_params["tagger"],
             label_names=sampler_params["label_names"],
             embeddings=sampler_params["embeddings"],
-            sampler_type=sampler_type,
-            combined_type=combined_type,
         )
 
         # Assert
@@ -1191,7 +1121,6 @@ class TestCombinedMultipleSampler:
 
     def test_call_return_correct_result_with_parallel_lc_cs(
         self,
-        cm_sampler: BaseSampler,
         lc_sampler: BaseSampler,
         cs_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
@@ -1200,8 +1129,15 @@ class TestCombinedMultipleSampler:
         """Test CombinedMultipleSampler call function return correct result with parallel lc_cs"""
 
         # Arrange
-        sampler_type = "lc_ds"
+        sampler_type = "lc_cs"
         combined_type = "parallel"
+        kmeans_params = {"n_clusters": 8, "n_init": 10, "random_state": 0}
+        cm_sampler = CombinedMultipleSampler(
+            sampler_type=sampler_type,
+            combined_type=combined_type,
+            kmeans_params=kmeans_params,
+        )
+
         cm_sampler.predict = MagicMock(return_value=[None])
         entities = Entities()
         entities.entities = [None]
@@ -1223,9 +1159,6 @@ class TestCombinedMultipleSampler:
             tagger=sampler_params["tagger"],
             label_names=sampler_params["label_names"],
             embeddings=sampler_params["embeddings"],
-            kmeans_params=sampler_params["kmeans_params"],
-            sampler_type=sampler_type,
-            combined_type=combined_type,
         )
 
         # Assert
@@ -1244,6 +1177,9 @@ class TestCombinedMultipleSampler:
         # Arrange
         sampler_type = "mnlp_ds"
         combined_type = "parallel"
+        cm_sampler = CombinedMultipleSampler(
+            sampler_type=sampler_type, combined_type=combined_type
+        )
         cm_sampler.predict = MagicMock(return_value=[None])
         entities = Entities()
         entities.entities = [None]
@@ -1265,8 +1201,6 @@ class TestCombinedMultipleSampler:
             tagger=sampler_params["tagger"],
             label_names=sampler_params["label_names"],
             embeddings=sampler_params["embeddings"],
-            sampler_type=sampler_type,
-            combined_type=combined_type,
         )
 
         # Assert
@@ -1274,7 +1208,6 @@ class TestCombinedMultipleSampler:
 
     def test_call_return_correct_result_with_parallel_mnlp_cs(
         self,
-        cm_sampler: BaseSampler,
         mnlp_sampler: BaseSampler,
         cs_sampler: BaseSampler,
         unlabeled_sentences: List[Sentence],
@@ -1285,6 +1218,12 @@ class TestCombinedMultipleSampler:
         # Arrange
         sampler_type = "mnlp_cs"
         combined_type = "parallel"
+        kmeans_params = {"n_clusters": 8, "n_init": 10, "random_state": 0}
+        cm_sampler = CombinedMultipleSampler(
+            sampler_type=sampler_type,
+            combined_type=combined_type,
+            kmeans_params=kmeans_params,
+        )
         cm_sampler.predict = MagicMock(return_value=[None])
         entities = Entities()
         entities.entities = [None]
@@ -1306,8 +1245,6 @@ class TestCombinedMultipleSampler:
             tagger=sampler_params["tagger"],
             label_names=sampler_params["label_names"],
             embeddings=sampler_params["embeddings"],
-            sampler_type=sampler_type,
-            combined_type=combined_type,
         )
 
         # Assert
