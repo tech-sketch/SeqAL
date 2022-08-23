@@ -1,7 +1,6 @@
-# Tutorial 5: Research and Annotation Mode
+# Research and Annotation Mode
 
 This tutorial shows explain what are research mode and annotation mode.
-
 
 ```python
 from flair.embeddings import WordEmbeddings
@@ -11,7 +10,47 @@ from seqal.datasets import ColumnCorpus, ColumnDataset
 from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import load_plain_text, add_tags
 
-# 1~7
+# 1. get the corpus
+columns = {0: "text", 1: "ner"}
+data_folder = "./data/conll"
+corpus = ColumnCorpus(
+    data_folder,
+    columns,
+    train_file="train_seed.txt",
+    dev_file="valid.txt",
+    test_file="test.txt",
+)
+
+# 2. tagger params
+tagger_params = {}
+tagger_params["tag_type"] = "ner"
+tagger_params["hidden_size"] = 256
+embeddings = WordEmbeddings("glove")
+tagger_params["embeddings"] = embeddings
+tagger_params["use_rnn"] = False
+
+# 3. trainer params
+trainer_params = {}
+trainer_params["max_epochs"] = 1
+trainer_params["mini_batch_size"] = 32
+trainer_params["learning_rate"] = 0.1
+trainer_params["patience"] = 5
+
+# 4. setup active learner
+sampler = LeastConfidenceSampler()
+learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
+
+# 5. initialize active learner
+learner.initialize(dir_path="output/init_train")
+
+# 6. prepare data pool
+file_path = "./datasets/conll/train_pool.txt"
+unlabeled_sentences = load_plain_text(file_path)
+
+# 7. query setup
+query_number = 10
+token_based = False
+iterations = 5
 
 # 8. iteration
 for i in range(iterations):
@@ -34,7 +73,7 @@ Make sure that we load the labeled data pool.
 ```python
 from seqal.datasets import ColumnDataset
 
-# 1~5
+# 1~5 steps can be found in Introduction
 
 # 6. prepare data pool from conll format
 columns = {0: "text", 1: "ner"}

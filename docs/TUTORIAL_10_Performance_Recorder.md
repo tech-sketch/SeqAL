@@ -1,4 +1,4 @@
-# Tutorial 10: Performance Recorder
+# Performance Recorder
 
 This tutorial shows how to use performance recorder.
 
@@ -11,7 +11,7 @@ from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import load_plain_text, add_tags, count_tokens
 from seqal.performance_recorder import PerformanceRecorder
 
-# 1~6
+# 1~6 steps can be found in Introduction
 
 # 7. query setup
 query_percent = 0.02

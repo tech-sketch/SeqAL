@@ -1,4 +1,6 @@
-# Performance
+# SeqAL Performance on Metrics and Time Cost
+
+## Performance
 
 We will show the performance of SeqAL on different datasets with different language.
 
@@ -9,12 +11,11 @@ We will show the performance of SeqAL on different datasets with different langu
 
 We first train the model on seed data (2% of training data). Then we query 2％ of training data in each iteration untill 50% data are queried.
 
-## SeqAL on different languages
+### SeqAL on different languages
 
-### Ontonotes 5.0 (EN)
+**Ontonotes 5.0 (EN)**
 
-**Setup**
-
+Setup:
 - dataset: CoNLL 2003(English)
 - model: Bi-LSTM CRF
 - total query data: 50%
@@ -28,10 +29,9 @@ We first train the model on seed data (2% of training data). Then we query 2％ 
 ![ontonotes](images/f1_ontonotes.png)
 
 
-### BCCWJ (JP)
+**BCCWJ (JP)**
 
-**Setup**
-
+Setup:
 - dataset: BCCWJ
 - model: Bi-LSTM CRF
 - total query data: 50%
@@ -44,11 +44,9 @@ We first train the model on seed data (2% of training data). Then we query 2％ 
 ![bccwj](images/f1_bccwj.jpg)
 
 
+**People's Daily 2014 (CN)**
 
-### People's Daily 2014 (CN)
-
-**Setup**
-
+Setup:
 - dataset: People's Daily 2014
 - model: Bi-LSTM CRF
 - total query data: 50%
@@ -61,13 +59,12 @@ We first train the model on seed data (2% of training data). Then we query 2％ 
 ![people_daily](images/f1_people_daily.jpg)
 
 
-## SeqAL on different domain
+### SeqAL on different domain
 
 
-### Ritter (SNS)
+**Ritter (SNS)**
 
-**Setup**
-
+Setup:
 - dataset: Ritter
 - model: Bi-LSTM CRF
 - total query data: 50%
@@ -79,11 +76,16 @@ We first train the model on seed data (2% of training data). Then we query 2％ 
 
 ![ritter](images/f1_ritter.jpg)
 
-# Time cost
+
+### Conclusion
+
+According to the performance of different sampling methods, `MNLP` is a proper baseline method. If we want to achieve high perforamnce, we recommend `MNLP+DS`.
+
+## Time cost
 
 According to the [active learning cycle](./images/al_cycle.png), we run experiments to check the time cost in each step.
 
-## GPU model time cost in each step.
+### GPU model time cost in each step.
 
 The GPU model is Bi-LSTM CRF model. Below is the experiment setup.
 
@@ -114,7 +116,7 @@ Below is the GPU model performance.
 ![gpu_model_permance](./images/gpu_model_permance.png)
 
 
-## CPU model time cost in each step.
+### CPU model time cost in each step.
 
 The CPU model is CRF model. Below is the experiment setup.
 
@@ -144,6 +146,6 @@ Below is the CPU model performance.
 ![cpu_model_permance](./images/cpu_model_permance.png)
 
 
-## Conclusion
+### Conclusion
 
 Compare with the time cost and perforamnce on GPU model and CPU model, we recommend use the CPU model. Because CPU model can decrease the time cost greatly only sacrificing a little performance. Another reason is that CPU model is cheaper than GPU mode. The price of CPU machine is about half price of GPU machine.

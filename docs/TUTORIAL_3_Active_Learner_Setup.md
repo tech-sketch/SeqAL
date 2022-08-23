@@ -1,4 +1,4 @@
-# Tutorial 3: Active Learner Setup
+# Active Learner Setup
 
 This tutorial shows how so setup Active Learner.
 

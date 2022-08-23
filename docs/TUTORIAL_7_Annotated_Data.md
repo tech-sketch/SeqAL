@@ -1,4 +1,4 @@
-# Tutorial 7: Annotated Data
+# Annotated Data
 
 This tutorial shows how to receive the labeled data.
 
@@ -35,7 +35,7 @@ For such annotated data, we can use `Aligner.add_tags_on_token()` to process it.
 
 
 ```python
-# 1~7
+# 1~7 steps can be found in Introduction
 
 # initialize Aligner
 aligner = Aligner()
@@ -83,7 +83,7 @@ For such annotated data, we can use `Aligner.add_tags_on_char_spaced_language()`
 
 
 ```python
-# 1~7
+# 1~7 steps can be found in Introduction
 
 # initialize Aligner
 aligner = Aligner()
@@ -128,7 +128,7 @@ For such annotated data, we can use `Aligner.add_tags_on_char_non_spaced_languag
 
 
 ```python
-# 1~7
+# 1~7 steps can be found in Introduction
 
 # initialize Aligner
 aligner = Aligner()

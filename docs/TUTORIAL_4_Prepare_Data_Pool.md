@@ -1,4 +1,4 @@
-# Tutorial 4: Prepare Data Pool
+# Prepare Data Pool
 
 This tutorial shows how to prepare data pool.
 

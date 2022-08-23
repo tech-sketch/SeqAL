@@ -1,4 +1,4 @@
-# Tutorial 1: Introduction
+# Introduction
 
 This tutorial shows how to use SeqAL to perform active learning cycle for NER(named entity recognition).
 
@@ -88,11 +88,11 @@ corpus = ColumnCorpus(
 )
 ```
 
-For such data, we import the `ColumnCorpus` class and provide a `columns` variable to specify which column is the name entity tag. 
+For such data, we import the `ColumnCorpus` class and provide a `columns` variable to specify which column is the name entity tag.
 
 The `train_seed.txt` is the dataset used to train the model. The `dev.txt` is the dataset used to give an estimate of model skill while tuning the model’s hyperparameters. The `test.txt` is the dataset used to give an unbiased estimate of the final tuned model.
 
-Related tutorial: [TUTORIAL_2_Prepare_Corpus](.TUTORIAL_2_Prepare_Corpus.md)
+Related tutorial: [TUTORIAL_2_Prepare_Corpus](./TUTORIAL_2_Prepare_Corpus.md)
 
 
 ## 2~5 Initialize Active Learner
@@ -124,7 +124,7 @@ To set up an active learner, we have to provide `corpus`, `sampler`, `tagger_par
 
 After the setup, we can initialize the learner by calling `learner.initialize`. This will first train the model from scratch. The training log and model will be saved to `dir_path`.
 
-Related tutorial: [TUTORIAL_3_Active_Learner_Setup](.TUTORIAL_3_Active_Learner_Setup.md)
+Related tutorial: [TUTORIAL_3_Active_Learner_Setup](./TUTORIAL_3_Active_Learner_Setup.md)
 
 ## 6 Prepare Data Pool
 
@@ -136,7 +136,7 @@ unlabeled_sentences = load_plain_text(file_path)
 
 The data pool should contain unlabeled data. We can load the plain text (one sentence one line) by `load_plain_text`. This will return a list of `flair.data.Sentence`.
 
-Related tutorial: [TUTORIAL_6_Query_Setup](.TUTORIAL_6_Query_Setup.md)
+Related tutorial: [TUTORIAL_6_Query_Setup](./TUTORIAL_6_Query_Setup.md)
 
 ## 7 Query Setup
 
@@ -149,7 +149,7 @@ iterations = 5
 
 The `query_number` means how much data we want to query. If `token_based` is `True`, we will query the `10` tokens  in each iteration. If `token_based` is `False`, we will query `10` sentences in each iteration. `iterations` means how many rounds we run the active learning cycle.
 
-Related tutorial: [TUTORIAL_6_Query_Setup](.TUTORIAL_6_Query_Setup.md)
+Related tutorial: [TUTORIAL_6_Query_Setup](./TUTORIAL_6_Query_Setup.md)
 
 ## 8 Iteration
 
@@ -169,15 +169,15 @@ for i in range(iterations):
     learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
 ```
 
-Step 9, the `learner.query()` run the query process. The parameter `research_mode` is `False` which means that we run a real annotation project. The detail can be found in [TUTORIAL_5_Research_and_Annotation_Mode](.TUTORIAL_5_Research_and_Annotation_Mode.md). The `queried_samples` contains the samples selected by the sampling method. The `unlabeled_setence` contains the rest data.
+Step 9, the `learner.query()` run the query process. The parameter `research_mode` is `False` which means that we run a real annotation project. The detail can be found in [TUTORIAL_5_Research_and_Annotation_Mode](./TUTORIAL_5_Research_and_Annotation_Mode.md). The `queried_samples` contains the samples selected by the sampling method. The `unlabeled_setence` contains the rest data.
 
-Related tutorial: [TUTORIAL_5_Research_and_Annotation_Mode](.TUTORIAL_5_Research_and_Annotation_Mode.md)
+Related tutorial: [TUTORIAL_5_Research_and_Annotation_Mode](./TUTORIAL_5_Research_and_Annotation_Mode.md)
 
 Step 10, the user should provide `human_annotate()`, and the `annotated_data` should contain text and labels.
 
-Step 11, we convert `annotated_data` to a list of `flair.data.Sentence` by `add_tags()`. 
+Step 11, we convert `annotated_data` to a list of `flair.data.Sentence` by `add_tags()`.
 
-Related tutorial: [TUTORIAL_7_Annotated_Data](.TUTORIAL_7_Annotated_Data.md)
+Related tutorial: [TUTORIAL_7_Annotated_Data](./TUTORIAL_7_Annotated_Data.md)
 
 Finally, `learner.teach()` will add `queried_sampels` to the training dataset and retrain the model from scratch.
 

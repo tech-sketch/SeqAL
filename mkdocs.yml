@@ -1,0 +1,44 @@
+# Project information
+site_name: "SeqAL"
+site_description: "An active learning tool for sequence labeling"
+site_author: "Xu Liang"
+site_url: "https://tech-sketch.github.io/seqal/"
+
+# Repository
+repo_name: "tech-sketch/SeqAL"
+repo_url: "https://github.com/tech-sketch/SeqAL"
+
+# Copyright
+copyright: "Copyright &copy; 2021 - Xu Liang"
+
+theme:
+  name: "material"
+  palette:
+    primary: "cyan"
+    accent: "cyan"
+  show_sidebar: true
+
+# Extensions
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+# Page tree
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Introduction: TUTORIAL_1_Introduction.md
+  - Prepare Corpus: TUTORIAL_2_Prepare_Corpus.md
+  - Setup Active Learner: TUTORIAL_3_Active_Learner_Setup.md
+  - Prepare Data Pool: TUTORIAL_4_Prepare_Data_Pool.md
+  - Research and Annotation Mode: TUTORIAL_5_Research_and_Annotation_Mode.md
+  - Setup Query: TUTORIAL_6_Query_Setup.md
+  - Annotated Data: TUTORIAL_7_Annotated_Data.md
+  - Stopper: TUTORIAL_8_Stopper.md
+  - Output Labeled Data: TUTORIAL_9_Output_Labeled_Data.md
+  - Performance Recorder: TUTORIAL_10_Performance_Recorder.md
+  - Multiple Language: TUTORIAL_11_Multiple_Language_Support.md
+  - Performance: performance.md

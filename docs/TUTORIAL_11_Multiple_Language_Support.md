@@ -1,4 +1,4 @@
-# Tutorial 11: Multiple Language Support
+# Multiple Language Support
 
 This tutorial shows how to use SeqAL for different language.
 

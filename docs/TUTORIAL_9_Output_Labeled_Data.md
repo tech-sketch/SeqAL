@@ -1,4 +1,4 @@
-# Tutorial 9: Output Labeled Data
+# Output Labeled Data
 
 This tutorial shows how to output labeled data.
 
@@ -13,7 +13,7 @@ from seqal.datasets import ColumnCorpus, ColumnDataset
 from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import load_plain_text, add_tags, output_labeled_data
 
-# 1~7
+# 1~7 steps can be found in Introduction
 
 # 8. iteration
 for i in range(iterations):
