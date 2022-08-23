@@ -2,7 +2,7 @@
 site_name: "SeqAL"
 site_description: "An active learning tool for sequence labeling"
 site_author: "Xu Liang"
-site_url: "https://tech-sketch.github.io/seqal/"
+site_url: "https://tech-sketch.github.io/SeqAL/"
 
 # Repository
 repo_name: "tech-sketch/SeqAL"
@@ -14,8 +14,9 @@ copyright: "Copyright &copy; 2021 - Xu Liang"
 theme:
   name: "material"
   palette:
-    primary: "cyan"
-    accent: "cyan"
+    scheme: slate
+    primary: deep purple
+    accent: indigo
   show_sidebar: true
 
 # Extensions
