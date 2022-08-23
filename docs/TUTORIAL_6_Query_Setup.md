@@ -1,4 +1,4 @@
-# Tutorial 6: Query Setup
+# Query Setup
 
 This tutorial shows how to make reasonable query.
 
@@ -10,7 +10,7 @@ from seqal.datasets import ColumnCorpus, ColumnDataset
 from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import load_plain_text, add_tags
 
-# 1~6
+# 1~6 steps can be found in Introduction
 
 # 7. query setup
 query_number = 10

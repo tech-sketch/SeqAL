@@ -1,4 +1,4 @@
-# Tutorial 2: Prepare Corpus
+# Prepare Corpus
 
 This tutorial shows how to prepare corpus.
 

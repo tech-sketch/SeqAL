@@ -1,4 +1,4 @@
-# Tutorial 8: Stopper
+# Stopper
 
 This tutorial shows how to use stoppers.
 
@@ -17,7 +17,7 @@ from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import load_plain_text, add_tags, count_tokens
 from seqal.stoppers import BudgetStopper
 
-# 1~7
+# 1~7 
 
 # Stopper setup
 stopper = BudgetStopper(goal=200, unit_price=0.02)
@@ -57,7 +57,7 @@ from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import load_plain_text, add_tags, count_tokens
 from seqal.stoppers import MetricStopper
 
-# 1~6
+# 1~6 steps can be found in Introduction
 
 # 7. query setup
 query_percent = 0.02

@@ -1,4 +1,4 @@
-# Tutorial 1: Introduction
+# Introduction
 
 This tutorial shows how to use SeqAL to perform active learning cycle for NER(named entity recognition).
 
