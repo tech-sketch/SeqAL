@@ -18,9 +18,18 @@ theme:
     accent: "cyan"
   show_sidebar: true
 
+# Extensions
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
 # Page tree
 nav:
-  - Installation: index.md
+  - Home: index.md
+  - Installation: installation.md
   - Introduction: TUTORIAL_1_Introduction.md
   - Prepare Corpus: TUTORIAL_2_Prepare_Corpus.md
   - Setup Active Learner: TUTORIAL_3_Active_Learner_Setup.md
@@ -29,7 +38,7 @@ nav:
   - Setup Query: TUTORIAL_6_Query_Setup.md
   - Annotated Data: TUTORIAL_7_Annotated_Data.md
   - Stopper: TUTORIAL_8_Stopper.md
-  - Output Labeled Data: TUTORIAL_9_Ouput_Labeled_Data.md
+  - Output Labeled Data: TUTORIAL_9_Output_Labeled_Data.md
   - Performance Recorder: TUTORIAL_10_Performance_Recorder.md
   - Multiple Language: TUTORIAL_11_Multiple_Language_Support.md
   - Performance: performance.md
