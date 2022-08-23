@@ -135,7 +135,7 @@ We provide a set of quick tutorials to get you started with the library.
 - [Tutorial 6: Query Setup](docs/TUTORIAL_6_Query_Setup.md)
 - [Tutorial 7: Annotated Data](docs/TUTORIAL_7_Annotated_Data.md)
 - [Tutorial 8: Stopper](docs/TUTORIAL_8_Stopper.md)
-- [Tutorial 9: Ouput Labeled Data](docs/TUTORIAL_9_Ouput_Labeled_Data.md)
+- [Tutorial 9: Output Labeled Data](docs/TUTORIAL_9_Output_Labeled_Data.md)
 - [Tutorial 10: Performance Recorder](docs/TUTORIAL_10_Performance_Recorder.md)
 - [Tutorial 11: Multiple Language Support](docs/TUTORIAL_11_Multiple_Language_Support.md)
 
