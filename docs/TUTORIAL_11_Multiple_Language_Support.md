@@ -2,11 +2,13 @@
 
 This tutorial shows how to use SeqAL for different language.
 
-[Tutorial 1](./TUTORIAL_1_Introduction.md) show example on English. If you want to use SeqAL on other language, you only need to do two things. 
+[Introduction](./TUTORIAL_1_Introduction.md) shows example on English. If you want to use SeqAL on other language, you need to meet the following requirements.
 
-1. Prepare the data with BIO or BIOES format on the language you used
-2. Prepare the embedding on the same language
-3. Use spacy model to tokenize the non-spaced language
+1. Prepare the data with BIO or BIOES format on the language you used. More detail can be found in [Prepare Corpus](./TUTORIAL_2_Prepare_Corpus.md)
+2. Prepare the embedding on the same language. We can use [`TransformerWordEmbeddings`](https://github.com/flairNLP/flair/blob/master/resources/docs/embeddings/TRANSFORMER_EMBEDDINGS.md) to read different languages' embedding from [HuggingFace](https://huggingface.co/models?sort=downloads).
+3. If the language of dataset is a kind of non-spaced language, we have to use spacy model to tokenize the dataset.
+
+We introduce the processing workflow for spaced language and non-spaced language below.
 
 ## Spaced Language
 
@@ -87,7 +89,7 @@ embedding = BertEmbeddings("bert-base-german-cased")
 
 ## Non-spaced Language
 
-If your dataset is non-spaced language, we should tokenize the sentence. we have to tokenize it. For example, assuming that the input is `東京は都市です`.
+If your dataset is non-spaced language, we should tokenize the sentence when [prepare data pool](./TUTORIAL_4_Prepare_Data_Pool.md). For example, assuming that the input is `東京は都市です`. After tokenization, it will become `["東京", "は", "都市", "です"]`.
 
 
 ```python
