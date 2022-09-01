@@ -10,51 +10,64 @@ We will use the below example to explain the SeqAL usage.
 from flair.embeddings import WordEmbeddings
 
 from seqal.active_learner import ActiveLearner
-from seqal.datasets import ColumnCorpus, ColumnDataset
+from seqal.datasets import ColumnCorpus
 from seqal.samplers import LeastConfidenceSampler
-from seqal.utils import load_plain_text, add_tags
+from seqal.utils import load_plain_text
+from seqal.aligner import Aligner
+from xxxx import annotate_by_human  # User need to prepare this method to interact with annotation tool
+
+
+# 0: prepare seed data, validation data, test data, and unlabeled data pool
+# - labeled data:
+#     - seed data: `train_seed.txt`
+#     - validation data: `dev.txt`
+#     - test data: `test.txt`
+# - unlabeled data:
+#     - unlabeled data pool: `unlabeled_data_pool.txt`
 
 # 1. get the corpus
 columns = {0: "text", 1: "ner"}
-data_folder = "./data/conll"
+data_folder = "./data/sample_bio"
 corpus = ColumnCorpus(
     data_folder,
     columns,
     train_file="train_seed.txt",
-    dev_file="valid.txt",
+    dev_file="dev.txt",
     test_file="test.txt",
 )
 
 # 2. tagger params
 tagger_params = {}
-tagger_params["tag_type"] = "ner"
+tagger_params["tag_type"] = "ner"  # what tag do we want to predict?
 tagger_params["hidden_size"] = 256
 embeddings = WordEmbeddings("glove")
 tagger_params["embeddings"] = embeddings
-tagger_params["use_rnn"] = False
 
-# 3. trainer params
+# 3. Trainer params
 trainer_params = {}
-trainer_params["max_epochs"] = 1
+trainer_params["max_epochs"] = 10
 trainer_params["mini_batch_size"] = 32
 trainer_params["learning_rate"] = 0.1
-trainer_params["patience"] = 5
+trainer_params["train_with_dev"] = True
 
-# 4. setup active learner
+# 4. initialize learner
 sampler = LeastConfidenceSampler()
 learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
 
-# 5. initialize active learner
+# 5. initial training
 learner.initialize(dir_path="output/init_train")
 
-# 6. prepare data pool
-file_path = "./datasets/conll/train_pool.txt"
+# 6. prepare unlabeled data pool
+file_path = "./data/sample_bio/unlabeled_data_pool.txt"
 unlabeled_sentences = load_plain_text(file_path)
 
 # 7. query setup
-query_number = 10
+query_number = 2
 token_based = False
 iterations = 5
+
+# initialize the tool to read annotated data
+aligner = Aligner()
 
 # 8. iteration
 for i in range(iterations):
@@ -63,11 +76,18 @@ for i in range(iterations):
         unlabeled_sentences, query_number, token_based=token_based, research_mode=False
     )
 
-    # 10. annotate data
-    annotated_data = human_annotate(queried_samples)
+    # 10. convert sentence to plain text
+    queried_texts = [{"text": sent.to_plain_string()} for sent in queried_samples]
 
-    # 11. retrain model with newly added queried_samples
-    queried_samples = add_tags(annotated_data)
+    # 11. send queried_texts to annotation tool
+    # annotator annotate the queried samples
+    # 'annotate_by_human' method should be provide by user
+    annotated_data = annotate_by_human(queried_texts)
+
+    # 12. convert data to sentence
+    queried_samples = aligner.align_spaced_language(annotated_data)
+
+    # 13. retrain model, the queried_samples will be added to corpus.train
     learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
 ```
 
@@ -130,7 +150,7 @@ Related tutorial: [Active Learner Setup](./TUTORIAL_3_Active_Learner_Setup.md)
 
 ```python
 # 6. prepare data pool
-file_path = "./datasets/conll/train_pool.txt"
+file_path = "./data/sample_bio/unlabeled_data_pool.txt"
 unlabeled_sentences = load_plain_text(file_path)
 ```
 
@@ -151,7 +171,7 @@ The `query_number` means how much data we want to query. If `token_based` is `Tr
 
 Related tutorial: [6 Query Setup](./TUTORIAL_6_Query_Setup.md)
 
-## 8 Iteration
+## 8~9 Query Unlabeled Data
 
 ```python
 # 8. iteration
@@ -160,24 +180,64 @@ for i in range(iterations):
     queried_samples, unlabeled_sentences = learner.query(
         unlabeled_sentences, query_number, token_based=token_based, research_mode=False
     )
-
-    # 10. annotate data
-    annotated_data = human_annotate(queried_samples)
-
-    # 11. retrain model with newly added queried_samples
-    queried_samples = add_tags(annotated_data)
-    learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
 ```
 
 Step 9, the `learner.query()` run the query process. The parameter `research_mode` is `False` which means that we run a real annotation project. The detail can be found in [Research and Annotation Mode](./TUTORIAL_5_Research_and_Annotation_Mode.md). The `queried_samples` contains the samples selected by the sampling method. The `unlabeled_setence` contains the rest data.
 
 Related tutorial: [Research and Annotation Mode](./TUTORIAL_5_Research_and_Annotation_Mode.md)
 
-Step 10, the user should provide `human_annotate()`, and the `annotated_data` should contain text and labels.
 
-Step 11, we convert `annotated_data` to a list of `flair.data.Sentence` by `add_tags()`.
+## 10~12 Get Annotated Data
+
+```python
+    # 10. convert sentence to plain text
+    queried_texts = [{"text": sent.to_plain_string()} for sent in queried_samples]
+    # queried_texts:
+    # [
+    #   {
+    #     "text": "I love Berlin"
+    #   },
+    #   {
+    #     "text": "Tokyo is a city"
+    #   }
+    # ]
+
+
+    # 11. send queried_texts to annotation tool
+    # annotator annotate the queried samples
+    # 'annotate_by_human' method should be provide by user
+    annotated_data = annotate_by_human(queried_texts)
+    # annotated_data:
+    # [
+    #     {
+    #         "text": ['I', 'love', 'Berlin'],
+    #         "labels": ['O', 'O', 'B-LOC']
+    #     }
+    #     {
+    #         "text": ['Tokyo', 'is', 'a', 'city'],
+    #         "labels": ['B-LOC', 'O', 'O', 'O']
+    #     }
+    # ]
+
+    # 12. convert data to sentence
+    queried_samples = aligner.align_spaced_language(annotated_data)
+
+```
+
+Step 10, we convert the queried texts to format that the annotation tool can receive. 
+
+
+Step 11, the user should provide `human_annotate()`, and the `annotated_data` should contain text and labels.
+
+Step 11, the user should provide `annotate_by_human()` method, which seed the `queried_texts` to annotation tool and return the annnotation result.
+
+
+Step 12, we convert `annotated_data` to a list of `flair.data.Sentence` by `aligner`. We support different format of annotated data. More detail is in below tutorial. 
 
 Related tutorial: [Annotated Data](./TUTORIAL_7_Annotated_Data.md)
+
+
+## 13 Retrain Model
 
 Finally, `learner.teach()` will add `queried_sampels` to the training dataset and retrain the model from scratch.
 

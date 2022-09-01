@@ -12,7 +12,7 @@ from seqal.utils import load_plain_text, add_tags
 
 # 1. get the corpus
 columns = {0: "text", 1: "ner"}
-data_folder = "./data/conll"
+data_folder = "./data/sample_bio"
 corpus = ColumnCorpus(
     data_folder,
     columns,
@@ -44,7 +44,7 @@ learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
 learner.initialize(dir_path="output/init_train")
 
 # 6. prepare data pool
-file_path = "./datasets/conll/train_pool.txt"
+pool_file = "./data/sample_bio/unlabeled_data_pool.txt"
 unlabeled_sentences = load_plain_text(file_path)
 
 # 7. query setup
@@ -77,7 +77,7 @@ from seqal.datasets import ColumnDataset
 
 # 6. prepare data pool from conll format
 columns = {0: "text", 1: "ner"}
-pool_file = "./datasets/conll/train_pool.txt"
+pool_file = "./data/sample_bio/labeled_data_pool.txt"
 data_pool = ColumnDataset(pool_file, columns)
 unlabeled_sentences = data_pool.sentences
 
@@ -104,12 +104,12 @@ from seqal.utils import load_plain_text
 
 # 6. prepare data pool from conll format
 columns = {0: "text"}
-pool_file = "./datasets/conll/train_pool.txt"
+pool_file = "./data/sample_bio/labeled_data_pool.txt"
 data_pool = ColumnDataset(pool_file, columns)
 unlabeled_sentences = data_pool.sentences
 
 # 6. prepare data pool from plain text
-file_path = "./datasets/conll/train_pool.txt"
+pool_file = "./data/sample_bio/unlabeled_data_pool.txt"
 unlabeled_sentences = load_plain_text(file_path)
 
 # 7. query setup

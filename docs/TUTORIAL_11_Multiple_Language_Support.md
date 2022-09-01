@@ -21,8 +21,8 @@ from seqal.active_learner import ActiveLearner
 from seqal.samplers import LeastConfidenceSampler
 
 ## 1 Load data
-columns = {0: "text", 3: "ner"}
-data_folder = "./datasets/conll"
+columns = {0: "text", 1: "ner"}
+data_folder = "./data/sample_bio"
 corpus = ColumnCorpus(
     data_folder,
     columns,
@@ -61,7 +61,7 @@ If you want to change the language, you just need change few lines. Below is an 
 
 First, changing the dataset on the language that you used.
 ```python
-data_folder = "./datasets/conll_deu"
+data_folder = "./data/conll_deu"
 corpus = ColumnCorpus(
     data_folder,
     columns,

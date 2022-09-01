@@ -10,8 +10,8 @@ We can use the `ColumnDataset` class to load CoNLL format.
 ```python
 from seqal.datasets import ColumnDataset
 
-columns = {0: "text"}
-pool_file = "./datasets/conll/train_pool.txt"
+columns = {0: "text", 1: "ner"}
+pool_file = "./data/sample_bio/labeled_data_pool.txt"
 data_pool = ColumnDataset(pool_file, columns)
 unlabeled_sentences = data_pool.sentences
 ```
@@ -19,13 +19,13 @@ unlabeled_sentences = data_pool.sentences
 We can get sentences from data_pool by calling `sentences` property.
 
 ```python
-print(data_pool.sentences[0])
+print(unlabeled_sentences[0])
 ```
 
 This prints:
 
 ```
-Sentence: "Taleban said its shipment of ammunition from Albania was evidence of Russian military support for Rabbani 's government ."   [− Tokens: 19  − Token-Labels: "Taleban <B-MISC> said its shipment of ammunition from Albania <B-LOC> was evidence of Russian <B-MISC> military support for Rabbani <B-PER> 's government ."]
+Sentence: "this is New York"   [− Tokens: 4  − Token-Labels: "this is New <B-LOC> York <I-LOC>"]
 ```
 
 ## Load Plain Text
@@ -35,8 +35,18 @@ We can use `load_plain_text` to read the unlabeled dataset. This will create a l
 ```python
 from seqal.utils import load_plain_text
 
-file_path = "./datasets/conll/train_pool.txt"
+file_path = "./data/sample_bio/unlabeled_data_pool.txt"
 unlabeled_sentences = load_plain_text(file_path)
+```
+
+```python
+print(unlabeled_sentences[0])
+```
+
+This prints:
+
+```
+Sentence: "this is New York"   [− Tokens: 4]
 ```
 
 ## Non-spaced Language

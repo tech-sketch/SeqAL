@@ -14,7 +14,7 @@ from seqal.utils import load_plain_text, add_tags
 
 # 1. get the corpus
 columns = {0: "text", 1: "ner"}
-data_folder = "./data/conll"
+data_folder = "./data/sample_bio"
 corpus = ColumnCorpus(
     data_folder,
     columns,

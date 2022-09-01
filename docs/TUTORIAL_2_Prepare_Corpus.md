@@ -2,12 +2,14 @@
 
 This tutorial shows how to prepare corpus.
 
+We can load the custom dataset by below script.
+
 ```python
 from seqal.datasets import ColumnCorpus
 
 # 1. get the corpus
 columns = {0: "text", 1: "ner"}
-data_folder = "./data/conll"
+data_folder = "./data/sample_bio"
 corpus = ColumnCorpus(
     data_folder,
     columns,
@@ -16,6 +18,19 @@ corpus = ColumnCorpus(
     test_file="test.txt",
 )
 ```
+
+If we want to use the existing corpus in [flair datasets](https://github.com/flairNLP/flair/blob/master/resources/docs/TUTORIAL_6_CORPUS.md), we could use below script. 
+
+Notice that we have to download the data first. For example, if we want to load CoNLL-03 corpus, we download CoNLL-03 from [homepage](https://www.clips.uantwerpen.be/conll2003/ner/) and put the `eng.testa`, `eng.testb`, `eng.train` to `data/conll_03` floder.
+
+
+```python
+import flair.datasets
+
+floder_path = "../data/conll_03"
+corpus = flair.datasets.CONLL_03(floder_path)
+```
+
 
 ## Data format
 
