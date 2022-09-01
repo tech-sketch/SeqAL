@@ -1,15 +1,24 @@
-import json
-
 from flair.embeddings import WordEmbeddings
 
 from seqal.active_learner import ActiveLearner
 from seqal.datasets import ColumnCorpus
 from seqal.samplers import LeastConfidenceSampler
-from seqal.utils import add_tags, count_tokens, load_plain_text
+from seqal.utils import load_plain_text
+from seqal.aligner import Aligner
+from xxxx import annotate_by_human  # User need to prepare this method to interact with annotation tool
+
+
+# 0: prepare seed data, validation data, test data, and unlabeled data pool
+# - labeled data:
+#     - seed data: `train_seed.txt`
+#     - validation data: `dev.txt`
+#     - test data: `test.txt`
+# - unlabeled data:
+#     - unlabeled data pool: `train_datapool.txt`
 
 # 1. get the corpus
 columns = {0: "text", 1: "ner"}
-data_folder = "./data/trivial_bioes"
+data_folder = "./data/sample_bio"
 corpus = ColumnCorpus(
     data_folder,
     columns,
@@ -27,7 +36,7 @@ tagger_params["embeddings"] = embeddings
 
 # 3. Trainer params
 trainer_params = {}
-trainer_params["max_epochs"] = 1
+trainer_params["max_epochs"] = 10
 trainer_params["mini_batch_size"] = 32
 trainer_params["learning_rate"] = 0.1
 trainer_params["train_with_dev"] = True
@@ -40,60 +49,55 @@ learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
 learner.initialize(dir_path="output/init_train")
 
 # 6. prepare unlabeled data pool
-file_path = "./data/trivial_bioes/train_datapool.txt"
+file_path = "./data/sample_bio/train_datapool.txt"
 unlabeled_sentences = load_plain_text(file_path)
 
-# 7. calculate query how many sentences in each iteration based on tokens
-query_percent = 0.02  # Query 2% data at each iteration
-token_based = True
-seed_stats = json.loads(corpus.obtain_statistics())
-datapool_stats = count_tokens(unlabeled_sentences)
-total_tokens = seed_stats["TRAIN"]["number_of_tokens"]["total"] + datapool_stats
-query_number = tokens_each_iteration = max(int(total_tokens * query_percent), 1)
+# 7. query setup
+query_number = 2
+token_based = False
+iterations = 5
 
+# initialize the tool to read annotated data
+aligner = Aligner()
 
 # 8. iteration
-for i in range(25):
-    print(f"Annotate {int((i+1)*query_percent*100)}% data:")
-    print(f"Number of the unlabeled sentences: {len(unlabeled_sentences)}")
-
-    unlabeled_sentences, queried_samples = learner.query(
-        unlabeled_sentences, query_number, token_based=True, simulation_mode=True
+for i in range(iterations):
+    # 9. query unlabeled sentences
+    queried_samples, unlabeled_sentences = learner.query(
+        unlabeled_sentences, query_number, token_based=token_based, research_mode=False
     )
 
-    # Convert sentence class to plain text
+    # 10. convert sentence to plain text
     queried_texts = [{"text": sent.to_plain_string()} for sent in queried_samples]
     # queried_texts:
     # [
     #   {
     #     "text": "I love Berlin"
-    #   }
-    # ]
-
-    # Annotator annotate the queried samples
-    # 'annotate_by_human' method should be provide by user
-    labeled_texts = annotate_by_human(queried_texts)  # noqa: F821
-    # labeled_texts:
-    # [
+    #   },
     #   {
-    #     "text": "I love Berlin .",
-    #     "labels": [  # The labels created by annotators
-    #       {
-    #         "start_pos": 7,
-    #         "text": "Berlin",
-    #         "label": "S-LOC"
-    #       }
-    #     ]
+    #     "text": "Tokyo is a city"
     #   }
     # ]
-    print(f"Number of queried sentence: {len(queried_samples)}")
-    print(f"Number of the rest sentences: {len(unlabeled_sentences)}")
 
-    # Add labels to Sentence class
-    labeled_samples = add_tags(labeled_texts)
 
-    # 'teach' method adds labeled_samples to corpus.train and retrain model
-    learner.teach(labeled_samples, dir_path=f"output/retrain_{i}")
-    print(f"Number of the labeled data: {len(corpus.train)}")
+    # 11. send queried_texts to annotation tool
+    # annotator annotate the queried samples
+    # 'annotate_by_human' method should be provide by user
+    annotated_data = annotate_by_human(queried_texts)
+    # annotated_data:
+    # [
+    #     {
+    #         "text": ['I', 'love', 'Berlin'],
+    #         "labels": ['O', 'O', 'B-LOC']
+    #     }
+    #     {
+    #         "text": ['Tokyo', 'is', 'a', 'city'],
+    #         "labels": ['B-LOC', 'O', 'O', 'O']
+    #     }
+    # ]
 
-    print()
+    # 12. convert data to sentence
+    queried_samples = aligner.align_spaced_language(annotated_data)
+
+    # 13. retrain model, the queried_samples will be added to corpus.train
+    learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
