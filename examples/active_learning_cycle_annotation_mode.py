@@ -1,13 +1,14 @@
 from flair.embeddings import WordEmbeddings
-from xxxx import (  # User need to prepare this method to interact with annotation tool
-    annotate_by_human,
-)
 
 from seqal.active_learner import ActiveLearner
 from seqal.aligner import Aligner
 from seqal.datasets import ColumnCorpus
 from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import load_plain_text
+
+# from xxxx import annotate_by_human
+# User need to prepare this method to interact with annotation tool
+
 
 # 0: prepare seed data, validation data, test data, and unlabeled data pool
 # - labeled data:
@@ -83,18 +84,13 @@ for i in range(iterations):
     # 11. send queried_texts to annotation tool
     # annotator annotate the queried samples
     # 'annotate_by_human' method should be provide by user
-    annotated_data = annotate_by_human(queried_texts)
-    # annotated_data:
-    # [
-    #     {
-    #         "text": ['I', 'love', 'Berlin'],
-    #         "labels": ['O', 'O', 'B-LOC']
-    #     }
-    #     {
-    #         "text": ['Tokyo', 'is', 'a', 'city'],
-    #         "labels": ['B-LOC', 'O', 'O', 'O']
-    #     }
-    # ]
+
+    # annotated_data = annotate_by_human(queried_texts)  # provide `annotate_by_human` and uncomment this line
+
+    annotated_data = [
+        {"text": ["I", "love", "Berlin"], "labels": ["O", "O", "B-LOC"]},
+        {"text": ["Tokyo", "is", "a", "city"], "labels": ["B-LOC", "O", "O", "O"]},
+    ]
 
     # 12. convert data to sentence
     queried_samples = aligner.align_spaced_language(annotated_data)
