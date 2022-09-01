@@ -1,12 +1,13 @@
 from flair.embeddings import WordEmbeddings
+from xxxx import (  # User need to prepare this method to interact with annotation tool
+    annotate_by_human,
+)
 
 from seqal.active_learner import ActiveLearner
+from seqal.aligner import Aligner
 from seqal.datasets import ColumnCorpus
 from seqal.samplers import LeastConfidenceSampler
 from seqal.utils import load_plain_text
-from seqal.aligner import Aligner
-from xxxx import annotate_by_human  # User need to prepare this method to interact with annotation tool
-
 
 # 0: prepare seed data, validation data, test data, and unlabeled data pool
 # - labeled data:
@@ -78,7 +79,6 @@ for i in range(iterations):
     #     "text": "Tokyo is a city"
     #   }
     # ]
-
 
     # 11. send queried_texts to annotation tool
     # annotator annotate the queried samples
