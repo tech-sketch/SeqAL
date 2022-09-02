@@ -1,17 +1,14 @@
 # SeqAL
 
 <!-- <p align="center">
-  <a href="https://github.com/BrambleXu/seqal/actions?query=workflow%3ACI">
-    <img src="https://img.shields.io/github/workflow/status/BrambleXu/seqal/CI/main?label=CI&logo=github&style=flat-square" alt="CI Status" >
-  </a>
-  <a href="https://seqal.readthedocs.io">
-    <img src="https://img.shields.io/readthedocs/seqal.svg?logo=read-the-docs&logoColor=fff&style=flat-square" alt="Documentation Status">
-  </a>
   <a href="https://codecov.io/gh/BrambleXu/seqal">
     <img src="https://img.shields.io/codecov/c/github/BrambleXu/seqal.svg?logo=codecov&logoColor=fff&style=flat-square" alt="Test coverage percentage">
   </a>
 </p> -->
 <p align="center">
+  <a href="https://tech-sketch.github.io/SeqAL/">
+    <img src="https://github.com/tech-sketch/SeqAL/actions/workflows/mkdocs-deployment.yml/badge.svg?logo=read-the-docs&logoColor=fff&style=flat-square" alt="Documentation Status">
+  </a>
   <a href="https://github.com/BrambleXu/seqal/actions?query=workflow%3ACI">
     <img src="https://img.shields.io/github/workflow/status/BrambleXu/seqal/CI/main?label=CI&logo=github&style=flat-square" alt="CI Status" >
   </a>
@@ -37,10 +34,11 @@ SeqAL is a sequence labeling active learning framework based on Flair.
 
 ## Installation
 
-Install this via pip (or your favourite package manager):
+SeqAL is available on PyPI:
 
 `pip install seqal`
 
+SeqAL officially supports Python 3.8+.
 
 ## Usage
 
@@ -57,87 +55,88 @@ To understand what SeqAL can do, we first introduce the pool-based active learni
   - Step 6: Retrain model
 - Repeat step2~step6 until the f1 score of the model beyond the threshold or annotation budget is no left
 
-SeqAL can cover all steps except step 0 and step 4. Below is a simple script to demonstrate how to use SeqAL to implement the work flow.
+SeqAL can cover all steps except step 0 and step 4. Because there is no 3rd part annotation tool, we can run below script to simulate the active learning cycle.
 
 ```python
+from flair.embeddings import WordEmbeddings
+
 from seqal.active_learner import ActiveLearner
+from seqal.datasets import ColumnCorpus, ColumnDataset
 from seqal.samplers import LeastConfidenceSampler
-from seqal.alinger import Alinger
-from seqal.datasets import ColumnCorpus
-from seqal.utils import load_plain_text
-from xxxx import annotate_by_human  # User need to prepare this method
 
-
-# Step 0: Preparation
-## Prepare Seed data, valid data, and test data
-columns = {0: "text", 1: "pos", 2: "syntactic_chunk", 3: "ner"}
-data_folder = "./datasets/conll"
+# 1. get the corpus
+columns = {0: "text", 1: "ner"}
+data_folder = "./data/sample_bio"
 corpus = ColumnCorpus(
     data_folder,
     columns,
     train_file="train_seed.txt",
-    dev_file="valid.txt",
+    dev_file="dev.txt",
     test_file="test.txt",
 )
 
-## Unlabeled data pool
-file_path = "./datasets/conll/train_datapool.txt"
-unlabeled_sentences = load_plain_text(file_path)
+# 2. tagger params
+tagger_params = {}
+tagger_params["tag_type"] = "ner"
+tagger_params["hidden_size"] = 256
+embeddings = WordEmbeddings("glove")
+tagger_params["embeddings"] = embeddings
+tagger_params["use_rnn"] = False
 
-## Initilize ActiveLearner
-learner = ActiveLearner(
-  tagger_params=tagger_params,   # Model parameters (hidden size, embedding, etc.)
-  query_strategy=LeastConfidenceSampler(),  # Query algorithm
-  corpus=corpus,                 # Corpus contains training, validation, test data
-  trainer_params=trainer_params  # Trainer parameters (epoch, batch size, etc.)
-)
+# 3. trainer params
+trainer_params = {}
+trainer_params["max_epochs"] = 1
+trainer_params["mini_batch_size"] = 32
+trainer_params["learning_rate"] = 0.1
+trainer_params["patience"] = 5
 
-# Step 1: Initial training on model
-learner.initialize()
+# 4. setup active learner
+sampler = LeastConfidenceSampler()
+learner = ActiveLearner(corpus, sampler, tagger_params, trainer_params)
 
-# Step 2&3: Predict on unlabeled data and query informative data
-_, queried_samples = learner.query(data_pool)
-queried_samples = [{"text": sent.to_plain_string()} for sent in queried_samples]  # Convert sentence class to plain text
-# queried_samples:
-# [
-#   {
-#     "text": "Tokyo is a city"
-#   }
-# ]
+# 5. initialize active learner
+learner.initialize(dir_path="output/init_train")
 
-# Step 4: Annotator annotate the selected samples
-new_labels = annotate_by_human(queried_samples)
-# new_labels:
-# [
-#   {
-#     "text": ['Tokyo', 'is', 'a', 'city'],
-#     "labels": ['B-LOC', 'O', 'O', 'O']
-#   }
-# ]
+# 6. prepare data pool
+pool_file = data_folder + "/labeled_data_pool.txt"
+data_pool = ColumnDataset(pool_file, columns)
+unlabeled_sentences = data_pool.sentences
 
-## Convert data to the suitable format
-alinger = Alinger()
-new_labeled_samples = alinger.add_tags_on_token(new_labels, 'ner')
+# 7. query setup
+query_number = 2
+token_based = False
+iterations = 5
 
-# Step 5&6: Add new labeled samples to training and retrain model
-learner.teach(new_labeled_samples)
+# 8. iteration
+for i in range(iterations):
+    # 9. query unlabeled sentences
+    queried_samples, unlabeled_sentences = learner.query(
+        unlabeled_sentences, query_number, token_based=token_based, research_mode=True
+    )
+
+    # 10. retrain model, the queried_samples will be added to corpus.train
+    learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
 ```
+
+When calling `learner.query()`, we set `research_mode=True`. This means that we simulate the active learning cycle. You can also find the script in `examples/active_learning_cycle_research_mode.py`. If you want to connect SeqAL with an annotation tool, you can see the script in `examples/active_learning_cycle_annotation_mode.py`.
 
 ## Tutorials
 
-We provide a set of quick tutorials to get you started with the library.
+We provide a set of quick tutorials to get you started with the library. 
 
-- [Tutorial 1: Introduction](docs/TUTORIAL_1_Introduction.md)
-- [Tutorial 2: Prepare Corpus](docs/TUTORIAL_2_Prepare_Corpus.md)
-- [Tutorial 3: Active Learner Setup](docs/TUTORIAL_3_Active_Learner_Setup.md)
-- [Tutorial 4: Prepare Data Pool](docs/TUTORIAL_4_Prepare_Data_Pool.md)
-- [Tutorial 5: Research and Annotation Mode](docs/TUTORIAL_5_Research_and_Annotation_Mode.md)
-- [Tutorial 6: Query Setup](docs/TUTORIAL_6_Query_Setup.md)
-- [Tutorial 7: Annotated Data](docs/TUTORIAL_7_Annotated_Data.md)
-- [Tutorial 8: Stopper](docs/TUTORIAL_8_Stopper.md)
-- [Tutorial 9: Output Labeled Data](docs/TUTORIAL_9_Output_Labeled_Data.md)
-- [Tutorial 10: Performance Recorder](docs/TUTORIAL_10_Performance_Recorder.md)
-- [Tutorial 11: Multiple Language Support](docs/TUTORIAL_11_Multiple_Language_Support.md)
+- [Tutorials on Github Page](https://tech-sketch.github.io/SeqAL/)
+- [Tutorials on Markown](./docs/)
+  - [Tutorial 1: Introduction](./docs/TUTORIAL_1_Introduction.md)
+  - [Tutorial 2: Prepare Corpus](./docs/TUTORIAL_2_Prepare_Corpus.md)
+  - [Tutorial 3: Active Learner Setup](./docs/TUTORIAL_3_Active_Learner_Setup.md)
+  - [Tutorial 4: Prepare Data Pool](./docs/TUTORIAL_4_Prepare_Data_Pool.md)
+  - [Tutorial 5: Research and Annotation Mode](./docs/TUTORIAL_5_Research_and_Annotation_Mode.md)
+  - [Tutorial 6: Query Setup](./docs/TUTORIAL_6_Query_Setup.md)
+  - [Tutorial 7: Annotated Data](./docs/TUTORIAL_7_Annotated_Data.md)
+  - [Tutorial 8: Stopper](./docs/TUTORIAL_8_Stopper.md)
+  - [Tutorial 9: Output Labeled Data](./docs/TUTORIAL_9_Output_Labeled_Data.md)
+  - [Tutorial 10: Performance Recorder](./docs/TUTORIAL_10_Performance_Recorder.md)
+  - [Tutorial 11: Multiple Language Support](./docs/TUTORIAL_11_Multiple_Language_Support.md)
 
 ## Performance
 
@@ -146,47 +145,11 @@ Active learning algorithms achieve 97% performance of the best deep model traine
 See [performance](./docs/performance.md) for more detail about performance and time cost.
 
 
-## Construct envirement locally
+## Contributing
 
-If you want to make a PR or implement something locally, you can follow bellow instruction to construct the development envirement locally.
+If you have suggestions for how SeqAL could be improved, or want to report a bug, open an issue! We'd love all and any contributions.
 
-First we create a environment "seqal" based on the `environment.yml` file.
-
-We use conda as envirement management tool, so install it first.
-
-```
-conda env create -f environment.yml
-```
-
-Then we activate the environment.
-
-```
-conda activate seqal
-```
-
-Install poetry for dependency management.
-
-```
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-```
-
-Add poetry path in your shell configure file (`bashrc`, `zshrc`, etc.)
-```
-export PATH="$HOME/.poetry/bin:$PATH"
-```
-
-Installing dependencies from `pyproject.toml`.
-
-```
-poetry install
-```
-
-You can make development locally now.
-
-If you want to delete the local envirement, run below command.
-```
-conda remove --name seqal --all
-```
+For more, check out the [Contributing Guide](./CONTRIBUTING.md).
 
 ## Credits
 

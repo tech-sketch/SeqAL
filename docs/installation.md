@@ -2,11 +2,13 @@
 
 ## Installation from PyPI
 
-To install SeqAL with pip, run the following command:
+SeqAL is available on PyPI:
 
 ```bash
 pip install seqal
 ```
+
+SeqAL officially supports Python 3.8+.
 
 ## Construct Envirement Locally
 
