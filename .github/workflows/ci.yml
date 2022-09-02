@@ -12,6 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        poetry-version: ["1.2.0"]
         linter:
           - name: Flake8
             run: flake8
@@ -27,6 +28,8 @@ jobs:
         with:
           python-version: 3.8
       - uses: abatilo/actions-poetry@v2.1.0
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
       - name: Install Dependencies
         run: poetry install
       - name: ${{ matrix.linter.name }}
@@ -47,15 +50,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version:
-        #   - 3.6
-        #   - 3.7
-          - 3.8
-        #   - 3.9
-        os:
-          - ubuntu-latest
-        #   - windows-latest
-          - macOS-latest
+        python-version: ["3.8", "3.9"]
+        poetry-version: ["1.2.0"]
+        os: [ubuntu-18.04]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -64,6 +61,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - uses: abatilo/actions-poetry@v2.1.0
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
       - name: Install Dependencies
         run: poetry install
       - name: Test with Pytest
