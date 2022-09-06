@@ -35,13 +35,14 @@ tagger_params["tag_type"] = "ner"  # what tag do we want to predict?
 tagger_params["hidden_size"] = 256
 embeddings = WordEmbeddings("glove")
 tagger_params["embeddings"] = embeddings
+tagger_params["use_rnn"] = False
 
 # 3. Trainer params
 trainer_params = {}
 trainer_params["max_epochs"] = 10
 trainer_params["mini_batch_size"] = 32
 trainer_params["learning_rate"] = 0.1
-trainer_params["train_with_dev"] = True
+trainer_params["patience"] = 5
 
 # 4. initialize learner
 sampler = LeastConfidenceSampler()
