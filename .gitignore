@@ -1,5 +1,5 @@
-# Ignore output in test
-tests/fixtures/output
+# Ignore output folder
+output
 !tests/fixtures/output/.gitkeep
 
 # Commitlint related
