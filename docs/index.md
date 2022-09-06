@@ -90,6 +90,8 @@ When calling `learner.query()`, we set `research_mode=True`. This means that we 
 python examples/active_learning_cycle_research_mode.py
 ```
 
+We also provide a notebook to demonstrate the simulation: [active_learning_cycle_research_mode](../notebooks/active_learning_cycle_research_mode.ipynb)
+
 More detail about research (simulation) mode can be found in [Research and Annotation Mode](./TUTORIAL_5_Research_and_Annotation_Mode.md).
 
 
@@ -203,11 +205,8 @@ for i in range(iterations):
 ```
 
 
-
-First, we should provide the 4 files to SeqAL. The 3 labeled datasets (seed data, valid data, test data) and 1 unlabeled dataset (data pool). If you want to use the [existing dataset](https://github.com/flairNLP/flair/blob/master/resources/docs/TUTORIAL_6_CORPUS.md) included in Flair, you can load if by call `flair.datasets`. Then you only need to provide the unlabeled dataset.
-
+First, we should provide the 4 files to SeqAL. The 3 labeled datasets (seed data, valid data, test data) and 1 unlabeled dataset (data pool). If you want to use the [existing dataset](https://github.com/flairNLP/flair/blob/master/resources/docs/TUTORIAL_6_CORPUS.md) included in Flair, you can follow the [data_preparation](../notebooks/data_preparation.ipynb) notebook. Then you only need to provide the unlabeled dataset.
 
 If the annotation tool if the only interface that the user can interactive, the annotation tool should transfer the 4 files to SeqAL.
 
-
-
+We provide the script in `examples/active_learning_cycle_annotation_mode.py` and the notebook to explain in detail: [active_learning_cycle_annotation_mode](../notebooks/active_learning_cycle_annotation_mode.ipynb)

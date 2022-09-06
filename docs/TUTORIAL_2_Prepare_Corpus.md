@@ -19,17 +19,7 @@ corpus = ColumnCorpus(
 )
 ```
 
-If we want to use the existing corpus in [flair datasets](https://github.com/flairNLP/flair/blob/master/resources/docs/TUTORIAL_6_CORPUS.md), we could use below script. 
-
-Notice that we have to download the data first. For example, if we want to load CoNLL-03 corpus, we download CoNLL-03 from [homepage](https://www.clips.uantwerpen.be/conll2003/ner/) and put the `eng.testa`, `eng.testb`, `eng.train` to `data/conll_03` floder.
-
-
-```python
-import flair.datasets
-
-floder_path = "../data/conll_03"
-corpus = flair.datasets.CONLL_03(floder_path)
-```
+If we want to use the existing corpus in [flair datasets](https://github.com/flairNLP/flair/blob/master/resources/docs/TUTORIAL_6_CORPUS.md), there are introductions in [data_preparation](../notebooks/data_preparation.ipynb) notebook.
 
 
 ## Data format

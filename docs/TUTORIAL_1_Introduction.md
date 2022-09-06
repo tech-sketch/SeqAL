@@ -4,7 +4,7 @@ This tutorial shows how to use SeqAL to perform active learning cycle for NER(na
 
 ![](images/al_cycle_v2.png)
 
-We will use the below example to explain the SeqAL usage.
+We will use the below example to explain the SeqAL usage with third part annotation tool.
 
 ```python
 from flair.embeddings import WordEmbeddings
@@ -167,7 +167,12 @@ query_number = 10
 iterations = 5
 ```
 
-The `query_number` means how much data we want to query. If `token_based` is `True`, we will query the `10` tokens  in each iteration. If `token_based` is `False`, we will query `10` sentences in each iteration. `iterations` means how many rounds we run the active learning cycle.
+The `query_number` means how many data samples we want to query in each iteration. 
+
+The `token_based` means we query data on sentence level or token level. If `token_based` is `True`, we will query the `10` tokens  in each iteration. If `token_based` is `False`, we will query `10` sentences in each iteration. 
+
+The `iterations` means how many rounds we run the active learning cycle.
+
 
 Related tutorial: [6 Query Setup](./TUTORIAL_6_Query_Setup.md)
 
@@ -226,11 +231,7 @@ Related tutorial: [Research and Annotation Mode](./TUTORIAL_5_Research_and_Annot
 
 Step 10, we convert the queried texts to format that the annotation tool can receive. 
 
-
-Step 11, the user should provide `human_annotate()`, and the `annotated_data` should contain text and labels.
-
-Step 11, the user should provide `annotate_by_human()` method, which seed the `queried_texts` to annotation tool and return the annnotation result.
-
+Step 11, the user should provide `annotate_by_human()` method, which receive the `queried_texts` to annotation tool and return the annnotation result.
 
 Step 12, we convert `annotated_data` to a list of `flair.data.Sentence` by `aligner`. We support different format of annotated data. More detail is in below tutorial. 
 
@@ -238,6 +239,11 @@ Related tutorial: [Annotated Data](./TUTORIAL_7_Annotated_Data.md)
 
 
 ## 13 Retrain Model
+
+```python
+    # 13. retrain model, the queried_samples will be added to corpus.train
+    learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
+```
 
 Finally, `learner.teach()` will add `queried_sampels` to the training dataset and retrain the model from scratch.
 
