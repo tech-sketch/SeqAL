@@ -34,6 +34,7 @@ python = "^3.8"
 torch = "1.9.1"
 flair = "0.10"
 spacy = "^3.4.1"
+scipy = "^1.8.0"
 
 [tool.poetry.dev-dependencies]
 black = "^22.6.0"
