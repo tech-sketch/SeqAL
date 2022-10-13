@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "seqal"
-version = "0.3.2"
+version = "0.3.3"
 description = "Sequence labeling active learning framework for Python"
 authors = ["Xu Liang <liangxu006@gmail.com>"]
 license = "MIT"
@@ -31,7 +31,7 @@ docs = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-torch = "1.9.1"
+torch = "1.10.0"
 flair = "0.10"
 spacy = "^3.4.1"
 scipy = "^1.8.0"
