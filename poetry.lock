@@ -82,7 +82,7 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "blis"
-version = "0.7.8"
+version = "0.7.9"
 description = "The Blis BLAS-like linear algebra library, as a self-contained C-extension."
 category = "main"
 optional = false
@@ -233,7 +233,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "cymem"
-version = "2.0.6"
+version = "2.0.7"
 description = "Manage calls to calloc/free through Cython"
 category = "main"
 optional = false
@@ -818,7 +818,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "mkdocs"
-version = "1.4.0"
+version = "1.4.1"
 description = "Project documentation with Markdown."
 category = "dev"
 optional = false
@@ -826,17 +826,19 @@ python-versions = ">=3.7"
 
 [package.dependencies]
 click = ">=7.0"
+colorama = {version = ">=0.4", markers = "platform_system == \"Windows\""}
 ghp-import = ">=1.0"
 importlib-metadata = {version = ">=4.3", markers = "python_version < \"3.10\""}
-Jinja2 = ">=2.11.1"
-Markdown = ">=3.2.1,<3.4"
+jinja2 = ">=2.11.1"
+markdown = ">=3.2.1,<3.4"
 mergedeep = ">=1.3.4"
 packaging = ">=20.5"
-PyYAML = ">=5.1"
+pyyaml = ">=5.1"
 pyyaml-env-tag = ">=0.1"
 watchdog = ">=2.0"
 
 [package.extras]
+min-versions = ["watchdog (==2.0)", "typing-extensions (==3.10)", "pyyaml (==5.1)", "pyyaml-env-tag (==0.1)", "packaging (==20.5)", "mergedeep (==1.3.4)", "markupsafe (==2.0.1)", "markdown (==3.2.1)", "jinja2 (==2.11.1)", "importlib-metadata (==4.3)", "ghp-import (==1.0)", "colorama (==0.4)", "click (==7.0)", "babel (==2.9.0)"]
 i18n = ["babel (>=2.9.0)"]
 
 [[package]]
@@ -882,7 +884,7 @@ python-versions = "*"
 
 [[package]]
 name = "murmurhash"
-version = "1.0.8"
+version = "1.0.9"
 description = "Cython bindings for MurmurHash"
 category = "main"
 optional = false
@@ -1069,7 +1071,7 @@ virtualenv = ">=20.0.8"
 
 [[package]]
 name = "preshed"
-version = "3.0.7"
+version = "3.0.8"
 description = "Cython hash table that trusts the keys are pre-hashed"
 category = "main"
 optional = false
@@ -1690,11 +1692,11 @@ python-versions = ">=3.6,<4.0"
 
 [[package]]
 name = "torch"
-version = "1.10.0"
+version = "1.12.1"
 description = "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
 category = "main"
 optional = false
-python-versions = ">=3.6.2"
+python-versions = ">=3.7.0"
 
 [package.dependencies]
 typing-extensions = "*"
@@ -1937,7 +1939,7 @@ docs = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "2ca2e3dcb11d19cd4ff7980f0a6217a071cb0acba523aa9471174167a4462373"
+content-hash = "6be69cde1e2bbf86d0a10d1127d882ef4f5b23703afc15f4b3c86ee40ea2de13"
 
 [metadata.files]
 appnope = [
