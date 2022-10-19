@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "seqal"
-version = "0.3.4"
+version = "0.3.5"
 description = "Sequence labeling active learning framework for Python"
 authors = ["Xu Liang <liangxu006@gmail.com>"]
 license = "MIT"
@@ -51,6 +51,7 @@ pylint = "^2.14.5"
 pandas = "^1.4.3"
 seaborn = "^0.11.2"
 mkdocs-material = "^8.4.1"
+codespell = "^2.2.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -65,3 +66,8 @@ testpaths = [
 [tool.isort]
 profile = "black"
 known_first_party = ["seqal", "tests"]
+
+[tool.codespell]
+skip = '*.po,*.ts,./.git,./src/3rdParty,./src/Test,./data,./playground,./notebooks,./datasets,./node_modules,./logs'
+count = ''
+quiet-level = 3

@@ -164,6 +164,19 @@ python-versions = ">=3.7"
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
+name = "codespell"
+version = "2.2.2"
+description = "Codespell"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+dev = ["check-manifest", "flake8", "pytest", "pytest-cov", "pytest-dependency", "tomli"]
+hard-encoding-detection = ["chardet"]
+toml = ["tomli"]
+
+[[package]]
 name = "colorama"
 version = "0.4.5"
 description = "Cross-platform colored terminal text."
@@ -1939,7 +1952,7 @@ docs = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "6be69cde1e2bbf86d0a10d1127d882ef4f5b23703afc15f4b3c86ee40ea2de13"
+content-hash = "1606b1d2b4c7d314a429437ae4d530e82205401dbae8b22eedfe4da7137c2e14"
 
 [metadata.files]
 appnope = [
@@ -1965,6 +1978,7 @@ cfgv = [
 ]
 charset-normalizer = []
 click = []
+codespell = []
 colorama = []
 confection = []
 conllu = []
