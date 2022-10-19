@@ -71,7 +71,7 @@ def add_tags(query_labels: List[dict]) -> List[Sentence]:
     """Add tags to create sentences.
 
     Args:
-        query_labels (List[dict]): Each dictionary contians text and labels.
+        query_labels (List[dict]): Each dictionary contains text and labels.
                                    Example:
                                     [
                                         {

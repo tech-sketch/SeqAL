@@ -9,7 +9,7 @@ We will show the performance of SeqAL on different datasets with different langu
 - **Random** means randomly query data without caring about informativeness.
 - **CS** (Clustering Similarity) and **DS** (Distributed Similarity) are the diversity based sampling methods for NER
 
-We first train the model on seed data (2% of training data). Then we query 2％ of training data in each iteration untill 50% data are queried.
+We first train the model on seed data (2% of training data). Then we query 2％ of training data in each iteration until 50% data are queried.
 
 ### SeqAL on different languages
 
@@ -79,7 +79,7 @@ Setup:
 
 ### Conclusion
 
-According to the performance of different sampling methods, `MNLP` is a proper baseline method. If we want to achieve high perforamnce, we recommend `MNLP+DS`.
+According to the performance of different sampling methods, `MNLP` is a proper baseline method. If we want to achieve high performance, we recommend `MNLP+DS`.
 
 ## Time cost
 
@@ -148,4 +148,4 @@ Below is the CPU model performance.
 
 ### Conclusion
 
-Compare with the time cost and perforamnce on GPU model and CPU model, we recommend use the CPU model. Because CPU model can decrease the time cost greatly only sacrificing a little performance. Another reason is that CPU model is cheaper than GPU mode. The price of CPU machine is about half price of GPU machine.
+Compare with the time cost and performance on GPU model and CPU model, we recommend use the CPU model. Because CPU model can decrease the time cost greatly only sacrificing a little performance. Another reason is that CPU model is cheaper than GPU mode. The price of CPU machine is about half price of GPU machine.

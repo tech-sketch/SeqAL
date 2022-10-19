@@ -100,6 +100,6 @@ The `MetricStopper(goal=0.9)` initialize the budget stopper. The `goal` means th
 
 The `learner.trained_tagger.evaluate(corpus.test, gold_label_type="ner")` evaluate on test dataset and return the evaluation result.
 
-We use `performance_recorder` to parse the evluation result. 
+We use `performance_recorder` to parse the evaluation result. 
 
 The `stopper.stop(iteration_performance.micro_f1)` compare the goal and the evaluation result on micro f1 score. We can also compare other metrics like macro f1, accuracy, etc. 

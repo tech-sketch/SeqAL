@@ -72,7 +72,7 @@ def save_label_info(sents: List[Sentence]) -> List[List[LabelInfo]]:
 def load_label_info(
     sents: List[Sentence], labels_info: List[List[LabelInfo]]
 ) -> List[Sentence]:
-    """Load label infomation after prediction.
+    """Load label information after prediction.
 
     Args:
         sents (List[Sentence]): Sentences in data pool.
@@ -156,7 +156,7 @@ class ActiveLearner:
             query_number (int): batch query number.
             token_based (bool, optional): If true, using query number as token number to query data.
                                           If false, using query number as sentence number to query data.
-            research_mode (bool, optional): If ture, sents contains real NER tags.
+            research_mode (bool, optional): If true, sents contains real NER tags.
                                             If false, sents do not contains NER tags.
 
         Returns:

@@ -46,7 +46,7 @@ class BaseSampler:
 
         Args:
             sent_scores (np.ndarray): Sentence scores.
-            order (str, optional): Sentence id order for reutrn . Defaults to "ascend".
+            order (str, optional): Sentence id order for return . Defaults to "ascend".
 
         Raises:
             TypeError: if sent_scores is not np.ndarray
@@ -111,7 +111,7 @@ class BaseSampler:
     def similarity_matrix(
         self, mat1: torch.Tensor, mat2: torch.Tensor, eps: float8 = 1e-8
     ) -> torch.Tensor:
-        """Calculate similarity bewteen matrix
+        """Calculate similarity between matrix
 
         https://en.wikipedia.org/wiki/Cosine_similarity
 

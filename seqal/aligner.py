@@ -11,7 +11,7 @@ class Aligner:
     """Align tokens and tags."""
 
     def concat_tags(self, tags: List[str]) -> str:
-        """Concat tags togeter
+        """Concat tags together
 
         Args:
             tags (List[str]): List of tags. The schema should be BIO
