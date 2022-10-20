@@ -57,10 +57,10 @@ As we mentioned in [TUTORIAL_2_Prepare_Corpus](TUTORIAL_2_Prepare_Corpus.md), we
 An example with CoNLL format:
 
 ```
-東京
-は
-都市
-です
+東京 B-LOC
+は O
+都市 O
+です O
 ```
 
 If the input format is plain text `東京は都市です`. We should tokenize the sentence.
