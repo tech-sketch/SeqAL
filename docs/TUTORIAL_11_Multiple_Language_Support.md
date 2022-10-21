@@ -89,8 +89,87 @@ embedding = BertEmbeddings("bert-base-german-cased")
 
 ## Non-spaced Language
 
-If your dataset is non-spaced language, we should tokenize the sentence when [prepare data pool](./TUTORIAL_4_Prepare_Data_Pool.md). For example, assuming that the input is `東京は都市です`. After tokenization, it will become `["東京", "は", "都市", "です"]`.
+### Prepare Corpus
 
+First we provide the corpus with CoNLL format like below:
+
+```
+東京 B-LOC
+は O
+都市 O
+です O
+```
+
+Then we load the corpus just like the spaced language.
+```python
+columns = {0: "text", 1: "ner"}
+data_folder = "./data/sample_jp"
+corpus = ColumnCorpus(
+    data_folder,
+    columns,
+    train_file="train_seed.txt",
+    dev_file="valid.txt",
+    test_file="test.txt",
+)
+```
+
+You can see the examples in `./data/sample_jp` directory.
+
+### Prepare Embeddings
+
+We provide the proper embedding for specified language. Below is a Japances example.
+
+```python
+from flair.embeddings import StackedEmbeddings, FlairEmbeddings
+
+embedding_types = [
+    FlairEmbeddings('ja-forward'),
+    FlairEmbeddings('ja-backward'),
+]
+embeddings = StackedEmbeddings(embeddings=embedding_types)
+```
+
+### Prepare Data Pool
+
+
+**Research Mode**
+
+If we just want to simulate the active learning cycle (the research mode), we can should load the labeled data pool by `ColumnDataset` and set the `research_mode` as `True`.
+
+```python
+from seqal.datasets import ColumnDataset
+
+columns = {0: "text", 1: "ner"}
+pool_file = "./data/sample_jp/labeled_data_pool.txt"
+data_pool = ColumnDataset(pool_file, columns)
+unlabeled_sentences = data_pool.sentences
+
+# ...
+
+for i in range(iterations):
+    queried_samples, unlabeled_sentences = learner.query(
+        unlabeled_sentences, query_number, token_based=token_based, research_mode=True
+    )
+    learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
+
+```
+
+**Annotation Mode**
+
+If we are dealing with a real annotation project, we usually load the data from plain text.
+
+```python
+file_path = "./data/sample_jp/unlabeled_data_pool.txt"
+
+unlabeled_sentences = []
+with open(file_path, mode="r", encoding="utf-8") as f:
+    for line in f:
+        unlabeled_sentences.append(line)
+```
+
+Because the loaded sentence is non-spaced, we have to tokenize the sentence. For examples, we tokenize the `東京は都市です` to `["東京", "は", "都市", "です"]`. 
+
+There are two ways to tokenize the sentences. The first method is using the `Transformer.to_subword()`. 
 
 ```python
 import spacy
@@ -98,10 +177,10 @@ from seqal.transformer import Transformer
 
 nlp = spacy.load("ja_core_news_sm")
 tokenizer = Transformer(nlp)
-unlabeled_sentences = [tokenizer.to_subword(sentence) for sentence in sentences]
+unlabeled_sentences = [tokenizer.to_subword(sentence) for sentence in unlabeled_sentences]
 ```
 
-We also can directly use the spacy tokenizer.
+The second method is directly using the spacy tokenizer.
 
 ```python
 import spacy
@@ -110,4 +189,23 @@ from flair.tokenization import SpacyTokenizer
 
 tokenizer = SpacyTokenizer("ja_core_news_sm")
 unlabeled_sentences = [Sentence(sentence, use_tokenizer=tokenizer) for sentence in sentences]
+```
+
+And do not forget set the `research_mode` as `False`.
+
+```python
+for i in range(iterations):
+    queried_samples, unlabeled_sentences = learner.query(
+        unlabeled_sentences, query_number, token_based=token_based, research_mode=False
+    )
+    learner.teach(queried_samples, dir_path=f"output/retrain_{i}")
+```
+
+
+### Run Active Learning Cycle
+
+Executing below command will run the active learning cycle on non-spaced language. The user can see the script for more detail.
+
+```
+python examples/active_learning_cycle_research_mode_non_spaced_language.py
 ```
