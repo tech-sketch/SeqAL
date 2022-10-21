@@ -36,7 +36,9 @@ SeqAL is a sequence labeling active learning framework based on Flair.
 
 SeqAL is available on PyPI:
 
-`pip install seqal`
+```bash
+pip install seqal
+```
 
 SeqAL officially supports Python 3.8+.
 
@@ -57,8 +59,27 @@ To understand what SeqAL can do, we first introduce the pool-based active learni
 
 SeqAL can cover all steps except step 0 and step 4. Because there is no 3rd part annotation tool, we can run below script to simulate the active learning cycle.
 
-```
-$python examples/run_al_cycle.py --text_column 0  --tag_column 1 --data_folder ./data/sample_bio --train_file train_seed.txt --dev_file dev.txt --test_file test.txt --pool_file labeled_data_pool.txt --tag_type ner --hidden_size 256 --embeddings glove --use_rnn False --max_epochs 1 --mini_batch_size 32 --learning_rate 0.1 --sampler MaxNormLogProbSampler --query_number 2 --token_based False --iterations 5 --research_mode True
+```bash
+python examples/run_al_cycle.py \
+  --text_column 0 \
+  --tag_column 1 \
+  --data_folder ./data/sample_bio \
+  --train_file train_seed.txt \
+  --dev_file dev.txt \
+  --test_file test.txt \
+  --pool_file labeled_data_pool.txt \
+  --tag_type ner \
+  --hidden_size 256 \
+  --embeddings glove \
+  --use_rnn False \
+  --max_epochs 1 \
+  --mini_batch_size 32 \
+  --learning_rate 0.1 \
+  --sampler MaxNormLogProbSampler \
+  --query_number 2 \
+  --token_based False \
+  --iterations 5 \
+  --research_mode True
 ```
 
 We set `research_mode=True`. This means that we simulate the active learning cycle. You can also find the script in `examples/run_al_cycle.py` or `examples/active_learning_cycle_research_mode.py`. If you want to connect SeqAL with an annotation tool, you can see the script in `examples/active_learning_cycle_annotation_mode.py`.
@@ -67,7 +88,7 @@ You can find more explanations about the parameters in the following tutorials.
 
 ## Tutorials
 
-We provide a set of quick tutorials to get you started with the library. 
+We provide a set of quick tutorials to get you started with the library.
 
 - [Tutorials on Github Page](https://tech-sketch.github.io/SeqAL/)
 - [Tutorials on Markown](./docs/)
@@ -88,7 +109,6 @@ We provide a set of quick tutorials to get you started with the library.
 Active learning algorithms achieve 97% performance of the best deep model trained on full data using only 30% of the training data on the CoNLL 2003 English dataset. The CPU model can decrease the time cost greatly only sacrificing a little performance.
 
 See [performance](./docs/performance.md) for more detail about performance and time cost.
-
 
 ## Contributing
 
