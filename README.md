@@ -82,9 +82,38 @@ python examples/run_al_cycle.py \
   --research_mode True
 ```
 
-We set `research_mode=True`. This means that we simulate the active learning cycle. You can also find the script in `examples/run_al_cycle.py` or `examples/active_learning_cycle_research_mode.py`. If you want to connect SeqAL with an annotation tool, you can see the script in `examples/active_learning_cycle_annotation_mode.py`.
+Parameters:
+- Dataset setup:
+  -`text_column`: which column is text in CoNLL format.
+  -`tag_column`: which column is tag in CoNLL format.
+  -`data_folder`: the folder path of data.
+  -`train_file`: file name of training (seed) data.
+  -`dev_file`: file name of validation data.
+  -`test_file`: file name of test data.
+  -`pool_file`: file name of unlabeled data pool data.
 
-You can find more explanations about the parameters in the following tutorials.
+- Tagger (model) setup:
+  -`tag_type`: tag type of sequence, "ner", "pos" etc.
+  -`hidden_size`: hidden size of model
+  -`embeddings`: embedding type
+  -`use_rnn`: if true, use Bi-LSTM CRF model, else CRF model.
+
+- Training setup
+  -`max_epochs`: number of epochs in each round for active learning.
+  -`mini_batch_size`: batch size.
+  -`learning_rate`: learning rate.
+
+- Active learning setup
+  -`sampler`: sampling method, "LeastConfidenceSampler", "MaxNormLogProbSampler", etc.
+  -`query_number`: number of data to query in each round.
+  -`token_based`: if true, count data number as token based, else count data number on sentence based.
+  -`iterations`: number of active learning round.
+  -`research_mode`: if true, simulate the active learning cycle with real labels, else with predicted labels.
+
+More explanations about the parameters in the tutorials.
+
+You can find the script in `examples/run_al_cycle.py` or `examples/active_learning_cycle_research_mode.py`. If you want to connect SeqAL with an annotation tool, you can see the script in `examples/active_learning_cycle_annotation_mode.py`.
+
 
 ## Tutorials
 
